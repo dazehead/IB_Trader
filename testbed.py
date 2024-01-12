@@ -15,7 +15,7 @@ df_object_list = upload_historical(tickers=tickers_list)
 risk = Risk_Handler(ib = None,
                     perc_risk = 0.8,
                     stop_time="10:00:00-05:00",
-                    atr_perc = .2)
+                    atr_perc = .1)
 
 # iterating of each DF_Manager and creating a strategy object with each manager
 for i, manager in enumerate(df_object_list):

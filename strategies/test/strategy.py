@@ -34,7 +34,7 @@ class Strategy:
         if self.risk:
             signals = self._stop_trading_time(signals)
             atr = ta.ATR(high, low, close, timeperiod=14)
-            signals = self._process_atr_data(signals, atr, close)
+            signals = self._process_atr_data(signals, atr, close, high)
         signals = self._process_signal_data(signals)
         
         # Technical Indicators
@@ -47,7 +47,7 @@ class Strategy:
 
         return signals
 
-    def _process_atr_data(self, signals, atr, close):
+    def _process_atr_data(self, signals, atr, close, high):
         """Replaces atr nan with 0's on signals and calculates stop loss and profit target
         impements them into new_signals"""
         stop_index = np.where(~np.isnan(atr))[0][0]
@@ -58,6 +58,7 @@ class Strategy:
 
         in_trade = False
         price_at_purchase = None
+        new_high = None
         for i,price in enumerate(close):
             # skips until atr has values populated
             if np.isnan(atr[i]):
@@ -66,15 +67,20 @@ class Strategy:
                 if new_signals[i] == 1 and not in_trade:
                     # assigns the price of stock during a BUY signal 
                     price_at_purchase = price
+                    new_high = high[i]
                     in_trade = True
                 elif in_trade:
-                    stop_loss = price_at_purchase - (price_at_purchase * (atr[i] + self.risk.atr_perc))
+                    if new_high < high[i]:
+                        new_high = high[i]
+                    stop_loss = new_high - (price_at_purchase * (atr[i] + self.risk.atr_perc))
                     profit_target = price_at_purchase + (price_at_purchase * (atr[i] + self.risk.profit_target_perc))
+                    #print(f"STOP LOSS: {stop_loss}")
+                    #print(f"PRICE: {price}\n")
                     if price < stop_loss:
                         # hit our stop loss need to SELL
                         new_signals[i] = -1
                         in_trade = False
-                    if new_signals[i] == -1 and price > stop_loss and price < profit_target:
+                    elif new_signals[i] == -1 and price > stop_loss and price < profit_target:
                         # SELL signal but stop loss not hit and profit target not hit: keep going                    
                         new_signals[i] = 0
                     elif (price > profit_target) and (new_signals[i] == -1):
