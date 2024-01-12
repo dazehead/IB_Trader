@@ -7,20 +7,22 @@ from strategies.test.strategy import Strategy
 from strategies.test.backtest import BackTest
 from risk_handler import Risk_Handler
 from get_data import upload_historical
-from dataframe_manager import DF_Manager
 
 tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG']
 
 df_object_list = upload_historical(tickers=tickers_list)
 
-risk = Risk_Handler(stop_time="10:00:00-05:00")
+risk = Risk_Handler(ib = None,
+                    perc_risk = 0.8,
+                    stop_time="10:00:00-05:00",
+                    atr_perc = .2)
 
 # iterating of each DF_Manager and creating a strategy object with each manager
 for i, manager in enumerate(df_object_list):
     # 
     strat = Strategy(
         df_manager=manager,
-        barsize= "10sec",
+        barsize= "1min",
         risk = risk)
     backtest = BackTest(strat)
 

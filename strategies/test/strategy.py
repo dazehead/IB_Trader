@@ -31,10 +31,12 @@ class Strategy:
         #Pattern Recognition
         strat = ta.CDLENGULFING(open, high, low, close)
         signals = self._process_ta_pattern_data(strat)
-        signals = self._process_signal_data(signals)
         if self.risk:
             signals = self._stop_trading_time(signals)
-
+            atr = ta.ATR(high, low, close, timeperiod=14)
+            signals = self._process_atr_data(signals, atr, close)
+        signals = self._process_signal_data(signals)
+        
         # Technical Indicators
         #rsi = vbt.RSI.run(close, window = rsi_window).rsi.to_numpy()# converting to numpy array
         #entry_condition = (rsi > 50)
@@ -44,6 +46,43 @@ class Strategy:
         #print(signals) # check if signals data is correct
 
         return signals
+
+    def _process_atr_data(self, signals, atr, close):
+        """Replaces atr nan with 0's on signals and calculates stop loss and profit target
+        impements them into new_signals"""
+        stop_index = np.where(~np.isnan(atr))[0][0]
+        zeros_array = np.zeros_like(signals)
+        is_trading = signals[stop_index:]
+        not_trading = zeros_array[:stop_index]
+        new_signals = np.concatenate((is_trading, not_trading))
+
+        in_trade = False
+        price_at_purchase = None
+        for i,price in enumerate(close):
+            # skips until atr has values populated
+            if np.isnan(atr[i]):
+                pass
+            else:
+                if new_signals[i] == 1 and not in_trade:
+                    # assigns the price of stock during a BUY signal 
+                    price_at_purchase = price
+                    in_trade = True
+                elif in_trade:
+                    stop_loss = price_at_purchase - (price_at_purchase * (atr[i] + self.risk.atr_perc))
+                    profit_target = price_at_purchase + (price_at_purchase * (atr[i] + self.risk.profit_target_perc))
+                    if price < stop_loss:
+                        # hit our stop loss need to SELL
+                        new_signals[i] = -1
+                        in_trade = False
+                    if new_signals[i] == -1 and price > stop_loss and price < profit_target:
+                        # SELL signal but stop loss not hit and profit target not hit: keep going                    
+                        new_signals[i] = 0
+                    elif (price > profit_target) and (new_signals[i] == -1):
+                            # logic for if price is above profit target and a SELL signal occurs
+                            in_trade = False
+
+        return new_signals
+        
 
     def _process_ta_pattern_data(self, signals):
         """Helper function to process signals generated through TA-LIB"""
@@ -90,11 +129,7 @@ class Strategy:
         trading_time_array = signals[:stop_index]
         stop_trading_array = zeros_array[stop_index:]
         new_signals = np.concatenate((trading_time_array, stop_trading_array))
-        #print(len(signals) == len(zeros_array))
-        #print(len(data) == len(datetimes))
-        #print(len(data), stop_index)
-        #print(new_signals)
-        #print("****************************\n")
+
         return new_signals
 
 

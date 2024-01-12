@@ -3,7 +3,7 @@ import pandas as pd
 
 class Risk_Handler:
     """A class to hanlde portfolio risk"""
-    def __init__(self, ib=None, perc_risk=.8,stop_time=None):
+    def __init__(self, ib=None, perc_risk=.8,stop_time=None, atr_perc= .10):
         """Initializing Risk resources"""
         if ib is not None:
             self.ib = ib
@@ -20,6 +20,9 @@ class Risk_Handler:
         self.perc_risk = perc_risk
 
         self.stop_time = stop_time
+        # this creates a 2/1 proffit/loss ratio
+        self.atr_perc = atr_perc
+        self.profit_target_perc = atr_perc * 2
 
 
     def get_directive(self):
