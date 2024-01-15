@@ -10,9 +10,7 @@ class BackTest:
         self.strategy = strategy_object
 
         # retrieves data from from Stragy() class
-        if self.strategy.barsize == '10sec':
-            self.data = self.strategy.data_10sec
-        elif self.strategy.barsize == '1min':
+        if self.strategy.barsize == '1min':
             self.data = self.strategy.data_1min
         elif self.strategy.barsize == '5min':
             self.data = self.strategy.data_5min

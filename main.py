@@ -14,11 +14,13 @@ from strategies.engulfing_risk.backtest import BackTest
 
 
 ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=2)
+ib.connect('127.0.0.1', 7497, clientId=1)
 
 def onBarUpdate(bars, hasNewBar):
     """handles logic for new bar data- Main Loop"""
     if hasNewBar:
+        print("New Bar")
+        """
         global df
         start_time = time.time()
         df.update(bars)
@@ -33,7 +35,7 @@ def onBarUpdate(bars, hasNewBar):
                                          close=df.data_1min.close)
         #market_orders(signals)
         print(f"Elapsed Time: {time.time() - start_time}")
-
+"""
 
 def market_orders(signals):
         """Logic for sending orders to IB"""
@@ -71,6 +73,36 @@ print("Qualifing Contract...")
 ib.qualifyContracts(top_ticker)
 print("Contract Qualified")
 
+
+
+
+# risk handler
+print("Initializing Risk_Handler...")
+risk = Risk_Handler(
+     ib=ib,
+     perc_risk=0.8,
+     stop_time=None,
+     atr_perc=.1)
+print("Risk_Handler Initialized...")
+
+
+
+# Initialize Strategy Object
+#print("Initializing Strategy...")
+#strat_engulf = Strategy(
+#     df_manager=df,
+#     barsize='1min',
+#     risk=risk)
+#print("Strategy Initialzied...")
+
+# Initalize Backtest Object
+#backtest = BackTest(strat_engulf)
+
+# tesitings backtest
+#print(backtest.pf.stats())
+#backtest.graph_data()
+
+
 # Retrieving Historical data and keeping up to date with 5 second intervals
 print("Starting Market Data Subscription...")
 bars = ib.reqHistoricalData(contract = top_ticker,
@@ -84,36 +116,11 @@ bars = ib.reqHistoricalData(contract = top_ticker,
 print("Market Data Subscription Successful...")
 ib.sleep(1)
 
-# Initialize DataFrame Manager
 print("Initializing DF...")
 df = DF_Manager(
-     bars=bars)
+     bars=bars,
+     barsize= '1 min')
 print("DF intialized...")
-
-# risk handler
-print("Initializing Risk_Handler...")
-risk = Risk_Handler(
-     ib=ib,
-     perc_risk=0.8,
-     stop_time=None,
-     atr_perc=.1)
-print("Risk_Handler Initialized...")
-
-# Initialize Strategy Object
-print("Initializing Strategy...")
-strat_engulf = Strategy(
-     df_manager=df,
-     barsize='1min',
-     risk=risk)
-print("Strategy Initialzied...")
-
-# Initalize Backtest Object
-#backtest = BackTest(strat_engulf)
-
-# tesitings backtest
-#print(backtest.pf.stats())
-#backtest.graph_data()
-
 
 # CallBacks
 bars.updateEvent.clear()
