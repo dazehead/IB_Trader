@@ -9,8 +9,8 @@ from scanner import Scanner
 from sec_data import SEC_Data
 from risk_handler import Risk_Handler
 from dataframe_manager import DF_Manager
-from strategies.englufing.strategy import Strategy
-from strategies.englufing.backtest import BackTest
+from strategies.engulfing_risk.strategy import Strategy
+from strategies.engulfing_risk.backtest import BackTest
 
 
 ib = IB()
@@ -22,12 +22,15 @@ def onBarUpdate(bars, hasNewBar):
         global df
         start_time = time.time()
         df.update(bars)
-        engulf_strat = Strategy(df)
+        engulf_strat = Strategy(
+             df_manager=df,
+             risk=risk,
+             barsize='1min')
+        
         signals = engulf_strat.custom_indicator(open=df.data_1min.open,
                                          high=df.data_1min.high,
                                          low=df.data_1min.low,
-                                         close=df.data_1min.close,
-                                         rsi_window=14)
+                                         close=df.data_1min.close)
         #market_orders(signals)
         print(f"Elapsed Time: {time.time() - start_time}")
 
@@ -53,45 +56,63 @@ def market_orders(signals):
 
 """---------------------START OF PROGRAM--------------------------"""
 # initializing Scanner object
-#top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
-#print(top_gainers.tickers_list)
+top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+print(top_gainers.tickers_list)
         
 # getting float data from SEC        
 #sec_data = SEC_Data(top_gainers.tickers_list)
 #top_gainers.filter_floats(sec_data.company_float_list)
 
 # extracting best gainer
-#top_ticker = top_gainers.contracts[0]
-top_ticker = Stock('SNTG', 'SMART', 'USD')
+top_ticker = top_gainers.contracts[0]
 
 print(f"--------------------------{top_ticker.symbol}--------------------------")
+print("Qualifing Contract...")
 ib.qualifyContracts(top_ticker)
+print("Contract Qualified")
 
 # Retrieving Historical data and keeping up to date with 5 second intervals
+print("Starting Market Data Subscription...")
 bars = ib.reqHistoricalData(contract = top_ticker,
                      endDateTime = '',
                      durationStr = '1 D',
                      barSizeSetting='5 secs',
                      whatToShow='TRADES',
                      useRTH=False,
-                     keepUpToDate=True,
+                     keepUpToDate=True
                      )
-
+print("Market Data Subscription Successful...")
+ib.sleep(1)
 
 # Initialize DataFrame Manager
-df = DF_Manager(bars)
+print("Initializing DF...")
+df = DF_Manager(
+     bars=bars)
+print("DF intialized...")
+
+# risk handler
+print("Initializing Risk_Handler...")
+risk = Risk_Handler(
+     ib=ib,
+     perc_risk=0.8,
+     stop_time=None,
+     atr_perc=.1)
+print("Risk_Handler Initialized...")
 
 # Initialize Strategy Object
-strat_engulf = Strategy(df)
+print("Initializing Strategy...")
+strat_engulf = Strategy(
+     df_manager=df,
+     barsize='1min',
+     risk=risk)
+print("Strategy Initialzied...")
 
 # Initalize Backtest Object
-backtest = BackTest(df.data_1min, strat_engulf)
+#backtest = BackTest(strat_engulf)
 
-# Initialize Risk Object
-risk = Risk_Handler(df)
 # tesitings backtest
-print(backtest.pf.stats())
-backtest.graph_data()
+#print(backtest.pf.stats())
+#backtest.graph_data()
 
 
 # CallBacks

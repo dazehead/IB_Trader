@@ -7,8 +7,8 @@ class Risk_Handler:
         """Initializing Risk resources"""
         if ib is not None:
             self.ib = ib
-            top_ticker = Stock('SNTG', 'SMART', 'USD')
-            self.ib.qualifyContracts(top_ticker)
+            #top_ticker = Stock('SNTG', 'SMART', 'USD')
+            #self.ib.qualifyContracts(top_ticker)
             self.account_summary = util.df(self.ib.accountSummary())
             balance = self.account_summary.loc[self.account_summary['tag'] == 'AvailableFunds', 'value']
             self.balance = pd.to_numeric(balance.iloc[0])
@@ -16,6 +16,7 @@ class Risk_Handler:
             self.bid = None
             self.ask = None
             self.mid = None
+            self.perc_risk = perc_risk
             self.balance_at_risk = self.balance * self.perc_risk
         self.perc_risk = perc_risk
 
