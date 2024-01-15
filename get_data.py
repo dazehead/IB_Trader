@@ -6,9 +6,9 @@ def upload_historical(tickers):
     all_data = []
     for ticker in tickers:
         tickers_filename = f"{ticker}_5sec"
-        df = pd.read_csv(f'historical_data/{tickers_filename}', delimiter=',')
+        df = pd.read_csv(f'historical_data/{tickers_filename}.csv', delimiter=',')
         df['date'] = pd.to_datetime(df['date'])
-        all_data.append(DF_Manager(df))
+        all_data.append(DF_Manager(df, ticker))
     return all_data
 
 
@@ -24,7 +24,7 @@ def download_historical(tickers_list, to_csv=True):
             useRTH= False)
         df = util.df(bars)
         if to_csv:
-            df.to_csv(f"historical_data/{ticker[0]}_5sec", index=False)
+            df.to_csv(f"historical_data/{ticker[0]}_5sec.csv", index=False)
         else:
             return df
 '''

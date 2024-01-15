@@ -17,6 +17,7 @@ class Strategy:
             sys.exit()
 
         """Initialize different bar data"""
+        self.ticker = df_manager.ticker
         self.risk = risk
         self.barsize = barsize
         #print("...Initializing Stategy")

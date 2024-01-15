@@ -8,6 +8,7 @@ class BackTest:
     def __init__(self, strategy_object):
         """Initialize backtesting resources from VectorBT"""
         self.strategy = strategy_object
+        self.ticker = self.strategy.ticker
 
         # retrieves data from from Stragy() class
         if self.strategy.barsize == '1min':

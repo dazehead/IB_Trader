@@ -7,9 +7,11 @@ from strategies.engulfing_risk.strategy import Strategy
 from strategies.engulfing_risk.backtest import BackTest
 from risk_handler import Risk_Handler
 from get_data import upload_historical
+from log import LogBook
 
 # tickers to backtest
-tickers_list = ['LBPH']#, 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG']
+tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG']
+
 
 df_object_list = upload_historical(tickers=tickers_list)
 
@@ -19,16 +21,29 @@ risk = Risk_Handler(ib = None,
                     atr_perc = .1)
 
 # iterating of each DF_Manager and creating a strategy object with each manager
+logbook = None
 for i, manager in enumerate(df_object_list):
-    # 
-    strat = Strategy(
-        df_manager=manager,
-        barsize= "1min",
-        risk = risk)
-    backtest = BackTest(strat)
+    if i == 0:
+        strat = Strategy(
+            df_manager=manager,
+            barsize= "1min",
+            risk = risk)
+        backtest = BackTest(strat)
+        logbook = LogBook(backtest)
+    else:
+        strat = Strategy(
+            df_manager=manager,
+            barsize='1min',
+            risk=risk)
+        backtest = BackTest(strat)
+        logbook.insert_beginning(backtest)
+    
 
-    print(f"\n\n------------------------{tickers_list[i]}--------------------------")
-    print(list(dir(backtest.pf)))
+
+
+    #print(list(dir(backtest.pf)))
     #print(backtest.pf.stats())
     #backtest.graph_data()
-    
+
+
+logbook.export_backtest_data("logbooks/backtests_01152024.csv")
