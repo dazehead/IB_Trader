@@ -9,8 +9,8 @@ from scanner import Scanner
 from sec_data import SEC_Data
 from risk_handler import Risk_Handler
 from dataframe_manager import DF_Manager
-from strategies.engulfing_risk.strategy import Strategy
-from strategies.engulfing_risk.backtest import BackTest
+from IB_Trader.strategies.engulfing_risk import Strategy
+from IB_Trader.backtest import BackTest
 
 
 ib = IB()
