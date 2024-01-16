@@ -48,8 +48,7 @@ def run_backtest(tickers_list):
 class Test_Scanner(Scanner):
     def __init__(self, ib, scancode):
         super().__init__(ib=ib, scancode=scancode)
-
-
+       
 
 
 
@@ -58,6 +57,8 @@ def test_scanner():
     ib.connect('127.0.0.1', 7497, clientId=2)
     
     top_gainers = Test_Scanner(ib, 'TOP_PERC_GAIN')
+    print(top_gainers.tickers_list)
+    top_gainers.scan_news()
     print(top_gainers.tickers_list)
     #top_gainers.retreive_filter_params()
 

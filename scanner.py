@@ -78,6 +78,8 @@ class Scanner:
 
     def get_ticker_list(self):
         """retreived a list of all the tickers found on scanner"""
+        if self.tickers_list:
+            self.tickers_list = []
         for contract in self.contracts:
             self.tickers_list.append(contract.symbol)
 
@@ -89,4 +91,29 @@ class Scanner:
                 self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
                 print(f"...{ticker} removed from list due to high float: {company_float}")
                 
-        
+    def scan_news(self):
+        """gets news items for ticker; however, only 3 are available"""
+        filtered_contracts = []
+        news_providers = self.ib.reqNewsProviders()
+        codes = '+'.join(np.code for np in news_providers)
+
+        for contract in self.contracts:
+            self.ib.qualifyContracts(contract)
+            headlines = self.ib.reqHistoricalNews(
+                conId=contract.conId,
+                providerCodes=codes,
+                startDateTime='',
+                endDateTime='',
+                totalResults=10
+                )
+            try:
+                latest = headlines[0]
+                article = self.ib.reqNewsArticle(
+                    providerCode=latest.providerCode,
+                    articleId=latest.articleId
+                    )
+                filtered_contracts.append(contract)
+            except IndexError:
+                pass
+        self.contracts = filtered_contracts
+        self.get_ticker_list()
