@@ -17,6 +17,7 @@ class Log:
         self.next_node = next_node
 
 class LogBook:
+    """Linked List that holds all logs"""
     def __init__(self, value=None):
         self.head_node = Log(value)
 

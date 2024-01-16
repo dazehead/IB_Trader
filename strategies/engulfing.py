@@ -9,7 +9,7 @@ import numpy as np
 import talib as ta
 from ib_insync import *
 from strategies.strategy import Strategy
-import sys
+
 
 class Engulfing(Strategy):
     """Class to store strategy resources"""

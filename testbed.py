@@ -5,12 +5,15 @@ from risk_handler import Risk_Handler
 from get_data import upload_historical
 from log import LogBook
 from scanner import Scanner
+from dataframe_manager import DF_Manager
+from market_orders import Trade
 
 # CONSTANTS
 tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG']
 
 
 def run_backtest(tickers_list):
+    """NOTE: update later so that it gets datetime by itself instead of manually inserting the date"""
     df_object_list = upload_historical(tickers=tickers_list)
 
     risk = Risk_Handler(ib = None,
@@ -44,23 +47,82 @@ def run_backtest(tickers_list):
 #df = logbook._convert_to_dataframe()
 #print(df)
 
-
-class Test_Scanner(Scanner):
-    def __init__(self, ib, scancode):
-        super().__init__(ib=ib, scancode=scancode)
-       
-
-
-
 def test_scanner():
     ib = IB()
     ib.connect('127.0.0.1', 7497, clientId=2)
     
-    top_gainers = Test_Scanner(ib, 'TOP_PERC_GAIN')
+    top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     print(top_gainers.tickers_list)
-    top_gainers.scan_news()
+    top_gainers.filter_by_news()
     print(top_gainers.tickers_list)
     #top_gainers.retreive_filter_params()
 
-test_scanner()
+#test_scanner()
 
+def run_paper_test():
+
+    def onBarUpdate(bars, hasNewBar):
+        if hasNewBar:
+            global df
+            global counter
+
+            df.update(bars)
+            open = df.data_1min.open
+            high = df.data_1min.high
+            low = df.data_1min.low
+            close = df.data_1min.close
+
+            trade = Trade(
+                ib=ib,
+                risk=risk,
+                signals=test_data,
+                contract=top_stock,
+                counter = counter
+                )
+            trade.execute_trade(close)
+            counter += 1
+            
+
+    ib = IB()
+    ib.connect("127.0.0.1", 7497, clientId=1)
+
+    top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+    top_stock = top_gainers.contracts[0]
+    ib.qualifyContracts(top_stock)
+
+    risk = Risk_Handler(
+        ib=ib,
+        perc_risk=0.8,
+        stop_time=None,
+        atr_prec=.1
+    )
+    
+    bars = ib.reqHistoricalData(
+        contract=top_stock,
+        endDateTime= '',
+        durationStr='1 D',
+        barSizeSetting='5 secs',
+        whatToShow='TRADES',
+        useRTH=False,
+        keepUpToDate=True
+    )
+
+    df = DF_Manager(
+        bars=bars,
+        ticker=top_stock.symbol
+    )
+    counter = 0
+    test_data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0]
+
+    try:
+        bars.updateEvent.clear()
+        bars.updateEvent += onBarUpdate
+        ib.sleep(10000)
+    except KeyboardInterrupt:
+        ib.cancelHistoricalData(bars)
+        ib.disconnect()
+    else:
+        ib.cancelHistoricalData(bars)
+        ib.disconnect()
+
+run_paper_test()

@@ -30,8 +30,9 @@ def download_historical(tickers_list, to_csv=True):
 '''
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=1)
-tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG']
-date_list = ['20240103 00:00:00', '20240104 00:00:00', '20240105 00:00:00', '20240106 00:00:00', '20240109 00:00:00', '20240110 00:00:00']
+tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'ELAB']
+# dates are 1 day in future so we can get the previous day
+date_list = ['20240103 00:00:00', '20240104 00:00:00', '20240105 00:00:00', '20240106 00:00:00', '20240109 00:00:00', '20240110 00:00:00', '20240117 00:00:00]
 tick_date_list = list(zip(tickers_list, date_list))
 
 all_data = upload_historical(tickers_list)

@@ -91,7 +91,7 @@ class Scanner:
                 self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
                 print(f"...{ticker} removed from list due to high float: {company_float}")
                 
-    def scan_news(self):
+    def filter_by_news(self):
         """gets news items for ticker; however, only 3 are available"""
         filtered_contracts = []
         news_providers = self.ib.reqNewsProviders()
