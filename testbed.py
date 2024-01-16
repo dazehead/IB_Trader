@@ -1,10 +1,6 @@
 from ib_insync import *
-#from scanner import Scanner
-#from sec_data import SEC_Data
-#from risk_handler import Risk_Handler
-#from dataframe_manager import DF_Manager
-from IB_Trader.strategies.engulfing_risk import Strategy
-from IB_Trader.backtest import BackTest
+from strategies.engulfing import Engulfing
+from backtest import BackTest
 from risk_handler import Risk_Handler
 from get_data import upload_historical
 from log import LogBook
@@ -24,14 +20,14 @@ risk = Risk_Handler(ib = None,
 logbook = None
 for i, manager in enumerate(df_object_list):
     if i == 0:
-        strat = Strategy(
+        strat = Engulfing(
             df_manager=manager,
             barsize= "1min",
             risk = risk)
         backtest = BackTest(strat)
         logbook = LogBook(backtest)
     else:
-        strat = Strategy(
+        strat = Engulfing(
             df_manager=manager,
             barsize='1min',
             risk=risk)
@@ -46,4 +42,6 @@ for i, manager in enumerate(df_object_list):
     #backtest.graph_data()
 
 
-logbook.export_backtest_data("logbooks/backtests_01152024.csv")
+#logbook.export_backtest_data("logbooks/backtests_01152024.csv")
+df = logbook._convert_to_dataframe()
+print(df)

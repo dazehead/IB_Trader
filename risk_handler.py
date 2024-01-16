@@ -12,7 +12,7 @@ class Risk_Handler:
             self.account_summary = util.df(self.ib.accountSummary())
             balance = self.account_summary.loc[self.account_summary['tag'] == 'AvailableFunds', 'value']
             self.balance = pd.to_numeric(balance.iloc[0])
-            self.bid_ask_df = None
+            #self.bid_ask_df = None
             self.bid = None
             self.ask = None
             self.mid = None
@@ -30,21 +30,11 @@ class Risk_Handler:
         for x in dir(self.ib):
             print(x)
 
-    def calculate_shares(self, contract):
+    def calculate_shares(self, close):
         """Calculates how many shares to purchase based on ticker price and balance_at_risk"""
-        bars = self.ib.reqHistoricalData(contract = contract,
-                     endDateTime = '',
-                     durationStr = '1 D',
-                     barSizeSetting='5 secs',
-                     whatToShow='BID_ASK',
-                     useRTH=False,
-                     keepUpToDate=False,
-                     )
-        self.bid_ask_df = util.df(bars)
-        self.bid = self.bid_ask_df['low'].iloc[-1]
-        self.ask = self.bid_ask_df['high'].iloc[-1]
-        self.mid = (self.bid + self.ask)/2
-        num_shares = int((self.balance_at_risk // self.mid))
+        price = close[-1]
+        print(price)
+        num_shares = int((self.balance_at_risk // price))
         return num_shares
     
     def calculate_limit(self, contract):

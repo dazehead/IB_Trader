@@ -1,45 +1,41 @@
-import vectorbt as vbt
-import numpy as np
-import pandas as pd
-import talib as ta
-import datetime as dt
 from ib_insync import *
 import time
 from scanner import Scanner
-from sec_data import SEC_Data
 from risk_handler import Risk_Handler
 from dataframe_manager import DF_Manager
-from IB_Trader.strategies.engulfing_risk import Strategy
-from IB_Trader.backtest import BackTest
+from strategies.engulfing import Engulfing
+
 
 
 ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=1)
+ib.connect('127.0.0.1', 7497, clientId=2)
 
 def onBarUpdate(bars, hasNewBar):
     """handles logic for new bar data- Main Loop"""
     if hasNewBar:
-        print("New Bar")
-        """
         global df
         start_time = time.time()
         df.update(bars)
-        engulf_strat = Strategy(
+        open = df.data_1min.open
+        high = df.data_1min.high
+        low = df.data_1min.low
+        close = df.data_1min.close
+
+        engulf_strat = Engulfing(
              df_manager=df,
              risk=risk,
              barsize='1min')
         
-        signals = engulf_strat.custom_indicator(open=df.data_1min.open,
-                                         high=df.data_1min.high,
-                                         low=df.data_1min.low,
-                                         close=df.data_1min.close)
-        #market_orders(signals)
+        signals = engulf_strat.custom_indicator(open=open,
+                                         high=high,
+                                         low=low,
+                                         close=close)
+        market_orders(signals, close)
         print(f"Elapsed Time: {time.time() - start_time}")
-"""
 
-def market_orders(signals):
+def market_orders(signals, close):
         """Logic for sending orders to IB"""
-        num_shares = risk.calculate_shares(top_ticker)
+        num_shares = risk.calculate_shares(close)
         if not ib.positions() and signals[-1] == 1:
             buy_order = MarketOrder('BUY', num_shares)
             trade = ib.placeOrder(top_ticker, buy_order)
@@ -73,9 +69,6 @@ print("Qualifing Contract...")
 ib.qualifyContracts(top_ticker)
 print("Contract Qualified")
 
-
-
-
 # risk handler
 print("Initializing Risk_Handler...")
 risk = Risk_Handler(
@@ -84,7 +77,6 @@ risk = Risk_Handler(
      stop_time=None,
      atr_perc=.1)
 print("Risk_Handler Initialized...")
-
 
 
 # Initialize Strategy Object
@@ -119,13 +111,17 @@ ib.sleep(1)
 print("Initializing DF...")
 df = DF_Manager(
      bars=bars,
-     barsize= '1 min')
+     ticker=top_ticker.symbol)
 print("DF intialized...")
 
 # CallBacks
-bars.updateEvent.clear()
-bars.updateEvent += onBarUpdate
-ib.sleep(10000)
-ib.cancelHistoricalData(bars)
-ib.disconnect()
-
+try:
+    bars.updateEvent.clear()
+    bars.updateEvent += onBarUpdate
+    ib.sleep(10000)
+except KeyboardInterrupt:
+    ib.cancelHistoricalData(bars)
+    ib.disconnect()
+else:
+    ib.cancelHistoricalData(bars)
+    ib.disconnect()
