@@ -23,12 +23,17 @@ class Scanner:
             instrument="STK",
             locationCode="STK.US.MAJOR",
             scanCode=self.scancode,
-            stockTypeFilter="CORP",
-            abovePrice=1.0,
-            belowPrice=20.0,
-            aboveVolume=999999)
+            stockTypeFilter="CORP")
+        
+        # full list of filters
+        """https://nbviewer.org/github/erdewit/ib_insync/blob/master/notebooks/scanners.ipynb"""
+        tagValues = [TagValue("priceAbove", '1'),
+                     TagValue("priceBelow", '20'),
+                     TagValue("volumeAbove", '999999'),
+                     #TagValue("openGapPercAbove", '25'),
+                     TagValue("changePercAbove", "25")]
 
-        scanDataList = self.ib.reqScannerSubscription(gainSub)
+        scanDataList = self.ib.reqScannerSubscription(gainSub, [], tagValues)
         self.ib.sleep(1.5)
         for data in scanDataList:
             # retrieves all the tickers-converts to Stock object and appends them to a list
@@ -45,6 +50,8 @@ class Scanner:
         root = ET.fromstring(params)
         # Create a list of dictionaries to store data
         data = []
+
+        """NOTE: .//Instrument this will search for scanner paramters"""
         for instrument in root.findall('.//Instrument'):
             instrument_data = {}
             for child in instrument:
@@ -53,6 +60,16 @@ class Scanner:
 
         # Create Pandas DataFrame
         self.parameters_df = pd.DataFrame(data)
+
+    def retreive_filter_params(self):
+        xml = self.ib.reqScannerParameters()
+        # parse XML deocument
+        tree = ET.fromstring(xml)
+        # find all tags that are available for filtering
+        tags = [elem.text for elem in tree.findall('.//AbstractField/code')]
+        print(len(tags), 'tags:')
+        for tag in tags:
+            print(tag)
 
     def search_param(self, param):
         """Function to search a particualar parameter----NOT DONE ONLY RETURNS INDICES"""
