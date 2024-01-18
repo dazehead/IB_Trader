@@ -3,7 +3,7 @@ import pandas as pd
 
 class Risk_Handler:
     """A class to hanlde portfolio risk"""
-    def __init__(self, ib=None, perc_risk=.8,stop_time=None, atr_perc= .10):
+    def __init__(self, ib=None, perc_risk=0.8,stop_time=None, atr_perc= .10):
         """Initializing Risk resources"""
         if ib is not None:
             self.ib = ib
@@ -12,12 +12,14 @@ class Risk_Handler:
             self.account_summary = util.df(self.ib.accountSummary())
             balance = self.account_summary.loc[self.account_summary['tag'] == 'AvailableFunds', 'value']
             self.balance = pd.to_numeric(balance.iloc[0])
+            print(f"Account Balance: {self.balance}")
             #self.bid_ask_df = None
             self.bid = None
             self.ask = None
             self.mid = None
             self.perc_risk = perc_risk
             self.balance_at_risk = self.balance * self.perc_risk
+            print(f"balance to trade: {self.balance_at_risk}")
         self.perc_risk = perc_risk
 
         self.stop_time = stop_time
@@ -30,12 +32,10 @@ class Risk_Handler:
         for x in dir(self.ib):
             print(x)
 
-    def calculate_shares(self, close):
+    def calculate_shares(self, price):
         """Calculates how many shares to purchase based on ticker price and balance_at_risk"""
-        price = close[-1]
-        print(price)
-        num_shares = int((self.balance_at_risk // price))
-        return num_shares
+        ### no longer need since we put in self.ib.reqMktData(self.top_stock,'', False, False).marketPrice()
+        return int((self.balance_at_risk // price))
     
     def calculate_limit(self, contract):
         """I dont think we will need this because we can just ge3t self.bid"""

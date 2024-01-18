@@ -59,70 +59,79 @@ def test_scanner():
 
 #test_scanner()
 
-def run_paper_test():
 
-    def onBarUpdate(bars, hasNewBar):
-        if hasNewBar:
-            global df
-            global counter
+def onBarUpdate(bars, hasNewBar):
+    if hasNewBar:
+        global df
+        global counter
 
-            df.update(bars)
-            open = df.data_1min.open
-            high = df.data_1min.high
-            low = df.data_1min.low
-            close = df.data_1min.close
-
-            trade = Trade(
-                ib=ib,
-                risk=risk,
-                signals=test_data,
-                contract=top_stock,
-                counter = counter
-                )
-            trade.execute_trade(close)
+        df.update(bars)
+        trade_handler = Trade(
+            ib=ib,
+            risk=risk,
+            signals=test_data,
+            contract=top_stock,
+            counter = counter
+            )
+        if trade_handler.trade is None:
+            """need to test more but this should stop program from putting in excessive sell orders"""
+            trade_handler.execute_trade()
             counter += 1
-            
+            print(counter)
+            print(type(trade_handler.pre_market_time))
+            print(trade_handler.pre_market_time)
+            print(trade_handler.outside_rth)
+        else:
+            """we put update orders in the TRADE() class the last else:"""
+            #print(ib.openOrders())
+            trade_handler.check_order()
+            # attempted to install order check funcitonalty here
+            def on_new_order(trade:trade_handler.trade):
+                print(trade_handler.trade.orderStatus.status)
+            ib.newOrderEvent.clear
+            ib.newOrderEvent+=on_new_order
+            ib.sleep(1)
+            counter += 1
+            print(counter)
 
-    ib = IB()
-    ib.connect("127.0.0.1", 7497, clientId=1)
+ib = IB()
+ib.connect("127.0.0.1", 7497, clientId=1)
 
-    top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
-    top_stock = top_gainers.contracts[0]
-    ib.qualifyContracts(top_stock)
+#top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+#top_stock = top_gainers.contracts[0]
+top_stock = Stock('AAPL', 'SMART', 'USD')
+print(f"-------------------------{top_stock.symbol}-------------------------")
+ib.qualifyContracts(top_stock)
 
-    risk = Risk_Handler(
-        ib=ib,
-        perc_risk=0.8,
-        stop_time=None,
-        atr_prec=.1
-    )
+risk = Risk_Handler(
+    ib=ib,
+    perc_risk=0.1,
+    stop_time=None,
+    atr_perc=.1
+)
+bars = ib.reqHistoricalData(
+    contract=top_stock,
+    endDateTime= '',
+    durationStr='1 D',
+    barSizeSetting='5 secs',
+    whatToShow='TRADES',
+    useRTH=False,
+    keepUpToDate=True
+)
+df = DF_Manager(
+    bars=bars,
+    ticker=top_stock.symbol
+)
+counter = 0
+test_data = [0,0,0,0,1,0,0,0,0,-1,0,0,0,0]
+try:
+    bars.updateEvent.clear()
+    bars.updateEvent += onBarUpdate
+    ib.sleep(10000)
+except KeyboardInterrupt:
+    ib.cancelHistoricalData(bars)
+    ib.disconnect()
+else:
+    ib.cancelHistoricalData(bars)
+    ib.disconnect()
     
-    bars = ib.reqHistoricalData(
-        contract=top_stock,
-        endDateTime= '',
-        durationStr='1 D',
-        barSizeSetting='5 secs',
-        whatToShow='TRADES',
-        useRTH=False,
-        keepUpToDate=True
-    )
-
-    df = DF_Manager(
-        bars=bars,
-        ticker=top_stock.symbol
-    )
-    counter = 0
-    test_data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0]
-
-    try:
-        bars.updateEvent.clear()
-        bars.updateEvent += onBarUpdate
-        ib.sleep(10000)
-    except KeyboardInterrupt:
-        ib.cancelHistoricalData(bars)
-        ib.disconnect()
-    else:
-        ib.cancelHistoricalData(bars)
-        ib.disconnect()
-
-run_paper_test()
