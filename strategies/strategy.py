@@ -24,6 +24,7 @@ class Strategy:
         self.data_10sec = df_manager.data_10sec
         self.data_1min = df_manager.data_1min
         self.data_5min = df_manager.data_5min
+        self.final_signals = None
         #print("...Strategy Initialized")
 
     def custom_indicator(self, open, high, low, close):
@@ -45,7 +46,7 @@ class Strategy:
         #signals = np.where(entry_condition, 1, np.where(exit_condition, -1, 0))
         #signals = self._process_signal_data(signals)
         #print(signals) # check if signals data is correct
-
+        self.final_signals = signals
         return signals
 
     def _process_atr_data(self, signals, atr, close, high):

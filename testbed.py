@@ -84,7 +84,7 @@ def onBarUpdate(bars, hasNewBar):
         else:
             """we put update orders in the TRADE() class the last else:"""
             #print(ib.openOrders())
-            trade_handler.check_order()
+            trade_handler._check_order()
             # attempted to install order check funcitonalty here
             def on_new_order(trade:trade_handler.trade):
                 print(trade_handler.trade.orderStatus.status)
