@@ -29,7 +29,7 @@ def test_price_action():
         barsize="5min",
         risk=risk)
     
-    strat.graph_data()
+    strat.price_action_testing()
 
 test_price_action()
 
