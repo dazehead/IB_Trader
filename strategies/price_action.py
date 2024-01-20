@@ -28,43 +28,109 @@ class PriceAction(Strategy):
     def price_action_testing(self):
         """iterates through the dataframe adding the next bar every iteration"""
         for i in range(len(self.data_5min)):
+            # might put logic later for the previous highs and lows so as not to write it out all the time
             iterating_data = self.data_5min.iloc[:i+1]
             current_high = iterating_data.high.values[-1]
-            current_index = len(iterating_data)
+            print(f"\n\n-------Iteration: {i}----------")
+            print(f"Current High : {current_high}")
             current_low = iterating_data.low.values[-1]
 
             # if highest high is NONE
-            self._calculate_highs(current_high, current_index, current_low)
-            self._calculate_lows(current_low, current_index)
+            self._calculate_highs(current_high, i)
+            #self._calculate_lows(current_low, i)
 
             self.graph_data(iterating_data, i)
 
 
-    def _calculate_highs(self, current_high, current_index, current_low):
-        if not self.highest_high:
-            self.highest_high = (current_index, current_high)
+    def _calculate_highs(self, current_high, i):
+        # if highest high is None -- first iteration
+        current_pair = (i, current_high)
+        previous_high = self.data_5min.iloc[i-1].high
+        prev_prev_high = self.data_5min.iloc[i-2].high
 
+        # need a new high --first iteration
+        if self.highest_high is None:
+            print("NONE")
+            # assigning first data as highest
+            self.highest_high = current_pair
+            #self.lowest_low = (i, current_low)
+            return
+
+        # --breakout-- reset with current as highest 
+        if current_high > self.highest_high[1]:
+            print("BREAKOUT")
+            self.highest_high = current_pair
+            self.next_high = None
+
+        # assigning next high
+        else:# current_high < self.highest_high[1]:
+            print("...next high logic")
+            
+            # if next_high is None
+            if self.next_high is None:
+                print("Next high is None")
+                if current_high == self.highest_high[1]:
+                    return
+                #elif current_high > self.highest_high[1]:
+                #    self.next_high = current_pair
+                #    return
+                else:# current_high < self.highest_high[1]
+                    self.next_high = current_pair
+                    
+
+            # if current is going up
+            elif current_high > previous_high:
+                print("current is going up")
+
+                # next high is None, assign next high to current
+                if self.next_high is None:
+                    print("next high is None - assign")
+                    self.next_high = current_pair
+
+                # assign next high if current going up
+                elif current_high >= self.next_high[1]:
+                    print("assign next high if current goin up")
+                    self.next_high = current_pair
+
+            # current is going down
+            elif current_high < previous_high:
+                # Green
+                #if open > close:
+                if prev_prev_high < previous_high:
+                    # add logic for if prev close is > current close
+                    print("triangle detected! set prev high to next_high")
+                    self.next_high = (i-1, self.data_5min.iloc[i-1].high)
+                else:
+                    # and possiblely check for red v green maybe
+                    print("current_high < previous high -- do nothing??????")
+                    return
+                
+            #print("do nothing level 1")
+            # do nothing if current is going down
+        '''
         # if we do not have a new high, and last high is less than current high 
-        if (current_high < self.highest_high[1]):
-            self.next_high = (current_index, current_high)
+        if (current_high < self.highest_high[1]) and self.data_5min.iloc[i-1].high < self.next_high:
+            self.next_high = (current_pair)
         # sets higher high and previous high this means a breakout
         elif current_high > self.highest_high[1]:
             """break out reset everything"""
-            self.highest_high = (current_index, current_high)
-            self.lowest_low = (current_index, current_low)
+            self.highest_high = (current_pair)
+            self.lowest_low = (i, current_low)
             self.next_high = None
             self.next_low = None
+        '''
 
-    def _calculate_lows(self, current_low, current_index):
-        if not self.lowest_low:
-            self.lowest_low = (current_index, current_low)
+    def _calculate_lows(self, current_low, i):
         
-        if current_low > self.lowest_low[1]:
-            self.next_low = (current_index, current_low)
-        elif current_low < self.lowest_low[1]:
-            """ break out"""
-            self.lowest_low = (current_index, current_low)
-            self.next_low = None
+        if not self.next_low:
+            self.next_low = (i, current_low)
+        elif current_low < self.next_low[1]:
+            self.next_low = (i, current_low)
+
+        #elif current_low < self.lowest_low[1]:
+        #    """ break out"""
+        #    self.lowest_low = (i, current_low)
+        #    self.next_low = None
 
     def graph_data(self, iterating_data, i):
         fig = iterating_data.vbt.ohlcv.plots(settings=dict(plot_type='candlestick'))
