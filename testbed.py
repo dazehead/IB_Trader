@@ -7,6 +7,7 @@ from log import LogBook
 from scanner import Scanner
 from dataframe_manager import DF_Manager
 from market_orders import Trade
+import datetime
 
 # CONSTANTS
 tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG']
@@ -73,39 +74,29 @@ def onBarUpdate(bars, hasNewBar):
             contract=top_stock,
             counter = counter
             )
-        if trade_handler.trade is None:
-            """need to test more but this should stop program from putting in excessive sell orders"""
-            trade_handler.execute_trade()
-            counter += 1
-            print(counter)
-            print(type(trade_handler.pre_market_time))
-            print(trade_handler.pre_market_time)
-            print(trade_handler.outside_rth)
-        else:
-            """we put update orders in the TRADE() class the last else:"""
-            #print(ib.openOrders())
-            trade_handler._check_order()
-            # attempted to install order check funcitonalty here
-            def on_new_order(trade:trade_handler.trade):
-                print(trade_handler.trade.orderStatus.status)
-            ib.newOrderEvent.clear
-            ib.newOrderEvent+=on_new_order
-            ib.sleep(1)
-            counter += 1
-            print(counter)
+        print(f"outside RTH: {trade_handler.outside_rth}")
+        #if trade_handler.trade is None:
+        #    """need to test more but this should stop program from putting in excessive sell orders"""
+        #    trade_handler.execute_trade()
+        #    counter += 1
+        #    print(counter)
+        trade_handler.execute_trade()
+        counter += 1
+        print(counter)
+
 
 ib = IB()
-ib.connect("127.0.0.1", 7497, clientId=1)
+ib.connect("127.0.0.1", 7497, clientId=2)
 
-#top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
-#top_stock = top_gainers.contracts[0]
-top_stock = Stock('AAPL', 'SMART', 'USD')
-print(f"-------------------------{top_stock.symbol}-------------------------")
+top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+top_stock = top_gainers.contracts[0]
+#top_stock = Stock('AAPL', 'SMART', 'USD')
+#print(f"-------------------------{top_stock.symbol}-------------------------")
 ib.qualifyContracts(top_stock)
 
 risk = Risk_Handler(
     ib=ib,
-    perc_risk=0.1,
+    perc_risk=0.05,
     stop_time=None,
     atr_perc=.1
 )
@@ -119,19 +110,27 @@ bars = ib.reqHistoricalData(
     keepUpToDate=True
 )
 df = DF_Manager(
-    bars=bars,
-    ticker=top_stock.symbol
+        bars=bars,
+        ticker=top_stock.symbol
 )
+trade_log = LogBook(ib)
+trade_log.log_trades()
 counter = 0
 test_data = [0,0,0,0,1,0,0,0,0,-1,0,0,0,0]
+
 try:
     bars.updateEvent.clear()
     bars.updateEvent += onBarUpdate
     ib.sleep(10000)
+
 except KeyboardInterrupt:
+    """fill doesn't have full shares executed ---- maybe some sleep"""
     ib.cancelHistoricalData(bars)
+    trade_log.log_trades()
     ib.disconnect()
+
 else:
     ib.cancelHistoricalData(bars)
+    trade_log.log_trades()
     ib.disconnect()
     
