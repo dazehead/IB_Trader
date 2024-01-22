@@ -35,7 +35,6 @@ class PriceAction(Strategy):
             print(f"Current High : {current_high}")
             current_low = iterating_data.low.values[-1]
 
-            # if highest high is NONE
             self._calculate_highs(current_high, i)
             #self._calculate_lows(current_low, i)
 
@@ -105,20 +104,6 @@ class PriceAction(Strategy):
                     print("current_high < previous high -- do nothing??????")
                     return
                 
-            #print("do nothing level 1")
-            # do nothing if current is going down
-        '''
-        # if we do not have a new high, and last high is less than current high 
-        if (current_high < self.highest_high[1]) and self.data_5min.iloc[i-1].high < self.next_high:
-            self.next_high = (current_pair)
-        # sets higher high and previous high this means a breakout
-        elif current_high > self.highest_high[1]:
-            """break out reset everything"""
-            self.highest_high = (current_pair)
-            self.lowest_low = (i, current_low)
-            self.next_high = None
-            self.next_low = None
-        '''
 
     def _calculate_lows(self, current_low, i):
         
@@ -127,10 +112,6 @@ class PriceAction(Strategy):
         elif current_low < self.next_low[1]:
             self.next_low = (i, current_low)
 
-        #elif current_low < self.lowest_low[1]:
-        #    """ break out"""
-        #    self.lowest_low = (i, current_low)
-        #    self.next_low = None
 
     def graph_data(self, iterating_data, i):
         fig = iterating_data.vbt.ohlcv.plots(settings=dict(plot_type='candlestick'))

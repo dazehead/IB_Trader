@@ -2,9 +2,12 @@ import pandas as pd
 
 class Log:
     """A class to log trades and store backtest results for analysis"""
-    def __init__(self, backtest, next_node=None):
-        self.value = backtest
-        self.name = self.value.ticker
+    def __init__(self, node, next_node=None):
+        self.value = node
+        try:
+            self.name = self.value.ticker
+        except:
+            print("--------------------get error type so as to add in Log Node for Except function--------------------------------")
         self.next_node = next_node
 
     def get_name(self):
@@ -76,19 +79,6 @@ class LogBook:
         df = pd.DataFrame(data, index=range(len(data)), columns=index_values[0])
         df['tickers'] = tickers
         return df
-        """
-        data = []
-        current_node = self.get_head_node()
-        while current_node:
-            data.append(current_node.value.pf.stats().rename(current_node.get_name()))
-            current_node = current_node.get_next_node()
-
-        df = pd.concat(data, axis=1)
-        return df
-        """
-
-
-
 
 
 """
