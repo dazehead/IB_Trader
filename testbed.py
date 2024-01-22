@@ -9,8 +9,30 @@ from dataframe_manager import DF_Manager
 from market_orders import Trade
 import datetime
 
+from strategies.price_action import PriceAction
+
 # CONSTANTS
 tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG']
+
+
+def test_price_action():
+    ticker = ['LBPH']
+    df_manager = upload_historical(tickers = ticker)
+    df_manager = df_manager[0]
+    risk = Risk_Handler(
+        ib=None,
+        perc_risk=0.8,
+        stop_time="10:00:00-05:00",
+        atr_perc = .1)
+    
+    strat = PriceAction(
+        df_manager=df_manager,
+        barsize="5min",
+        risk=risk)
+    
+    strat.price_action_testing()
+
+test_price_action()
 
 
 def run_backtest(tickers_list):
@@ -60,7 +82,7 @@ def test_scanner():
 
 #test_scanner()
 
-
+'''
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -134,3 +156,5 @@ else:
     trade_log.log_trades()
     ib.disconnect()
     
+'''
+

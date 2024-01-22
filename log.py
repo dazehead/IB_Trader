@@ -5,10 +5,19 @@ import numpy as np
 
 class Log:
     """A class to log trades and store backtest results for analysis"""
+<<<<<<< HEAD
     def __init__(self, log_file, next_node=None):
         self.value = log_file
         if self.value is not None:
             self.name = self.value.contract.symbol
+=======
+    def __init__(self, node, next_node=None):
+        self.value = node
+        try:
+            self.name = self.value.ticker
+        except:
+            print("--------------------get error type so as to add in Log Node for Except function--------------------------------")
+>>>>>>> price_action
         self.next_node = next_node
         self.list = []
 
@@ -89,6 +98,7 @@ class LogBook:
         df = pd.DataFrame(data, index=range(len(data)), columns=index_values[0])
         df['tickers'] = tickers
         return df
+<<<<<<< HEAD
     
     def log_trades(self):
         """Function to retrieve trade information from IB"""
@@ -158,6 +168,8 @@ class LogBook:
 
 
 
+=======
+>>>>>>> price_action
 
 
 """
