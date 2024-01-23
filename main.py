@@ -4,11 +4,23 @@ from scanner import Scanner
 from risk_handler import Risk_Handler
 from dataframe_manager import DF_Manager
 from strategies.engulfing import Engulfing
+from market_orders import Trade
+from log import LogBook
+from backtest import BackTest
+import sys
 
 
-
+"""
+7496 - live
+7497 - paper
+"""
 ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=2)
+ib.connect('127.0.0.1', 7497, clientId=1)
+
+if ib.client.port == 7496:
+    to_go_on = input("YOU ARE FIXING TO TRADE ON A LIVE ACCOUNT PLEASE INPUT 'Y' TO CONTINUE...").upper()
+    if to_go_on != 'Y':
+        sys.exit()
 
 def onBarUpdate(bars, hasNewBar):
     """handles logic for new bar data- Main Loop"""
@@ -26,30 +38,24 @@ def onBarUpdate(bars, hasNewBar):
              risk=risk,
              barsize='1min')
         
-        signals = engulf_strat.custom_indicator(open=open,
-                                         high=high,
-                                         low=low,
-                                         close=close)
-        market_orders(signals, close)
+        signals = engulf_strat.custom_indicator(
+            open=open,
+            high=high,
+            low=low,
+            close=close)
+        
+        #backtest = BackTest(engulf_strat)
+        #backtest.graph_data()
+        
+        trade = Trade(
+            ib=ib, 
+            risk=risk, 
+            signals=signals,
+            contract=top_ticker)
+
+        trade.execute_trade()
         print(f"Elapsed Time: {time.time() - start_time}")
 
-def market_orders(signals, close):
-        """Logic for sending orders to IB"""
-        num_shares = risk.calculate_shares(close)
-        if not ib.positions() and signals[-1] == 1:
-            buy_order = MarketOrder('BUY', num_shares)
-            trade = ib.placeOrder(top_ticker, buy_order)
-            while not trade.isDone():
-                ib.waitOnUpdate()
-            print("BUY")
-        elif signals[-1] == -1 and ib.positions():
-            positions = ib.positions()[0].position
-            sell_order = MarketOrder('SELL', positions)
-            trade = ib.placeOrder(top_ticker, sell_order)
-            while not trade.isDone():
-                ib.waitOnUpdate()
-            print("SELL")
-        #print('OPEN POSITION:' + str(positions))
 
 
 """---------------------START OF PROGRAM--------------------------"""
@@ -73,27 +79,10 @@ print("Contract Qualified")
 print("Initializing Risk_Handler...")
 risk = Risk_Handler(
      ib=ib,
-     perc_risk=0.8,
+     perc_risk=0.5,
      stop_time=None,
      atr_perc=.1)
 print("Risk_Handler Initialized...")
-
-
-# Initialize Strategy Object
-#print("Initializing Strategy...")
-#strat_engulf = Strategy(
-#     df_manager=df,
-#     barsize='1min',
-#     risk=risk)
-#print("Strategy Initialzied...")
-
-# Initalize Backtest Object
-#backtest = BackTest(strat_engulf)
-
-# tesitings backtest
-#print(backtest.pf.stats())
-#backtest.graph_data()
-
 
 # Retrieving Historical data and keeping up to date with 5 second intervals
 print("Starting Market Data Subscription...")
@@ -114,6 +103,11 @@ df = DF_Manager(
      ticker=top_ticker.symbol)
 print("DF intialized...")
 
+print("Initializing Trade Log...")
+trade_log = LogBook(ib=ib)
+print("Trade Log Initialized...")
+
+
 # CallBacks
 try:
     bars.updateEvent.clear()
@@ -121,7 +115,15 @@ try:
     ib.sleep(10000)
 except KeyboardInterrupt:
     ib.cancelHistoricalData(bars)
+    if ib.positions():
+        trade_log._sell_order()
+        ib.sleep(5)
+    trade_log.log_trades()
     ib.disconnect()
 else:
     ib.cancelHistoricalData(bars)
+    if ib.positions():
+        trade_log._sell_order()
+        ib.sleep(5)
+    trade_log.log_trades()
     ib.disconnect()

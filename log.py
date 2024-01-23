@@ -2,22 +2,17 @@ import pandas as pd
 import datetime
 from ib_insync import util
 import numpy as np
+from datetime import datetime
+import sqlite3
 
 class Log:
     """A class to log trades and store backtest results for analysis"""
-<<<<<<< HEAD
-    def __init__(self, log_file, next_node=None):
-        self.value = log_file
-        if self.value is not None:
-            self.name = self.value.contract.symbol
-=======
     def __init__(self, node, next_node=None):
         self.value = node
         try:
             self.name = self.value.ticker
         except:
-            print("--------------------get error type so as to add in Log Node for Except function--------------------------------")
->>>>>>> price_action
+            self.name = None
         self.next_node = next_node
         self.list = []
 
@@ -98,48 +93,53 @@ class LogBook:
         df = pd.DataFrame(data, index=range(len(data)), columns=index_values[0])
         df['tickers'] = tickers
         return df
-<<<<<<< HEAD
     
     def log_trades(self):
         """Function to retrieve trade information from IB"""
         # retrives trades, converts to df, creates new datframe with column names 
         trades = self.ib.trades()
         trades_df = util.df(trades)
-        column_names = ['conId', 'symbol', 'action', 'orderType','filledQuantity', 'avg_price', 'commission', 'fill_amt', 'time']
+        #print(trades_df.columns)
+        column_names = ['conId', 'symbol', 'action', 'orderType','shares', 'avg_price', 'commission', 'fill_amt', 'time']
         new_df = pd.DataFrame(columns = column_names)
         
         # iterates through the trades and extracts disired data
         for i in range(len(trades_df)):
-            print(f'\n---------------------------{i}----------------------------\n')
+            #print(f'\n---------------------------{i}----------------------------\n')
             values = []
             values.append(trades_df.contract.iloc[i].conId)
             values.append(trades_df.contract.iloc[i].symbol)
             values.append(trades_df.order.iloc[i].action)
             values.append(trades_df.order.iloc[i].orderType)
-            values.append(trades_df.order.iloc[i].filledQuantity)
+            #values.append(trades_df.order.iloc[i].filledQuantity)
 
             # fills is filled with all order information some multiple orders in order to get filled
             fills = trades_df.fills.iloc[i]
             if len(fills) == 0:
                 # if the fills are empty ie: Cancelled orders I assume
+                values.append(np.Nan)
                 values.append(np.NaN)
                 values.append(np.NaN)
                 values.append(len(fills))
                 values.append(np.NaN)
             elif len(fills) > 1:
+                shares = 0
                 avg_price = 0
                 commission = 0
                 for fill in fills:
+                    shares += fill.execution.shares
                     avg_price += fill.execution.price
                     commission += fill.commissionReport.commission
 
                 avg_price = avg_price * len(fills)
+                values.append(shares)
                 values.append(avg_price)
                 values.append(commission)
                 values.append(len(fills))
                 values.append(fills[-1].execution.time)
             else:
-                print(fills)
+                #print(fills)
+                values.append(fills[-1].execution.shares)
                 values.append(fills[-1].execution.price)
                 values.append(fills[-1].commissionReport.commission)
                 values.append(len(fills))
@@ -148,28 +148,21 @@ class LogBook:
                 #print(trades_df.fills.iloc[i])
             data_dict = dict(zip(column_names, values))
             new_df = new_df._append(data_dict, ignore_index=True)
-            print(new_df.head(10))
-            
+        #new_df = new_df.sort_values(by='time')
 
-        
+        self.export_trades_to_db(new_df)
+    
+    def export_trades_to_db(self, df):
+        conn = sqlite3.connect('logbooks/trades/trade_log')
+        if self.ib.client.port == 7497:
+            # paper trading
+            name = "paper_log"
+        else:
+            # 7496 -- real account
+            name = "trading_log"
 
+        df.to_sql(name, conn, if_exists='append', index=False)
 
-            
-        """
-        data = []
-        current_node = self.get_head_node()
-        while current_node:
-            data.append(current_node.value.pf.stats().rename(current_node.get_name()))
-            current_node = current_node.get_next_node()
-
-        df = pd.concat(data, axis=1)
-        return df
-        """
-
-
-
-=======
->>>>>>> price_action
 
 
 """

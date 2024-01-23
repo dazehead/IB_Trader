@@ -32,7 +32,7 @@ def test_price_action():
     
     strat.price_action_testing()
 
-test_price_action()
+#test_price_action()
 
 
 def run_backtest(tickers_list):
@@ -41,7 +41,7 @@ def run_backtest(tickers_list):
 
     risk = Risk_Handler(ib = None,
                         perc_risk = 0.8,
-                        stop_time="10:00:00-05:00",
+                        stop_time=None,#"10:00:00-05:00",
                         atr_perc = .1)
 
     # iterating of each DF_Manager and creating a strategy object with each manager
@@ -72,7 +72,7 @@ def run_backtest(tickers_list):
 
 def test_scanner():
     ib = IB()
-    ib.connect('127.0.0.1', 7497, clientId=2)
+    ib.connect('127.0.0.1', 7497, clientId=1)
     
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     print(top_gainers.tickers_list)
@@ -89,6 +89,7 @@ def onBarUpdate(bars, hasNewBar):
         global counter
 
         df.update(bars)
+
         trade_handler = Trade(
             ib=ib,
             risk=risk,
@@ -96,29 +97,25 @@ def onBarUpdate(bars, hasNewBar):
             contract=top_stock,
             counter = counter
             )
-        print(f"outside RTH: {trade_handler.outside_rth}")
-        #if trade_handler.trade is None:
-        #    """need to test more but this should stop program from putting in excessive sell orders"""
-        #    trade_handler.execute_trade()
-        #    counter += 1
-        #    print(counter)
+
         trade_handler.execute_trade()
+
         counter += 1
         print(counter)
 
 
 ib = IB()
-ib.connect("127.0.0.1", 7497, clientId=2)
+ib.connect("127.0.0.1", 7497, clientId=1)
 
 top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
 top_stock = top_gainers.contracts[0]
 #top_stock = Stock('AAPL', 'SMART', 'USD')
-#print(f"-------------------------{top_stock.symbol}-------------------------")
+print(f"-------------------------{top_stock.symbol}-------------------------")
 ib.qualifyContracts(top_stock)
 
 risk = Risk_Handler(
     ib=ib,
-    perc_risk=0.05,
+    perc_risk=0.01,
     stop_time=None,
     atr_perc=.1
 )
@@ -135,8 +132,8 @@ df = DF_Manager(
         bars=bars,
         ticker=top_stock.symbol
 )
-trade_log = LogBook(ib)
-trade_log.log_trades()
+trade_log = LogBook(ib=ib)
+#trade_log.log_trades()
 counter = 0
 test_data = [0,0,0,0,1,0,0,0,0,-1,0,0,0,0]
 
@@ -156,5 +153,5 @@ else:
     trade_log.log_trades()
     ib.disconnect()
     
-'''
 
+'''

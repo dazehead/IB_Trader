@@ -1,5 +1,6 @@
 from ib_insync import *
 import pandas as pd
+import sys
 
 class Risk_Handler:
     """A class to hanlde portfolio risk"""
@@ -7,19 +8,35 @@ class Risk_Handler:
         """Initializing Risk resources"""
         if ib is not None:
             self.ib = ib
-            #top_ticker = Stock('SNTG', 'SMART', 'USD')
-            #self.ib.qualifyContracts(top_ticker)
-            self.account_summary = util.df(self.ib.accountSummary())
-            balance = self.account_summary.loc[self.account_summary['tag'] == 'AvailableFunds', 'value']
-            self.balance = pd.to_numeric(balance.iloc[0])
-            print(f"Account Balance: {self.balance}")
-            #self.bid_ask_df = None
-            self.bid = None
-            self.ask = None
-            self.mid = None
+
+            self.account_summary = util.df(self.ib.accountSummary())[['tag', 'value']]
+            self.balance = pd.to_numeric(
+                self.account_summary.loc[self.account_summary['tag'] == 'AvailableFunds', 'value'].iloc[0]
+                )
+            self.buying_power = pd.to_numeric(
+                self.account_summary.loc[self.account_summary['tag'] == 'BuyingPower', 'value'].iloc[0]
+                )
+            
             self.perc_risk = perc_risk
             self.balance_at_risk = self.balance * self.perc_risk
+            if self.buying_power < self.balance_at_risk:
+                print("!!!!!!!!BUYING POWER TOO LOW!!!!!!!!")
+                to_go_on = input(f"Would you like to still trade today only using {self.buying_power}?\n Y or N").upper()
+                while to_go_on not in ['Y', 'N']:
+                    to_go_on = input(f"Invalid Response please enter 'Y' or 'N'").upper()
+                if to_go_on == 'Y':
+                    self.balance_at_risk = self.buying_power
+                elif to_go_on == 'N':
+                    sys.exit()
+
+
+
+            
+            print(f"Account Balance: {self.balance}")
+            print(f"Buying Power: {self.buying_power}")
             print(f"balance to trade: {self.balance_at_risk}")
+            self.view_account_summary()
+
         self.perc_risk = perc_risk
 
         self.stop_time = stop_time
@@ -31,15 +48,11 @@ class Risk_Handler:
     def get_directive(self):
         for x in dir(self.ib):
             print(x)
-
-    def calculate_shares(self, price):
-        """Calculates how many shares to purchase based on ticker price and balance_at_risk"""
-        ### no longer need since we put in self.ib.reqMktData(self.top_stock,'', False, False).marketPrice()
-        return int((self.balance_at_risk // price))
     
-    def calculate_limit(self, contract):
-        """I dont think we will need this because we can just ge3t self.bid"""
-        pass
+    def view_account_summary(self):
+        for i in range(len(self.account_summary)):
+            print("-----------------------------------------")
+            print(self.account_summary.iloc[i])
                           
 
 """--------------------TESTING AREA-----------------------"""

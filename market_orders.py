@@ -6,8 +6,10 @@ class Trade:
     def __init__(self, ib, risk, signals, contract, counter=None):
         self.ib = ib
         self.risk = risk
+        self.remaining_trades = self.risk.remaining_day_trades
         self.top_stock = contract
         self.all_signals = signals
+        self.trade_limit = self.risk.remaining_day_trades
 
         self.todays_date = str(datetime.now()).split(' ')[0]
         self.outside_rth = self.check_RTH()
@@ -43,10 +45,12 @@ class Trade:
         sell_order = MarketOrder("SELL", positions)
         sell_order.outsideRth = self.outside_rth
         self.ib.placeOrder(self.top_stock, sell_order)
+        #self.risk.remaining_day_trades = self.ib.accountSummary()[2].value
 
 
     def _check_order(self):
-        print("in checking order")
+        print("in checking order-updating remaining_day_trades")
+       # self.risk.remaining_day_trades = self.ib.accountSummary()[2].value
         pass
 
     def check_RTH(self):
