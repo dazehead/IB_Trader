@@ -32,11 +32,14 @@ class Strategy:
         #Pattern Recognition
         strat = ta.CDLENGULFING(open, high, low, close)
         signals = self._process_ta_pattern_data(strat)
+        #print(f"Engulfing signals: {signals[-1]}")
         if self.risk:
             if self.risk.stop_time is not None:
                 signals = self._stop_trading_time(signals)
             atr = ta.ATR(high, low, close, timeperiod=14)
             signals = self._process_atr_data(signals, atr, close, high)
+            #print(f"Processed ATR signals: {signals[-1]}")
+
         signals = self._process_signal_data(signals)
         
         # Technical Indicators
@@ -52,42 +55,36 @@ class Strategy:
     def _process_atr_data(self, signals, atr, close, high):
         """Replaces atr nan with 0's on signals and calculates stop loss and profit target
         impements them into new_signals"""
-        stop_index = np.where(~np.isnan(atr))[0][0]
-        zeros_array = np.zeros_like(signals)
-        is_trading = signals[stop_index:]
-        not_trading = zeros_array[:stop_index]
-        new_signals = np.concatenate((is_trading, not_trading))
+        # need to get price from order execution
+        #stop_index = np.where(~np.isnan(atr))[0][0]
+        #zeros_array = np.zeros_like(signals)
+        #is_trading = signals[stop_index:]
+        #not_trading = zeros_array[:stop_index]
+        #new_signals = np.concatenate((is_trading, not_trading))
+        price_at_purchase = self.risk.ib.positions()[-1].avgCost
+        if self.risk.highest_high is None:
+            self.risk.highest_high = high[-1]
+            new_signals = signals
+        else:
+            if price_at_purchase > self.risk.highest_high:
+                self.risk.highest_high = price_at_purchase
+            if high[-1] > self.risk.highest_high:
+                self.risk.highest_high = high[-1]
+            
 
-        in_trade = False
-        price_at_purchase = None
-        new_high = None
-        for i,price in enumerate(close):
-            # skips until atr has values populated
-            if np.isnan(atr[i]):
-                pass
-            else:
-                if new_signals[i] == 1 and not in_trade:
-                    # assigns the price of stock during a BUY signal 
-                    price_at_purchase = price
-                    new_high = high[i]
-                    in_trade = True
-                elif in_trade:
-                    if new_high < high[i]:
-                        new_high = high[i]
-                    stop_loss = new_high - (price_at_purchase * (atr[i] + self.risk.atr_perc))
-                    profit_target = price_at_purchase + (price_at_purchase * (atr[i] + self.risk.profit_target_perc))
-                    #print(f"STOP LOSS: {stop_loss}")
-                    #print(f"PRICE: {price}\n")
-                    if price < stop_loss:
-                        # hit our stop loss need to SELL
-                        new_signals[i] = -1
-                        in_trade = False
-                    elif new_signals[i] == -1 and price > stop_loss and price < profit_target:
-                        # SELL signal but stop loss not hit and profit target not hit: keep going                    
-                        new_signals[i] = 0
-                    elif (price > profit_target) and (new_signals[i] == -1):
-                            # logic for if price is above profit target and a SELL signal occurs
-                            in_trade = False
+            stop_loss = self.risk.highest_high - (atr[-1] + self.risk.atr_perc)
+            print(f"High: {self.risk.highest_high}")
+            print(f"ATR: {atr[-1]}")
+            print(f"Purchase Price: {price_at_purchase}")
+            print(f"ATR perc_risk = {self.risk.atr_perc}")
+            print(f"STOPLOSS: {stop_loss}")
+            if close[-1] < stop_loss:
+                """SELL"""
+                new_signals = signals
+                new_signals[-1] = -1
+            elif close[-1] > stop_loss:
+                new_signals = signals
+
 
         return new_signals
         

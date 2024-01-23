@@ -6,10 +6,10 @@ class Trade:
     def __init__(self, ib, risk, signals, contract, counter=None):
         self.ib = ib
         self.risk = risk
-        self.remaining_trades = self.risk.remaining_day_trades
+        #self.remaining_trades = self.risk.remaining_day_trades
         self.top_stock = contract
         self.all_signals = signals
-        self.trade_limit = self.risk.remaining_day_trades
+        #self.trade_limit = self.risk.remaining_day_trades
 
         self.todays_date = str(datetime.now()).split(' ')[0]
         self.outside_rth = self.check_RTH()
@@ -23,6 +23,7 @@ class Trade:
     def execute_trade(self):
         """need functionality for if we bought ORTH and are selling RTH"""
         price = self.ib.reqMktData(self.top_stock,'', False, False).marketPrice()
+        self.ib.cancelMktData(self.top_stock)
         num_shares = self.risk.balance_at_risk // price
 
         if not self.ib.positions() and self.signal == 1:
@@ -49,7 +50,7 @@ class Trade:
 
 
     def _check_order(self):
-        print("in checking order-updating remaining_day_trades")
+        print("in checking order")
        # self.risk.remaining_day_trades = self.ib.accountSummary()[2].value
         pass
 

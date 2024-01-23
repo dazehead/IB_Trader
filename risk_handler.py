@@ -28,6 +28,7 @@ class Risk_Handler:
                     self.balance_at_risk = self.buying_power
                 elif to_go_on == 'N':
                     sys.exit()
+            self.highest_high = None
 
 
 

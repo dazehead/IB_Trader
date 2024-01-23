@@ -21,12 +21,19 @@ class Engulfing(Strategy):
         #Pattern Recognition
         strat = ta.CDLENGULFING(open, high, low, close)
         signals = self._process_ta_pattern_data(strat)
+        print(f"signals: {signals[-1]}")
         if self.risk:
             if self.risk.stop_time is not None:
                 signals = self._stop_trading_time(signals)
             atr = ta.ATR(high, low, close, timeperiod=14)
-            signals = self._process_atr_data(signals, atr, close, high)
-        signals = self._process_signal_data(signals)
+            if self.risk.ib.positions():
+                signals = self._process_atr_data(signals, atr, close, high)
+                print(f"atr signals: {signals[-1]}")
+        # removed this for live trades - reason to believe if previous is a 1 it refuses to do another 1 until -1 is done again
+        # this is already handled within Trade class
+        #signals = self._process_signal_data(signals)
+            
+
         
         # Technical Indicators
         #rsi = vbt.RSI.run(close, window = rsi_window).rsi.to_numpy()# converting to numpy array

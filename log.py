@@ -117,7 +117,7 @@ class LogBook:
             fills = trades_df.fills.iloc[i]
             if len(fills) == 0:
                 # if the fills are empty ie: Cancelled orders I assume
-                values.append(np.Nan)
+                values.append(np.NaN)
                 values.append(np.NaN)
                 values.append(np.NaN)
                 values.append(len(fills))
@@ -157,11 +157,21 @@ class LogBook:
         if self.ib.client.port == 7497:
             # paper trading
             name = "paper_log"
+            try:
+                db = db = pd.read_sql('SELECT * FROM paper_log', conn)
+            except:
+                print("first time on database")
+
         else:
             # 7496 -- real account
             name = "trading_log"
+            try:
+                db = pd.read_sql('SELECT * FROM trading_log', conn)
+            except:
+                print('first time database')
 
-        df.to_sql(name, conn, if_exists='append', index=False)
+        merged_data = pd.concat([db, df]).drop_duplicates(keep=False)
+        merged_data.to_sql(name, conn, if_exists='replace', index=False)
 
 
 

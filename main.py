@@ -15,7 +15,7 @@ import sys
 7497 - paper
 """
 ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=1)
+ib.connect('127.0.0.1', 7497, clientId=2)
 
 if ib.client.port == 7496:
     to_go_on = input("YOU ARE FIXING TO TRADE ON A LIVE ACCOUNT PLEASE INPUT 'Y' TO CONTINUE...").upper()
@@ -26,7 +26,7 @@ def onBarUpdate(bars, hasNewBar):
     """handles logic for new bar data- Main Loop"""
     if hasNewBar:
         global df
-        start_time = time.time()
+        #start_time = time.time()
         df.update(bars)
         open = df.data_1min.open
         high = df.data_1min.high
@@ -44,9 +44,6 @@ def onBarUpdate(bars, hasNewBar):
             low=low,
             close=close)
         
-        #backtest = BackTest(engulf_strat)
-        #backtest.graph_data()
-        
         trade = Trade(
             ib=ib, 
             risk=risk, 
@@ -54,7 +51,11 @@ def onBarUpdate(bars, hasNewBar):
             contract=top_ticker)
 
         trade.execute_trade()
-        print(f"Elapsed Time: {time.time() - start_time}")
+        if signals[-1] == 1 or signals[-1] == -1:
+            backtest = BackTest(engulf_strat)
+            backtest.graph_data()
+        #print(f"Elapsed Time: {time.time() - start_time}")
+        print("------------------------------------------------------------\n")
 
 
 
@@ -79,9 +80,9 @@ print("Contract Qualified")
 print("Initializing Risk_Handler...")
 risk = Risk_Handler(
      ib=ib,
-     perc_risk=0.5,
+     perc_risk=0.1,
      stop_time=None,
-     atr_perc=.1)
+     atr_perc=.2)
 print("Risk_Handler Initialized...")
 
 # Retrieving Historical data and keeping up to date with 5 second intervals
@@ -116,14 +117,34 @@ try:
 except KeyboardInterrupt:
     ib.cancelHistoricalData(bars)
     if ib.positions():
-        trade_log._sell_order()
-        ib.sleep(5)
+        input = input("Would you like to sell all positions? Y or N\n").upper()
+        while input not in ['Y', 'N']:
+            input = input("Invalid response please Enter 'Y' or 'N'\n").upper()
+        if input == 'Y':
+        # need to change to something like ib.sell_all_positions
+            trade = Trade(
+                ib=ib,
+                risk=risk,
+                signals = [-1],
+                contract=top_ticker)
+            trade._sell_order()
+            ib.sleep(5)
     trade_log.log_trades()
     ib.disconnect()
 else:
     ib.cancelHistoricalData(bars)
     if ib.positions():
-        trade_log._sell_order()
-        ib.sleep(5)
+        input = input("Would you like to sell all positions? Y or N\n").upper()
+        while input not in ['Y', 'N']:
+            input = input("Invalid response please Enter 'Y' or 'N'\n").upper()
+        if input == 'Y':
+        # need to change to something like ib.sell_all_positions
+            trade = Trade(
+                ib=ib,
+                risk=risk,
+                signals = [-1],
+                contract=top_ticker)
+            trade._sell_order()
+            ib.sleep(5)
     trade_log.log_trades()
     ib.disconnect()
