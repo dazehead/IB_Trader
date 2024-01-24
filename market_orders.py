@@ -19,22 +19,31 @@ class Trade:
         else:
             self.signal = signals[-1]
 
-        self.price = self.ib.reqMktData(self.top_stock,'', False, False).marketPrice()
-        self.ib.cancelMktData(self.top_stock)
+        market_data = self.ib.reqMktData(self.top_stock, '', False, False)
+        # we can get a lot of different dat from this market data
+        # ticks, vwap, ticks, volume, low52wwk, high52week, ask, modelGreeks, bidGreeks
+
+        self.halted = market_data.halted
+        self.price = market_data.marketPrice()
         self.num_shares = self.risk.balance_at_risk // self.price
         
 
     def execute_trade(self):
         """need functionality for if we bought ORTH and are selling RTH"""
+        if self.halted == 0.0: # not halted
 
-        if not self.ib.positions() and self.signal == 1:
-            self._buy_order(self.num_shares)
-        elif self.ib.positions() and (self.signal == -1) and (self.risk.trade == None):
-            """sell order but we need to check if there is already an order that has not filled then cancel and resubmit"""
-            self._sell_order()
-        else:
-            """this section is to make sure that all positions were sold if not cancel and put in another market order"""
-            self._check_order()
+            if not self.ib.positions() and self.signal == 1:
+                self._buy_order(self.num_shares)
+
+            elif self.ib.positions() and (self.signal == -1) and (self.risk.trade == None):
+                """sell order but we need to check if there is already an order that has not filled then cancel and resubmit"""
+                self._sell_order()
+
+            else:
+                """this section is to make sure that all positions were sold if not cancel and put in another market order"""
+                self._check_order()
+        else: # trading halted passing until trading is resumed
+            pass
     
     def _buy_order(self, num_shares):
         """buys order at market order"""
@@ -59,14 +68,16 @@ class Trade:
         if self.risk.trade is not None:
             #print(self.risk.trade)
             if self.risk.trade.orderStatus.status != 'Filled':
-
                 #print(self.risk.trade.orderStatus.status)
+
                 if self.risk.trade.order.action == 'BUY':
                     self.ib.cancelOrder(self.risk.trade.order)
                     self._buy_order(self.num_shares)
+
                 elif self.risk.trade.order.action == 'SELL':
                     self.ib.cancelOrder(self.risk.trade.order)
-                    self._sell_order()       
+                    self._sell_order()    
+                       
             else:
                 self.risk.trade = None
         pass
