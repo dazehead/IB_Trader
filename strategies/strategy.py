@@ -24,7 +24,6 @@ class Strategy:
         self.data_10sec = df_manager.data_10sec
         self.data_1min = df_manager.data_1min
         self.data_5min = df_manager.data_5min
-        self.final_signals = None
         #print("...Strategy Initialized")
 
     def custom_indicator(self, open, high, low, close):
@@ -49,41 +48,46 @@ class Strategy:
         #signals = np.where(entry_condition, 1, np.where(exit_condition, -1, 0))
         #signals = self._process_signal_data(signals)
         #print(signals) # check if signals data is correct
-        self.final_signals = signals
         return signals
 
     def _process_atr_data(self, signals, atr, close, high):
         """Replaces atr nan with 0's on signals and calculates stop loss and profit target
         impements them into new_signals"""
-        # need to get price from order execution
-        #stop_index = np.where(~np.isnan(atr))[0][0]
-        #zeros_array = np.zeros_like(signals)
-        #is_trading = signals[stop_index:]
-        #not_trading = zeros_array[:stop_index]
-        #new_signals = np.concatenate((is_trading, not_trading))
-        price_at_purchase = self.risk.ib.positions()[-1].avgCost
-        if self.risk.highest_high is None:
-            self.risk.highest_high = high[-1]
-            new_signals = signals
-        else:
-            if price_at_purchase > self.risk.highest_high:
-                self.risk.highest_high = price_at_purchase
-            if high[-1] > self.risk.highest_high:
-                self.risk.highest_high = high[-1]
-            
 
-            stop_loss = self.risk.highest_high - (atr[-1] + self.risk.atr_perc)
-            print(f"High: {self.risk.highest_high}")
-            print(f"ATR: {atr[-1]}")
-            print(f"Purchase Price: {price_at_purchase}")
-            print(f"ATR perc_risk = {self.risk.atr_perc}")
-            print(f"STOPLOSS: {stop_loss}")
-            if close[-1] < stop_loss:
-                """SELL"""
+        if self.risk.ib is not None:
+            """if we are connected to IB"""
+            price_at_purchase = self.risk.ib.positions()[-1].avgCost
+            if self.risk.highest_high is None:
+                self.risk.highest_high = high[-1]
                 new_signals = signals
-                new_signals[-1] = -1
-            elif close[-1] > stop_loss:
-                new_signals = signals
+            else:
+                if price_at_purchase > self.risk.highest_high:
+                    self.risk.highest_high = price_at_purchase
+                if high[-1] > self.risk.highest_high:
+                    self.risk.highest_high = high[-1]
+                
+
+                stop_loss = self.risk.highest_high - (atr[-1] + self.risk.atr_perc)
+                print(f"High: {self.risk.highest_high}")
+                print(f"ATR: {atr[-1]}")
+                print(f"Purchase Price: {price_at_purchase}")
+                print(f"ATR perc_risk = {self.risk.atr_perc}")
+                print(f"STOPLOSS: {stop_loss}")
+                if close[-1] < stop_loss:
+                    """SELL"""
+                    new_signals = signals
+                    new_signals[-1] = -1
+                elif close[-1] > stop_loss:
+                    new_signals = signals
+        else:
+            return signals
+            # need to get price from order execution
+            #stop_index = np.where(~np.isnan(atr))[0][0]
+            #zeros_array = np.zeros_like(signals)
+            #is_trading = signals[stop_index:]
+            #not_trading = zeros_array[:stop_index]
+            #new_signals = np.concatenate((is_trading, not_trading))
+            
 
 
         return new_signals
@@ -138,10 +142,8 @@ class Strategy:
         return new_signals
 
 
-'''
     def graph_data(self, data):
         """Function to graph data"""
         ########### Graphing for Visualization #################################
         fig = data.vbt.ohlcv.plots(settings=dict(plot_type='candlestick'))
         fig.show()
-'''

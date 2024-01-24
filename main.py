@@ -55,7 +55,7 @@ def onBarUpdate(bars, hasNewBar):
             backtest = BackTest(engulf_strat)
             backtest.graph_data()
         #print(f"Elapsed Time: {time.time() - start_time}")
-        print("------------------------------------------------------------\n")
+        #print("------------------------------------------------------------\n")
 
 
 

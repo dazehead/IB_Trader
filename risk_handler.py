@@ -6,8 +6,8 @@ class Risk_Handler:
     """A class to hanlde portfolio risk"""
     def __init__(self, ib=None, perc_risk=0.8,stop_time=None, atr_perc= .10):
         """Initializing Risk resources"""
-        if ib is not None:
-            self.ib = ib
+        self.ib = ib
+        if self.ib is not None:
 
             self.account_summary = util.df(self.ib.accountSummary())[['tag', 'value']]
             self.balance = pd.to_numeric(

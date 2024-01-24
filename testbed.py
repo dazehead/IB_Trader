@@ -9,10 +9,33 @@ from dataframe_manager import DF_Manager
 from market_orders import Trade
 import datetime
 from strategies.price_action import PriceAction
+from strategies.kefr_kama import Kefr_Kama
 
 
 # CONSTANTS
 tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'SGMT', 'ELAB']
+
+def test_kaufmans():
+    ticker = ['LBPH']
+    df_manager = upload_historical(tickers=ticker)
+    df_manager = df_manager[0]
+    risk = Risk_Handler(
+        ib=None,
+        perc_risk=0.8,
+        stop_time=None,
+        atr_perc = .10)
+    
+    strat = Kefr_Kama(
+        df_manager=df_manager,
+        barsize="1min",
+        risk=risk)
+    
+    backtest = BackTest(strat)
+    backtest.graph_data()
+    print(backtest.pf.stats())
+    
+
+test_kaufmans()
 
 
 def test_price_action():
@@ -29,6 +52,7 @@ def test_price_action():
         df_manager=df_manager,
         barsize="5min",
         risk=risk)
+    
     
     strat.price_action_testing()
 
@@ -82,7 +106,7 @@ def test_scanner():
 
 #test_scanner()
 
-
+'''
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -152,5 +176,5 @@ else:
     ib.cancelHistoricalData(bars)
     trade_log.log_trades()
     ib.disconnect()
-    
+'''
 

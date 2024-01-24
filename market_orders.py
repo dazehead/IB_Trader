@@ -6,10 +6,8 @@ class Trade:
     def __init__(self, ib, risk, signals, contract, counter=None):
         self.ib = ib
         self.risk = risk
-        #self.remaining_trades = self.risk.remaining_day_trades
         self.top_stock = contract
         self.all_signals = signals
-        #self.trade_limit = self.risk.remaining_day_trades
 
         self.todays_date = str(datetime.now()).split(' ')[0]
         self.outside_rth = self.check_RTH()
@@ -77,7 +75,7 @@ class Trade:
                 elif self.risk.trade.order.action == 'SELL':
                     self.ib.cancelOrder(self.risk.trade.order)
                     self._sell_order()    
-                       
+
             else:
                 self.risk.trade = None
         pass

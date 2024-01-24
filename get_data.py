@@ -32,7 +32,7 @@ def download_historical(tickers_list, to_csv=True):
                 df.to_csv(filename, index=False)
         else:
             return df
-
+'''
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=1)
 #tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'ELAB', 'SGMT']
@@ -48,3 +48,4 @@ tick_date_list = list(zip(tickers_list, date_list))
 #print(all_data)
 
 ib.disconnect()
+'''
