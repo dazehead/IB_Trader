@@ -36,7 +36,7 @@ class Risk_Handler:
             print(f"Account Balance: {self.balance}")
             print(f"Buying Power: {self.buying_power}")
             print(f"balance to trade: {self.balance_at_risk}")
-            self.view_account_summary()
+            #self.view_account_summary()
 
         self.perc_risk = perc_risk
 

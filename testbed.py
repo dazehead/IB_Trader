@@ -8,8 +8,8 @@ from scanner import Scanner
 from dataframe_manager import DF_Manager
 from market_orders import Trade
 import datetime
-
 from strategies.price_action import PriceAction
+
 
 # CONSTANTS
 tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG']

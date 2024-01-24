@@ -104,74 +104,67 @@ class LogBook:
         new_df = pd.DataFrame(columns = column_names)
         
         # iterates through the trades and extracts disired data
-        for i in range(len(trades_df)):
-            #print(f'\n---------------------------{i}----------------------------\n')
-            values = []
-            values.append(trades_df.contract.iloc[i].conId)
-            values.append(trades_df.contract.iloc[i].symbol)
-            values.append(trades_df.order.iloc[i].action)
-            values.append(trades_df.order.iloc[i].orderType)
-            #values.append(trades_df.order.iloc[i].filledQuantity)
+        try:
+            for i in range(len(trades_df)):
+                #print(f'\n---------------------------{i}----------------------------\n')
+                values = []
+                values.append(trades_df.contract.iloc[i].conId)
+                values.append(trades_df.contract.iloc[i].symbol)
+                values.append(trades_df.order.iloc[i].action)
+                values.append(trades_df.order.iloc[i].orderType)
+                #values.append(trades_df.order.iloc[i].filledQuantity)
 
-            # fills is filled with all order information some multiple orders in order to get filled
-            fills = trades_df.fills.iloc[i]
-            if len(fills) == 0:
-                # if the fills are empty ie: Cancelled orders I assume
-                values.append(np.NaN)
-                values.append(np.NaN)
-                values.append(np.NaN)
-                values.append(len(fills))
-                values.append(np.NaN)
-            elif len(fills) > 1:
-                shares = 0
-                avg_price = 0
-                commission = 0
-                for fill in fills:
-                    shares += fill.execution.shares
-                    avg_price += fill.execution.price
-                    commission += fill.commissionReport.commission
+                # fills is filled with all order information some multiple orders in order to get filled
+                fills = trades_df.fills.iloc[i]
+                if len(fills) == 0:
+                    # if the fills are empty ie: Cancelled orders I assume
+                    values.append(np.NaN)
+                    values.append(np.NaN)
+                    values.append(np.NaN)
+                    values.append(len(fills))
+                    values.append(np.NaN)
+                elif len(fills) > 1:
+                    shares = 0
+                    avg_price = 0
+                    commission = 0
+                    for fill in fills:
+                        shares += fill.execution.shares
+                        avg_price += fill.execution.price
+                        commission += fill.commissionReport.commission
 
-                avg_price = avg_price * len(fills)
-                values.append(shares)
-                values.append(avg_price)
-                values.append(commission)
-                values.append(len(fills))
-                values.append(fills[-1].execution.time)
-            else:
-                #print(fills)
-                values.append(fills[-1].execution.shares)
-                values.append(fills[-1].execution.price)
-                values.append(fills[-1].commissionReport.commission)
-                values.append(len(fills))
-                values.append(fills[-1].execution.time)
+                    avg_price = avg_price * len(fills)
+                    values.append(shares)
+                    values.append(avg_price)
+                    values.append(commission)
+                    values.append(len(fills))
+                    values.append(fills[-1].execution.time)
+                else:
+                    #print(fills)
+                    values.append(fills[-1].execution.shares)
+                    values.append(fills[-1].execution.price)
+                    values.append(fills[-1].commissionReport.commission)
+                    values.append(len(fills))
+                    values.append(fills[-1].execution.time)
 
-                #print(trades_df.fills.iloc[i])
-            data_dict = dict(zip(column_names, values))
-            new_df = new_df._append(data_dict, ignore_index=True)
-        #new_df = new_df.sort_values(by='time')
+                    #print(trades_df.fills.iloc[i])
+                data_dict = dict(zip(column_names, values))
+                new_df = new_df._append(data_dict, ignore_index=True)
+            self.export_trades_to_db(new_df)
+        except TypeError:
+            print('Could not export logs as there are no trades for today')
 
-        self.export_trades_to_db(new_df)
     
     def export_trades_to_db(self, df):
         conn = sqlite3.connect('logbooks/trades/trade_log')
         if self.ib.client.port == 7497:
             # paper trading
             name = "paper_log"
-            try:
-                db = db = pd.read_sql('SELECT * FROM paper_log', conn)
-            except:
-                print("first time on database")
 
         else:
             # 7496 -- real account
             name = "trading_log"
-            try:
-                db = pd.read_sql('SELECT * FROM trading_log', conn)
-            except:
-                print('first time database')
 
-        merged_data = pd.concat([db, df]).drop_duplicates(keep=False)
-        merged_data.to_sql(name, conn, if_exists='replace', index=False)
+        df.to_sql(name, conn, if_exists='replace', index=False)
 
 
 
