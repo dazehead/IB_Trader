@@ -153,6 +153,7 @@ class LogBook:
                 data_dict = dict(zip(column_names, values))
                 new_df = new_df._append(data_dict, ignore_index=True)
                 new_df.dropna(inplace=True)
+                new_df.sort_values(by='time', inplace=True)
             self.export_trades_to_db(new_df)
         except TypeError:
             print('Could not export logs as there are no trades for today')

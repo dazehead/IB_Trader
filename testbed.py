@@ -107,15 +107,15 @@ def onBarUpdate(bars, hasNewBar):
 ib = IB()
 ib.connect("127.0.0.1", 7497, clientId=1)
 
-top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
-top_stock = top_gainers.contracts[0]
-#top_stock = Stock('AAPL', 'SMART', 'USD')
+#top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+#top_stock = top_gainers.contracts[0]
+top_stock = Stock('SPRC', 'SMART', 'USD')
 print(f"-------------------------{top_stock.symbol}-------------------------")
 ib.qualifyContracts(top_stock)
 
 risk = Risk_Handler(
     ib=ib,
-    perc_risk=0.01,
+    perc_risk=0.2,
     stop_time=None,
     atr_perc=.1
 )
