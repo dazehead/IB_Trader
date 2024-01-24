@@ -18,40 +18,55 @@ class Trade:
             self.signal = signals[counter]
         else:
             self.signal = signals[-1]
+
+        self.price = self.ib.reqMktData(self.top_stock,'', False, False).marketPrice()
+        self.ib.cancelMktData(self.top_stock)
+        self.num_shares = self.risk.balance_at_risk // self.price
         
 
     def execute_trade(self):
         """need functionality for if we bought ORTH and are selling RTH"""
-        price = self.ib.reqMktData(self.top_stock,'', False, False).marketPrice()
-        self.ib.cancelMktData(self.top_stock)
-        num_shares = self.risk.balance_at_risk // price
 
         if not self.ib.positions() and self.signal == 1:
-            self._buy_order(num_shares)
+            self._buy_order(self.num_shares)
         elif self.ib.positions() and (self.signal == -1):
-            """might have to tweek this possible it will not sell everything and we will have to update the order"""
+            """sell order but we need to check if there is already an order that has not filled then cancel and resubmit"""
             self._sell_order()
         else:
             """this section is to make sure that all positions were sold if not cancel and put in another market order"""
             self._check_order()
     
     def _buy_order(self, num_shares):
+        """buys order at market order"""
         buy_order = MarketOrder('BUY', num_shares)
         buy_order.outsideRth = self.outside_rth
-        self.ib.placeOrder(self.top_stock, buy_order)
+        trade = self.ib.placeOrder(self.top_stock, buy_order)
+        self.risk.trade = trade
         
     
     def _sell_order(self):
+        """sells open positions at market"""
         positions = self.ib.positions()[0].position
         sell_order = MarketOrder("SELL", positions)
         sell_order.outsideRth = self.outside_rth
-        self.ib.placeOrder(self.top_stock, sell_order)
-        #self.risk.remaining_day_trades = self.ib.accountSummary()[2].value
+        trade = self.ib.placeOrder(self.top_stock, sell_order)
+        self.risk.trade = trade
 
 
     def _check_order(self):
+        """checks to make sure the orders have been filled, if not then we cancel the orders and place the orders again with updated market"""
         print("in checking order")
-       # self.risk.remaining_day_trades = self.ib.accountSummary()[2].value
+        if self.risk.trade is not None:
+            #print(self.risk.trade)
+            if self.risk.trade.orderStatus.status != 'Filled':
+                if self.risk.trade.order.action == 'BUY':
+                    self.ib.cancelOrder(self.risk.trade.order.orderId)
+                    self._buy_order(self.num_shares)
+                elif self.risk.trade.order.action == 'SELL':
+                    self.ib.cancelOrder(self.risk.trade.order.orderId)
+                    self._sell_order()       
+            else:
+                self.risk.trade = None
         pass
 
     def check_RTH(self):

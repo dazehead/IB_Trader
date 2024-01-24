@@ -29,6 +29,7 @@ class Risk_Handler:
                 elif to_go_on == 'N':
                     sys.exit()
             self.highest_high = None
+            self.trade = None
 
 
 

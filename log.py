@@ -71,7 +71,10 @@ class LogBook:
 
     def export_backtest_data(self, path):
         df = self._convert_to_dataframe()
-        df.to_csv(path, index=False)
+        name = 'backtests'
+        conn = sqlite3.connect('logbooks/trade_log')
+        df.to_sql(name, conn, if_exists='replace', index=False)
+        #df.to_csv(path, index=False)
 
     def _convert_to_dataframe(self):
         data = []
@@ -132,7 +135,7 @@ class LogBook:
                         avg_price += fill.execution.price
                         commission += fill.commissionReport.commission
 
-                    avg_price = avg_price * len(fills)
+                    avg_price = avg_price / len(fills)
                     values.append(shares)
                     values.append(avg_price)
                     values.append(commission)
@@ -149,21 +152,20 @@ class LogBook:
                     #print(trades_df.fills.iloc[i])
                 data_dict = dict(zip(column_names, values))
                 new_df = new_df._append(data_dict, ignore_index=True)
+                new_df.dropna(inplace=True)
             self.export_trades_to_db(new_df)
         except TypeError:
             print('Could not export logs as there are no trades for today')
 
     
     def export_trades_to_db(self, df):
-        conn = sqlite3.connect('logbooks/trades/trade_log')
+        conn = sqlite3.connect('logbooks/trade_log')
         if self.ib.client.port == 7497:
             # paper trading
             name = "paper_log"
-
         else:
             # 7496 -- real account
             name = "trading_log"
-
         df.to_sql(name, conn, if_exists='replace', index=False)
 
 

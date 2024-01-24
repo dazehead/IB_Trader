@@ -12,7 +12,7 @@ from strategies.price_action import PriceAction
 
 
 # CONSTANTS
-tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG']
+tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'SGMT', 'ELAB']
 
 
 def test_price_action():
@@ -76,13 +76,13 @@ def test_scanner():
     
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     print(top_gainers.tickers_list)
-    top_gainers.filter_by_news()
-    print(top_gainers.tickers_list)
+    #top_gainers.filter_by_news()
+    #print(top_gainers.tickers_list)
     #top_gainers.retreive_filter_params()
 
 #test_scanner()
 
-'''
+
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -154,4 +154,3 @@ else:
     ib.disconnect()
     
 
-'''
