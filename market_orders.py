@@ -29,7 +29,7 @@ class Trade:
 
         if not self.ib.positions() and self.signal == 1:
             self._buy_order(self.num_shares)
-        elif self.ib.positions() and (self.signal == -1):
+        elif self.ib.positions() and (self.signal == -1) and (self.risk.trade == None):
             """sell order but we need to check if there is already an order that has not filled then cancel and resubmit"""
             self._sell_order()
         else:
