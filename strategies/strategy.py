@@ -80,15 +80,46 @@ class Strategy:
                 elif close[-1] > stop_loss:
                     new_signals = signals
         else:
-            return signals
-            # need to get price from order execution
-            #stop_index = np.where(~np.isnan(atr))[0][0]
-            #zeros_array = np.zeros_like(signals)
-            #is_trading = signals[stop_index:]
-            #not_trading = zeros_array[:stop_index]
-            #new_signals = np.concatenate((is_trading, not_trading))
-            
+            """If we are only backtesting and NOT connect to IB"""
+            stop_index = np.where(~np.isnan(atr))[0][0]
+            zeros_array = np.zeros_like(signals)
+            is_trading = signals[stop_index:]
+            not_trading = zeros_array[:stop_index]
+            new_signals = np.concatenate((is_trading, not_trading))
 
+            in_trade = False
+            price_at_purchase = None
+            new_high = None
+            for i,price in enumerate(close):
+                # skips until atr has values populated
+                if np.isnan(atr[i]):
+                    pass
+                else:
+                    if new_signals[i] == 1 and not in_trade:
+                        # assigns the price of stock during a BUY signal 
+                        price_at_purchase = price
+                        new_high = high[i]
+                        in_trade = True
+                    elif in_trade:
+                        if new_high < high[i]:
+                            new_high = high[i]
+                        stop_loss = new_high - (price_at_purchase * (atr[i] + self.risk.atr_perc))
+                        profit_target = price_at_purchase + (price_at_purchase * (atr[i] + self.risk.profit_target_perc))
+                        #print(f"STOP LOSS: {stop_loss}")
+                        #print(f"PRICE: {price}\n")
+                        if price < stop_loss:
+                            # hit our stop loss need to SELL
+                            new_signals[i] = -1
+                            in_trade = False
+                        elif new_signals[i] == -1 and price > stop_loss and price < profit_target:
+                            # SELL signal but stop loss not hit and profit target not hit: keep going                    
+                            new_signals[i] = 0
+                        elif (price > profit_target) and (new_signals[i] == -1):
+                                # logic for if price is above profit target and a SELL signal occurs
+                                in_trade = False
+            #add 14 zeros to the front of atr
+            temp_signals = new_signals[:-14]
+            new_signals = np.concatenate((np.zeros(14), temp_signals))
 
         return new_signals
         

@@ -51,6 +51,7 @@ def onBarUpdate(bars, hasNewBar):
             contract=top_ticker)
 
         trade.execute_trade()
+        
         if signals[-1] == 1 or signals[-1] == -1:
             backtest = BackTest(engulf_strat)
             backtest.graph_data()

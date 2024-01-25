@@ -22,7 +22,7 @@ def test_kaufmans():
     risk = Risk_Handler(
         ib=None,
         perc_risk=0.8,
-        stop_time=None,
+        stop_time='10:00:00-05:00',
         atr_perc = .10)
     
     strat = Kefr_Kama(

@@ -15,22 +15,44 @@ class Kefr_Kama(Strategy):
         """Actual strategy to be used"""
         # entrys
         efratios = self.calculate_efratio(efratio_timeperiod)
-        signals = pd.Series(0, index=efratios.index)
-        signals[efratios > threshold] = 1
+        signals_with_efr = pd.Series(0, index=efratios.index)
+        signals_with_efr[efratios > threshold] = 1
 
         # exits
         if self.risk:
             if self.risk.stop_time is not None:
-                signals = self._stop_trading_time(signals)
+                signals = self._stop_trading_time(signals_with_efr)
             atr = ta.ATR(high, low, close, timeperiod=14)
 
             # will have to re-anable this if connect to IB
-            #if self.risk.ib.positions(): indent next line
-            signals = self._process_atr_data(signals, atr, close, high)
+            if self.risk.ib is not None:
+                if self.risk.ib.positions():
+                    final_signals = self._process_atr_data(signals, atr, close, high)
+            else:
+                signals_after_atr = self._process_atr_data(signals, atr, close, high)
+                final_signals = self._process_signal_data(signals=signals_after_atr)
+
+                #--------------------------Testing------------------------
+                #print(len(signals_with_efr))
+                #graph_signals = pd.Series(signals_with_efr, index=self.data_1min.index)
+                #self.graph_data(graph_signals, efratio_timeperiod, efratios, 'Signals with EFR')
+
+                #print(len(signals_after_atr))
+                #graph_signals = pd.Series(signals_after_atr, index=self.data_1min.index)
+                #self.graph_data(graph_signals, efratio_timeperiod, efratios, 'Signals after ATR')
+
+                #print(len(final_signals))
+                #graph_signals = pd.Series(final_signals, index=self.data_1min.index)
+                #self.graph_data(graph_signals, efratio_timeperiod, efratios, 'final_signals')
+                
+
+
+                
                 #print(f"atr signals: {signals[-1]}")
-
-
-        return signals
+        else:
+            return final_signals
+        
+        return final_signals
 
     def _efratio(self, prices):
         #print(self.data_1min.close)
@@ -65,17 +87,14 @@ class Kefr_Kama(Strategy):
 
         zeros = [0 for i in range(time_period-1)]
         efratios = zeros + efratios
-        print(len(efratios))
-        print(len(self.data_1min.index))
         efratios = pd.Series(efratios, index=self.data_1min.index)
-        self.graph_data(self.data_1min, time_period, close_prices, efratios)
         return efratios
     
-    def graph_data(self, data, time_period, close_prices, efratios):
+    def graph_data(self, data, time_period, efratios, name):
         """Function to graph data"""
         ########### Graphing for Visualization #################################
-        fig1 = data.vbt.ohlcv.plots(settings=dict(plot_type='candlestick'))
-        fig1.show()
+        #fig1 = data.vbt.ohlcv.plots(settings=dict(plot_type='candlestick'))
+        #fig1.show()
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(x=efratios.index,
                          y=efratios,
@@ -83,5 +102,13 @@ class Kefr_Kama(Strategy):
                          name=f'Efficiency Ratios ({time_period}-day window)',
                          line=dict(color='red')))
         fig2.show()
+
+        fig3 = go.Figure()
+        fig3.add_trace(go.Scatter(x=data.index,
+                                  y=data,
+                                  mode='lines',
+                                  name=name,
+                                  line=dict(color='red')))
+        fig3.show()
 
         
