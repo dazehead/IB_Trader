@@ -15,13 +15,13 @@ class Kefr_Kama(Strategy):
         """Actual strategy to be used"""
         # entrys
         efratios = self.calculate_efratio(efratio_timeperiod)
-        signals_with_efr = pd.Series(0, index=efratios.index)
-        signals_with_efr[efratios > threshold] = 1
+        signals = pd.Series(0, index=efratios.index)
+        signals[efratios > threshold] = 1
 
         # exits
         if self.risk:
             if self.risk.stop_time is not None:
-                signals = self._stop_trading_time(signals_with_efr)
+                signals = self._stop_trading_time(signals)
             atr = ta.ATR(high, low, close, timeperiod=14)
 
             # will have to re-anable this if connect to IB

@@ -69,10 +69,10 @@ class LogBook:
                 else:
                     current_node = next_node
 
-    def export_backtest_data(self, path):
+    def export_backtest_to_db(self, name_of_strategy):
         df = self._convert_to_dataframe()
-        name = 'backtests'
-        conn = sqlite3.connect('logbooks/trade_log')
+        name = name_of_strategy
+        conn = sqlite3.connect('logbooks/backtests')
         df.to_sql(name, conn, if_exists='replace', index=False)
         #df.to_csv(path, index=False)
 

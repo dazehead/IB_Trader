@@ -53,6 +53,7 @@ class Strategy:
     def _process_atr_data(self, signals, atr, close, high):
         """Replaces atr nan with 0's on signals and calculates stop loss and profit target
         impements them into new_signals"""
+        """ ALSO IMPLEMENTED IS A PROFIT TARGET ESTIMATION"""
 
         if self.risk.ib is not None:
             """if we are connected to IB"""
@@ -101,12 +102,21 @@ class Strategy:
                         new_high = high[i]
                         in_trade = True
                     elif in_trade:
+                        # in a trade and new_high-current highest is less than the current high
                         if new_high < high[i]:
+                            # the new high is the current price
                             new_high = high[i]
-                        stop_loss = new_high - (price_at_purchase * (atr[i] + self.risk.atr_perc))
-                        profit_target = price_at_purchase + (price_at_purchase * (atr[i] + self.risk.profit_target_perc))
-                        #print(f"STOP LOSS: {stop_loss}")
-                        #print(f"PRICE: {price}\n")
+                        
+                        """Below code for a percentage based atr """
+                        #stop_loss = new_high - (price_at_purchase * (atr[i] + self.risk.atr_perc))
+                        #profit_target = price_at_purchase + (price_at_purchase * (atr[i] + self.risk.profit_target_perc))
+                        
+                        """Below code for subtracting the atr"""
+                        stop_loss = new_high - (atr[i] + self.risk.atr_perc)
+                        profit_target = price_at_purchase + (atr[i] + self.risk.atr_perc)
+
+                        print(f"STOP LOSS: {stop_loss}")
+                        print(f"PRICE: {price}\n")
                         if price < stop_loss:
                             # hit our stop loss need to SELL
                             new_signals[i] = -1

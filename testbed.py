@@ -13,7 +13,7 @@ from strategies.kefr_kama import Kefr_Kama
 
 
 # CONSTANTS
-tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'SGMT', 'ELAB']
+tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'SGMT', 'ELAB', 'SPRC']
 
 def test_kaufmans():
     ticker = ['LBPH']
@@ -23,7 +23,7 @@ def test_kaufmans():
         ib=None,
         perc_risk=0.8,
         stop_time='10:00:00-05:00',
-        atr_perc = .10)
+        atr_perc = .25)
     
     strat = Kefr_Kama(
         df_manager=df_manager,
@@ -33,9 +33,10 @@ def test_kaufmans():
     backtest = BackTest(strat)
     backtest.graph_data()
     print(backtest.pf.stats())
-    
+#test_kaufmans()
 
-test_kaufmans()
+
+
 
 
 def test_price_action():
@@ -52,11 +53,12 @@ def test_price_action():
         df_manager=df_manager,
         barsize="5min",
         risk=risk)
-    
-    
-    strat.price_action_testing()
 
+    strat.price_action_testing()
 #test_price_action()
+
+
+
 
 
 def run_backtest(tickers_list):
@@ -65,32 +67,32 @@ def run_backtest(tickers_list):
 
     risk = Risk_Handler(ib = None,
                         perc_risk = 0.8,
-                        stop_time=None,#"10:00:00-05:00",
-                        atr_perc = .1)
+                        stop_time="10:00:00-05:00",
+                        atr_perc = .10)
 
     # iterating of each DF_Manager and creating a strategy object with each manager
-    logbook = None
+    logbook = LogBook(None, None)
     for i, manager in enumerate(df_object_list):
         if i == 0:
-            strat = Engulfing(
+            strat = Kefr_Kama(
                 df_manager=manager,
                 barsize= "1min",
                 risk = risk)
             backtest = BackTest(strat)
-            logbook = LogBook(backtest)
+            logbook = LogBook(ib=None, value=backtest)
         else:
-            strat = Engulfing(
+            strat = Kefr_Kama(
                 df_manager=manager,
                 barsize='1min',
                 risk=risk)
             backtest = BackTest(strat)
-            logbook.insert_beginning(backtest)
+            logbook.insert_beginning(new_value=backtest)
         #print(list(dir(backtest.pf)))
-        #print(backtest.pf.stats())
-        #backtest.graph_data()
+        print(backtest.pf.stats())
+        backtest.graph_data()
     return logbook
-#logbook.export_backtest_data("logbooks/backtests_01152024.csv")
-#logbook = run_backtest(tickers_list=tickers_list)
+logbook = run_backtest(tickers_list=tickers_list)
+logbook.export_backtest_to_db("KEFT-ATR_subatr_stop10")
 #df = logbook._convert_to_dataframe()
 #print(df)
 
