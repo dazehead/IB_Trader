@@ -69,6 +69,23 @@ class LogBook:
                 else:
                     current_node = next_node
 
+    def export_hyper_to_db(self, name_of_strategy):
+        """Function to export a hyper optimized backtest to a DB"""
+        name = name_of_strategy
+        current_node = self.get_head_node()
+
+        while current_node:
+            df = current_node.value.returns.reset_index()
+            # These must be the names of the parameters tested
+            df.columns = ['cust_efratio_timeperiod', 'cust_threshold', 'cust_atr_perc', 'return']
+        
+            conn = sqlite3.connect('logbooks/hyper')
+            df.to_sql(f"{name}_{current_node.get_name()}", conn, if_exists='replace', index=False)
+
+            current_node = current_node.get_next_node()
+
+
+
     def export_backtest_to_db(self, name_of_strategy):
         df = self._convert_to_dataframe()
         name = name_of_strategy
@@ -168,6 +185,8 @@ class LogBook:
             # 7496 -- real account
             name = "trading_log"
         df.to_sql(name, conn, if_exists='replace', index=False)
+    
+
 
 
 

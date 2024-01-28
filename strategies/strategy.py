@@ -68,7 +68,7 @@ class Strategy:
                     self.risk.highest_high = high[-1]
                 
 
-                stop_loss = self.risk.highest_high - (atr[-1] + self.risk.atr_perc)
+                stop_loss = self.risk.highest_high - (atr[-1]*2 + self.risk.atr_perc)
                 print(f"High: {self.risk.highest_high}")
                 print(f"ATR: {atr[-1]}")
                 print(f"Purchase Price: {price_at_purchase}")
@@ -92,41 +92,57 @@ class Strategy:
             price_at_purchase = None
             new_high = None
             for i,price in enumerate(close):
-                # skips until atr has values populated
-                if np.isnan(atr[i]):
-                    pass
-                else:
-                    if new_signals[i] == 1 and not in_trade:
-                        # assigns the price of stock during a BUY signal 
-                        price_at_purchase = price
-                        new_high = high[i]
-                        in_trade = True
-                    elif in_trade:
-                        # in a trade and new_high-current highest is less than the current high
-                        if new_high < high[i]:
-                            # the new high is the current price
-                            new_high = high[i]
-                        
-                        """Below code for a percentage based atr """
-                        #stop_loss = new_high - (price_at_purchase * (atr[i] + self.risk.atr_perc))
-                        #profit_target = price_at_purchase + (price_at_purchase * (atr[i] + self.risk.profit_target_perc))
-                        
-                        """Below code for subtracting the atr"""
-                        stop_loss = new_high - (atr[i] + self.risk.atr_perc)
-                        profit_target = price_at_purchase + (atr[i] + self.risk.atr_perc)
+                try:
+                    price = close[i+14]
+                    #print(f"------------------------{i}------------------------")
+                    # skips until atr has values populated
+                    if np.isnan(atr[i]):
+                        pass
+                    else:
+                        if new_signals[i] == 1 and not in_trade:
+                            # assigns the price of stock during a BUY signal 
+                            price_at_purchase = price
+                            new_high = price#high[i+14]
+                            in_trade = True
+                            #print("BUY")
+                        if in_trade:
+                            # in a trade and new_high-current highest is less than the current high
+                            if new_high < price:#high[i+14]:
+                                # the new high is the current price
+                                new_high = price#high[i+14]
+                            
+                            """Below code for a percentage based atr """
+                            #stop_loss = new_high - (price_at_purchase * (atr[i] + self.risk.atr_perc))
+                            #profit_target = price_at_purchase + (price_at_purchase * (atr[i] + self.risk.profit_target_perc))
+                            
+                            """Below code for subtracting the atr"""
+                            stop_loss = new_high - (atr[i]*2 + self.risk.atr_perc)
+                            profit_target = price_at_purchase + (atr[i] + self.risk.atr_perc)
 
-                        print(f"STOP LOSS: {stop_loss}")
-                        print(f"PRICE: {price}\n")
-                        if price < stop_loss:
-                            # hit our stop loss need to SELL
-                            new_signals[i] = -1
-                            in_trade = False
-                        elif new_signals[i] == -1 and price > stop_loss and price < profit_target:
-                            # SELL signal but stop loss not hit and profit target not hit: keep going                    
-                            new_signals[i] = 0
-                        elif (price > profit_target) and (new_signals[i] == -1):
-                                # logic for if price is above profit target and a SELL signal occurs
+                            #print(f"PROFIT TARGET: {profit_target}")
+                            #print(f"STOP LOSS: {stop_loss}")
+                            #print(f"PRICE: {price}")
+                            #print(f"NEW HIGH: {new_high}")
+                            if price < stop_loss:
+                                # hit our stop loss need to SELL
+                                new_signals[i] = -1
                                 in_trade = False
+                                #print(f"PROFIT TARGET: {profit_target}")
+                                #print(f"STOP LOSS: {stop_loss}")
+                                #print(f"PRICE: {price}")
+                                #print(f"NEW HIGH: {new_high}")
+                                #print("SELL\n")
+                            elif new_signals[i] == -1 and price > stop_loss and price < profit_target:
+                                # SELL signal but stop loss not hit and profit target not hit: keep going
+                                #print("PROFIT NOT HIT AND STOP LOSS NOT HIT")              
+                                new_signals[i] = 0
+                            elif (price > profit_target) and (new_signals[i] == -1):
+                                pass
+                                # logic for if price is above profit target and a SELL signal occurs
+                                #in_trade = False
+                                #print("PRICE ABOVE PROFIT TARGET AND SELL SIGNALS ---- DO NOTHING")
+                except IndexError:
+                    pass
             #add 14 zeros to the front of atr
             temp_signals = new_signals[:-14]
             new_signals = np.concatenate((np.zeros(14), temp_signals))

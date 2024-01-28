@@ -11,25 +11,27 @@ class Kefr_Kama(Strategy):
         """Initiate class resources"""
         super().__init__(df_manager = df_manager, risk=risk, barsize=barsize)
     
-    def custom_indicator(self, open, high, low, close, efratio_timeperiod=14, threshold=0.6):
+    def custom_indicator(self, open, high, low, close, efratio_timeperiod=10, threshold=0.5, atr_perc = .2):
         """Actual strategy to be used"""
+        self.risk.atr_perc = atr_perc
+        #print(f'\nefraiot:{efratio_timeperiod}, threshold:{threshold}')
         # entrys
         efratios = self.calculate_efratio(efratio_timeperiod)
-        signals = pd.Series(0, index=efratios.index)
-        signals[efratios > threshold] = 1
+        signals_ef = pd.Series(0, index=efratios.index)
+        signals_ef[efratios > threshold] = 1
 
         # exits
         if self.risk:
             if self.risk.stop_time is not None:
-                signals = self._stop_trading_time(signals)
+                signals_ef = self._stop_trading_time(signals_ef)
             atr = ta.ATR(high, low, close, timeperiod=14)
 
             # will have to re-anable this if connect to IB
             if self.risk.ib is not None:
                 if self.risk.ib.positions():
-                    final_signals = self._process_atr_data(signals, atr, close, high)
+                    final_signals = self._process_atr_data(signals_ef, atr, close, high)
             else:
-                signals_after_atr = self._process_atr_data(signals, atr, close, high)
+                signals_after_atr = self._process_atr_data(signals_ef, atr, close, high)
                 final_signals = self._process_signal_data(signals=signals_after_atr)
 
                 #--------------------------Testing------------------------
