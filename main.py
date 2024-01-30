@@ -62,15 +62,19 @@ def onBarUpdate(bars, hasNewBar):
 
 """---------------------START OF PROGRAM--------------------------"""
 # initializing Scanner object
-top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
-print(top_gainers.tickers_list)
-        
+if not ib.positions():
+    top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+    print(top_gainers.tickers_list)
+    top_gainers.calculate_percent_change()
+    top_ticker = top_gainers.monitor_percent_change(perc_threshold=.04, time_interval=10)
+    top_ticker = top_gainers.contracts[0]
+else:
+    top_ticker =  Stock(ib.positions()[0].contract.symbol, 'SMART', 'USD')
+    
 # getting float data from SEC        
 #sec_data = SEC_Data(top_gainers.tickers_list)
 #top_gainers.filter_floats(sec_data.company_float_list)
-
 # extracting best gainer
-top_ticker = top_gainers.contracts[0]
 
 print(f"--------------------------{top_ticker.symbol}--------------------------")
 print("Qualifing Contract...")

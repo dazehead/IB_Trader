@@ -19,6 +19,7 @@ class Scanner:
         print("...Scanner Initialized")
 
     def monitor_percent_change(self, perc_threshold, time_interval):
+
         while not self.big_move:
             for i, contract in enumerate(self.contracts):
                 market_data = self.ib.reqMktData(contract, '', False, False)
@@ -28,6 +29,7 @@ class Scanner:
                     return contract
                 else:
                     self.ib.sleep(time_interval)
+            print(self.percent_change)
 
 
     def calculate_percent_change(self):

@@ -177,6 +177,7 @@ class LogBook:
 
     
     def export_trades_to_db(self, df):
+        """takes df and exports it to the trade_log, also logic for duplicates, will not overwrite"""
         conn = sqlite3.connect('logbooks/trade_log')
         if self.ib.client.port == 7497:
             # paper trading
@@ -184,7 +185,16 @@ class LogBook:
         else:
             # 7496 -- real account
             name = "trading_log"
-        df.to_sql(name, conn, if_exists='replace', index=False)
+
+        df_from_db= pd.read_sql('SELECT time FROM paper_log', conn)
+        df_from_db['time'] = pd.to_datetime(df_from_db['time'])
+        df['time'] = pd.to_datetime(df['time'])
+
+        merged_df = pd.merge(df, df_from_db[['time']], on='time', how='left', indicator=True)
+        result = merged_df[merged_df['_merge'] == 'left_only'].drop('_merge', axis=1)
+
+        result.to_sql(name, conn, if_exists='append', index=False)
+
     
 
 

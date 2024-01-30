@@ -109,14 +109,9 @@ def test_scanner():
     
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     top_gainers.calculate_percent_change()
-    top_stock = top_gainers.monitor_percent_change(perc_threshold=.05)
-
-
-    #top_gainers.filter_by_news()
-    #print(top_gainers.tickers_list)
-    #top_gainers.retreive_filter_params()
-
-test_scanner()
+    top_stock = top_gainers.monitor_percent_change(perc_threshold=.05, time_interval=10)
+    print(f"BREAKING OUT : {top_stock}")
+#test_scanner()
 
 
 
@@ -124,7 +119,6 @@ test_scanner()
 
 
 
-'''
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -149,9 +143,9 @@ def onBarUpdate(bars, hasNewBar):
 ib = IB()
 ib.connect("127.0.0.1", 7497, clientId=2)
 
-top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
-top_stock = top_gainers.contracts[0]
-#top_stock = Stock('SPRC', 'SMART', 'USD')
+#top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+#top_stock = top_gainers.contracts[0]
+top_stock = Stock('NEXI', 'SMART', 'USD')
 print(f"-------------------------{top_stock.symbol}-------------------------")
 ib.qualifyContracts(top_stock)
 
@@ -194,7 +188,5 @@ else:
     ib.cancelHistoricalData(bars)
     trade_log.log_trades()
     ib.disconnect()
-
-'''
 
 
