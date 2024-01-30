@@ -5,6 +5,7 @@ class DF_Manager:
     """Must be connected to ib for bars"""
     """class for managing DataFrame manipulation"""
     def __init__(self, bars, ticker):
+        """Initializing Class Resources"""
         self.ticker = ticker
         """Instaniates data from either bars or a dataframe for each time frame"""
         if isinstance(bars, pd.DataFrame):

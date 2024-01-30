@@ -30,10 +30,8 @@ class Risk_Handler:
                     sys.exit()
             self.highest_high = None
             self.trade = None
+            self.trade_num_shares = None
 
-
-
-            
             print(f"Account Balance: {self.balance}")
             print(f"Buying Power: {self.buying_power}")
             print(f"balance to trade: {self.balance_at_risk}")
@@ -48,10 +46,12 @@ class Risk_Handler:
 
 
     def get_directive(self):
+        """Returns the directory of IB class"""
         for x in dir(self.ib):
             print(x)
     
     def view_account_summary(self):
+        """prints out our account summary"""
         for i in range(len(self.account_summary)):
             print("-----------------------------------------")
             print(self.account_summary.iloc[i])

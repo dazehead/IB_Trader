@@ -57,6 +57,7 @@ class LogBook:
         return string_list
     
     def remove_node(self, name_to_remove):
+        """Removes a node"""
         current_node = self.get_head_node()
         if current_node.get_name() == name_to_remove:
             self.head_node = current_node.get_next_node()
@@ -87,6 +88,7 @@ class LogBook:
 
 
     def export_backtest_to_db(self, name_of_strategy):
+        """Function to export a backtest to a db"""
         df = self._convert_to_dataframe()
         name = name_of_strategy
         conn = sqlite3.connect('logbooks/backtests')
@@ -94,6 +96,7 @@ class LogBook:
         #df.to_csv(path, index=False)
 
     def _convert_to_dataframe(self):
+        """Helper function to convert a backtest information to a DataFrame"""
         data = []
         index_values = []
         tickers = []

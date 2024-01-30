@@ -52,9 +52,9 @@ def onBarUpdate(bars, hasNewBar):
 
         trade.execute_trade()
         
-        if signals[-1] == 1 or signals[-1] == -1:
-            backtest = BackTest(strat)
-            backtest.graph_data()
+        #if signals[-1] == 1 or signals[-1] == -1:
+        #    backtest = BackTest(strat)
+        #    backtest.graph_data()
         #print(f"Elapsed Time: {time.time() - start_time}")
         #print("------------------------------------------------------------\n")
 
@@ -67,7 +67,6 @@ if not ib.positions():
     print(top_gainers.tickers_list)
     top_gainers.calculate_percent_change()
     top_ticker = top_gainers.monitor_percent_change(perc_threshold=.04, time_interval=10)
-    top_ticker = top_gainers.contracts[0]
 else:
     top_ticker =  Stock(ib.positions()[0].contract.symbol, 'SMART', 'USD')
     

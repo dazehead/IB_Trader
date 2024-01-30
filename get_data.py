@@ -18,6 +18,7 @@ def upload_historical(tickers):
 
 
 def download_historical(tickers_list, to_csv=True):
+    """Downloads historical data from IB"""
     for ticker in tickers_list:
         contract = Stock(ticker[0], 'SMART', 'USD')
         ib.qualifyContracts(contract)

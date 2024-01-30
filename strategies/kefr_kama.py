@@ -33,30 +33,30 @@ class Kefr_Kama(Strategy):
             else:
                 signals = self._process_atr_data(signals, atr, close, high)
                 signals = self._process_signal_data(signals=signals)
+                #print(f"atr signals: {signals[-1]}")
+
 
                 #--------------------------Testing------------------------
-                #print(len(signals_with_efr))
-                #graph_signals = pd.Series(signals_with_efr, index=self.data_1min.index)
-                #self.graph_data(graph_signals, efratio_timeperiod, efratios, 'Signals with EFR')
+                """
+                print(len(signals_with_efr))
+                graph_signals = pd.Series(signals_with_efr, index=self.data_1min.index)
+                self.graph_data(graph_signals, efratio_timeperiod, efratios, 'Signals with EFR')
 
-                #print(len(signals_after_atr))
-                #graph_signals = pd.Series(signals_after_atr, index=self.data_1min.index)
-                #self.graph_data(graph_signals, efratio_timeperiod, efratios, 'Signals after ATR')
+                print(len(signals_after_atr))
+                graph_signals = pd.Series(signals_after_atr, index=self.data_1min.index)
+                self.graph_data(graph_signals, efratio_timeperiod, efratios, 'Signals after ATR')
 
-                #print(len(final_signals))
-                #graph_signals = pd.Series(final_signals, index=self.data_1min.index)
-                #self.graph_data(graph_signals, efratio_timeperiod, efratios, 'final_signals')
-                
-
-
-                
-                #print(f"atr signals: {signals[-1]}")
+                print(len(final_signals))
+                graph_signals = pd.Series(final_signals, index=self.data_1min.index)
+                self.graph_data(graph_signals, efratio_timeperiod, efratios, 'final_signals')
+                """          
         else:
             return signals
         
         return signals
 
     def _efratio(self, prices):
+        """Helper function to calculate single Effecincy Ratio"""
         #print(self.data_1min.close)
 
         #Calculate price changes and absolute price changes
@@ -77,6 +77,7 @@ class Kefr_Kama(Strategy):
         return round(kaufman_ratio, 3)
     
     def calculate_efratio(self, time_period):
+        """Logic to calculate Effieciency Ratio """
         efratios = []
         close_prices = self.data_1min.close
 
@@ -112,5 +113,3 @@ class Kefr_Kama(Strategy):
                                   name=name,
                                   line=dict(color='red')))
         fig3.show()
-
-        

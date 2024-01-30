@@ -19,17 +19,23 @@ class Scanner:
         print("...Scanner Initialized")
 
     def monitor_percent_change(self, perc_threshold, time_interval):
-
+        """
+        Monitors the percent change of all tickers return by scanner
+        if percentage change exceeds threshold after a time_interval
+        returns that contract 
+        """
         while not self.big_move:
             for i, contract in enumerate(self.contracts):
                 market_data = self.ib.reqMktData(contract, '', False, False)
                 market_price = market_data.marketPrice()
                 self.percent_change[i].append(((market_price - self.prev_day_close[i]) / self.prev_day_close[i]) * 100)
                 if self.percent_change[i][-1] - self.percent_change[i][-2] > perc_threshold:
+                    print(f"{self.tickers_list[i]} has broken the {perc_threshold} from {self.percent_change[i][-2]} to {self.percent_change[i][-1]}")
                     return contract
                 else:
+                    print("...Monitoring Percent Change")
+                    self.ib.cancelMktData()
                     self.ib.sleep(time_interval)
-            print(self.percent_change)
 
 
     def calculate_percent_change(self):
@@ -38,11 +44,12 @@ class Scanner:
             market_data = self.ib.reqMktData(contract, '', False, False)
             market_price = market_data.marketPrice()
             self.percent_change.append([((market_price - self.prev_day_close[i]) / self.prev_day_close[i]) * 100])
-        print(self.percent_change)
+        #print(self.percent_change)
 
         
 
     def get_prev_day_close(self):
+        """Function gets the previous days close so that we can calculate percentage change"""
         for contract in self.contracts:
             bars = self.ib.reqHistoricalData(
                 contract=contract,
@@ -105,6 +112,7 @@ class Scanner:
         self.parameters_df = pd.DataFrame(data)
 
     def retreive_filter_params(self):
+        """Retrives all filter parameters that can be used on a scanner"""
         xml = self.ib.reqScannerParameters()
         # parse XML deocument
         tree = ET.fromstring(xml)
@@ -127,6 +135,7 @@ class Scanner:
             self.tickers_list.append(contract.symbol)
 
     def filter_floats(self, sec_data):
+        """filters contracts by which ones are less than pre-determined float"""
         for data in sec_data:
             ticker = data[0]
             company_float = data[1]

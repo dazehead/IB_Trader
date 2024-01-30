@@ -1,8 +1,8 @@
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from ib_insync import *
 
 class Trade:
+    """A class to handle interactions with IB"""
     def __init__(self, ib, risk, signals, contract, counter=None):
         self.ib = ib
         self.risk = risk
@@ -27,7 +27,7 @@ class Trade:
         
 
     def execute_trade(self):
-        """need functionality for if we bought ORTH and are selling RTH"""
+        """Logic for when to buy and sell based off signals and if we already hold positions"""
         print(f"\nSignal: {self.signal}")
         if self.halted == 0.0: # not halted
 
@@ -45,30 +45,17 @@ class Trade:
             print("----Trading has been Halted----")
     
     def _buy_order(self, num_shares):
-        """buys order at market order"""
-        if self.risk.trade is not None:
-            shares_prev_bought = self.risk.trade.order.filledQuantity
-            print(shares_prev_bought)
-
-            #updated_shares = num_shares - shares_prev_bought
-            #self.ib.cancelOrder(self.risk.trade.order)
-            #self.risk.trade = None
-            #buy_order = MarketOrder('BUY', updated_shares)
-            #buy_order.outsideRth = self.outside_rth
-            #trade = self.ib.placeOrder(self.top_stock, buy_order)
-            #self.risk.trade = trade
-            # this is where we cancel and rebuy but change the number of shares to what is left
-            
-        else:
-            buy_order = MarketOrder('BUY', num_shares)
-            buy_order.outsideRth = self.outside_rth
-            trade = self.ib.placeOrder(self.top_stock, buy_order)
-            self.risk.trade = trade
-            print("----BOUGHT----")
+        """Buys order at market order"""  
+        self.risk.trade_num_shares = num_shares
+        buy_order = MarketOrder('BUY', num_shares)
+        buy_order.outsideRth = self.outside_rth
+        trade = self.ib.placeOrder(self.top_stock, buy_order)
+        self.risk.trade = trade
+        print("----BOUGHT----")
         
     
     def _sell_order(self):
-        """sells open positions at market"""
+        """Sells open positions at market"""
         self.risk.trade = None
         positions = self.ib.positions()[0].position
         sell_order = MarketOrder("SELL", positions)
@@ -78,7 +65,7 @@ class Trade:
 
 
     def _check_order(self):
-        """checks to make sure the orders have been filled, if not then we cancel the orders and place the orders again with updated market"""
+        """Checks to make sure the orders have been filled, if not then we cancel the orders and place the orders again with updated market"""
         print("----------------in checking order----------------------------")
         if self.risk.trade is not None:
             #print(self.risk.trade)
@@ -86,8 +73,12 @@ class Trade:
                 print(f"Order Status: {self.risk.trade.orderStatus.status}")
 
                 if self.risk.trade.order.action == 'BUY':
+                    shares_prev_bought = self.risk.trade.order.filledQuantity
+                    self.num_shares = round(self.risk.trade_num_shares - shares_prev_bought, 0)
+                    print(f"filled: {shares_prev_bought} : needing: {self.num_shares}")
+                    self.ib.cancelOrder(self.risk.trade.order)
                     self._buy_order(self.num_shares)
-                    print('goin to buy')
+                    print('canceling and re-buying with calculated shares')
 
                 elif self.risk.trade.order.action == 'SELL':
                     self.ib.cancelOrder(self.risk.trade.order)
@@ -98,6 +89,7 @@ class Trade:
         pass
 
     def check_RTH(self):
+        """returns whether it is oRTH or not"""
         pre_market_time, post_market_time = self._format_market_times()
         current_time = datetime.now()
         if current_time <= pre_market_time or current_time >= post_market_time:
@@ -106,6 +98,7 @@ class Trade:
             return False
         
     def _format_market_times(self):
+        """Helper function to format datetimes of pre/post market"""
         pre_market_start = str(datetime.strptime('08:30:00', '%H:%M:%S')).split(' ')[1]
         post_market_start = str(datetime.strptime('15:00:00', '%H:%M:%S')).split(' ')[1]        
         pre_market_combined = self.todays_date + " " + pre_market_start

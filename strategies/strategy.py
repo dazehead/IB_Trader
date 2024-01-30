@@ -11,6 +11,7 @@ import sys
 class Strategy:
     """Class to store strategy resources"""
     def __init__(self, df_manager, risk=None, barsize=None):
+        """Initialize Class Resources"""
         if barsize is None:
             print("You need to define barsize")
             sys.exit()
@@ -41,13 +42,15 @@ class Strategy:
 
         signals = self._process_signal_data(signals)
         
-        # Technical Indicators
-        #rsi = vbt.RSI.run(close, window = rsi_window).rsi.to_numpy()# converting to numpy array
-        #entry_condition = (rsi > 50)
-        #exit_condition = (rsi < 30)
-        #signals = np.where(entry_condition, 1, np.where(exit_condition, -1, 0))
-        #signals = self._process_signal_data(signals)
-        #print(signals) # check if signals data is correct
+        """
+        #Technical Indicators
+        rsi = vbt.RSI.run(close, window = rsi_window).rsi.to_numpy()# converting to numpy array
+        entry_condition = (rsi > 50)
+        exit_condition = (rsi < 30)
+        signals = np.where(entry_condition, 1, np.where(exit_condition, -1, 0))
+        signals = self._process_signal_data(signals)
+        print(signals) # check if signals data is correct
+        """
         return signals
 
     def _process_atr_data(self, signals, atr, close, high):
