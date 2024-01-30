@@ -8,7 +8,7 @@ from market_orders import Trade
 from log import LogBook
 from backtest import BackTest
 import sys
-
+from strategies.kefr_kama import Kefr_Kama
 
 """
 7496 - live
@@ -33,12 +33,12 @@ def onBarUpdate(bars, hasNewBar):
         low = df.data_1min.low
         close = df.data_1min.close
 
-        engulf_strat = Engulfing(
+        strat = Kefr_Kama(
              df_manager=df,
              risk=risk,
              barsize='1min')
         
-        signals = engulf_strat.custom_indicator(
+        signals = strat.custom_indicator(
             open=open,
             high=high,
             low=low,
@@ -53,7 +53,7 @@ def onBarUpdate(bars, hasNewBar):
         trade.execute_trade()
         
         if signals[-1] == 1 or signals[-1] == -1:
-            backtest = BackTest(engulf_strat)
+            backtest = BackTest(strat)
             backtest.graph_data()
         #print(f"Elapsed Time: {time.time() - start_time}")
         #print("------------------------------------------------------------\n")
@@ -118,34 +118,42 @@ try:
 except KeyboardInterrupt:
     ib.cancelHistoricalData(bars)
     if ib.positions():
-        input = input("Would you like to sell all positions? Y or N\n").upper()
-        while input not in ['Y', 'N']:
-            input = input("Invalid response please Enter 'Y' or 'N'\n").upper()
-        if input == 'Y':
+        choice = input("Would you like to sell all positions? Y or N\n").strip().upper()
+        while choice not in ['Y', 'N']:
+            choice = input("Invalid response please Enter 'Y' or 'N'\n").strip().upper()
+        if choice == 'Y':
         # need to change to something like ib.sell_all_positions
             trade = Trade(
                 ib=ib,
                 risk=risk,
-                signals = [-1],
+                signals = [-1, -1, -1, -1, -1, -1],
                 contract=top_ticker)
-            trade._sell_order()
+            trade.execute_trade()
             ib.sleep(5)
+            while risk.trade:
+                trade.execute_trade()
+                ib.sleep(5)
     trade_log.log_trades()
     ib.disconnect()
+    sys.exit()
 else:
     ib.cancelHistoricalData(bars)
     if ib.positions():
-        input = input("Would you like to sell all positions? Y or N\n").upper()
-        while input not in ['Y', 'N']:
-            input = input("Invalid response please Enter 'Y' or 'N'\n").upper()
-        if input == 'Y':
+        choice = input("Would you like to sell all positions? Y or N\n").strip().upper()
+        while choice not in ['Y', 'N']:
+            choice = input("Invalid response please Enter 'Y' or 'N'\n").strip().upper()
+        if choice == 'Y':
         # need to change to something like ib.sell_all_positions
             trade = Trade(
                 ib=ib,
                 risk=risk,
-                signals = [-1],
+                signals = [-1, -1, -1, -1, -1, -1],
                 contract=top_ticker)
-            trade._sell_order()
+            trade.execute_trade()
             ib.sleep(5)
+            while risk.trade:
+                trade.execute_trade()
+                ib.sleep(5)
     trade_log.log_trades()
     ib.disconnect()
+    sys.exit()

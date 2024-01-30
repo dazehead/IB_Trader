@@ -12,10 +12,49 @@ class Scanner:
         self.scancode = scancode
         self.tickers_list = []
         self.company_float_threshold = 70000000
+        self.big_move = False
+        self.prev_day_close = []
+        self.percent_change = []
         self.scan_market()
-        self.retreive_scanner_params()
-        self.get_ticker_list()
         print("...Scanner Initialized")
+
+    def monitor_percent_change(self, perc_threshold, time_interval):
+        while not self.big_move:
+            for i, contract in enumerate(self.contracts):
+                market_data = self.ib.reqMktData(contract, '', False, False)
+                market_price = market_data.marketPrice()
+                self.percent_change[i].append(((market_price - self.prev_day_close[i]) / self.prev_day_close[i]) * 100)
+                if self.percent_change[i][-1] - self.percent_change[i][-2] > perc_threshold:
+                    return contract
+                else:
+                    self.ib.sleep(time_interval)
+
+
+    def calculate_percent_change(self):
+        """function creates a list of the percentage change"""
+        for i, contract in enumerate(self.contracts):
+            market_data = self.ib.reqMktData(contract, '', False, False)
+            market_price = market_data.marketPrice()
+            self.percent_change.append([((market_price - self.prev_day_close[i]) / self.prev_day_close[i]) * 100])
+        print(self.percent_change)
+
+        
+
+    def get_prev_day_close(self):
+        for contract in self.contracts:
+            bars = self.ib.reqHistoricalData(
+                contract=contract,
+                endDateTime= '',
+                durationStr='2 D',
+                barSizeSetting='1 min',
+                whatToShow='TRADES',
+                useRTH=False,
+                keepUpToDate=True)
+            df = util.df(bars)
+            df['date'] = df['date'].apply(lambda x: str(x).split()[0])
+            prev_df = df[df['date'] == df['date'].unique()[0]]
+            self.prev_day_close.append(prev_df.iloc[-1]['close'])            
+
 
     def scan_market(self):
         """Function to retrieve Tickers from Scanner"""
@@ -31,16 +70,18 @@ class Scanner:
                      TagValue("priceBelow", '20'),
                      TagValue("volumeAbove", '999999'),
                      #TagValue("openGapPercAbove", '25'),
-                     TagValue("changePercAbove", "25")]
+                     TagValue("changePercAbove", "20")]
 
         scanDataList = self.ib.reqScannerSubscription(gainSub, [], tagValues)
         self.ib.sleep(1.5)
         for data in scanDataList:
             # retrieves all the tickers-converts to Stock object and appends them to a list
             stock = Stock(data.contractDetails.contract.symbol, 'SMART', 'USD')
+            self.ib.qualifyContracts(stock)
             self.contracts.append(stock)
         print(f'{len(scanDataList)} Tickers found.')
-        self.retreive_scanner_params()
+        self.get_prev_day_close()
+        self.get_ticker_list()
 
     def retreive_scanner_params(self):
         """Function to retreive all parameters available to use in a scanner"""

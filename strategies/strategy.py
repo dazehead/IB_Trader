@@ -59,21 +59,21 @@ class Strategy:
             """if we are connected to IB"""
             price_at_purchase = self.risk.ib.positions()[-1].avgCost
             if self.risk.highest_high is None:
-                self.risk.highest_high = high[-1]
+                self.risk.highest_high = close[-1]
                 new_signals = signals
             else:
                 if price_at_purchase > self.risk.highest_high:
                     self.risk.highest_high = price_at_purchase
-                if high[-1] > self.risk.highest_high:
-                    self.risk.highest_high = high[-1]
+                if close[-1] > self.risk.highest_high:
+                    self.risk.highest_high = close[-1]
                 
 
                 stop_loss = self.risk.highest_high - (atr[-1]*2 + self.risk.atr_perc)
-                print(f"High: {self.risk.highest_high}")
-                print(f"ATR: {atr[-1]}")
+                print(f"Highest Close: {self.risk.highest_high}")
+                #print(f"ATR: {atr[-1]}")
                 print(f"Purchase Price: {price_at_purchase}")
-                print(f"ATR perc_risk = {self.risk.atr_perc}")
-                print(f"STOPLOSS: {stop_loss}")
+                #print(f"ATR perc_risk = {self.risk.atr_perc}")
+                print(f"Stop Loss: {stop_loss}")
                 if close[-1] < stop_loss:
                     """SELL"""
                     new_signals = signals

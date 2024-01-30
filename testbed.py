@@ -93,7 +93,7 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-logbook = run_backtest(tickers_list=tickers_list)
+#logbook = run_backtest(tickers_list=tickers_list)
 #logbook.export_backtest_to_db("KEFT-ATR_subatr_stop10")
 #df = logbook._convert_to_dataframe()
 #print(df)
@@ -108,12 +108,15 @@ def test_scanner():
     ib.connect('127.0.0.1', 7497, clientId=1)
     
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
-    print(top_gainers.tickers_list)
+    top_gainers.calculate_percent_change()
+    top_stock = top_gainers.monitor_percent_change(perc_threshold=.05)
+
+
     #top_gainers.filter_by_news()
     #print(top_gainers.tickers_list)
     #top_gainers.retreive_filter_params()
 
-#test_scanner()
+test_scanner()
 
 
 
@@ -121,77 +124,77 @@ def test_scanner():
 
 
 
-def test_strat_with_ib():
-    def onBarUpdate(bars, hasNewBar):
-        if hasNewBar:
-            global df
-            global counter
+'''
+def onBarUpdate(bars, hasNewBar):
+    if hasNewBar:
+        global df
+        global counter
 
-            df.update(bars)
+        df.update(bars)
 
-            trade_handler = Trade(
-                ib=ib,
-                risk=risk,
-                signals=test_data,
-                contract=top_stock,
-                counter = counter
-                )
+        trade_handler = Trade(
+            ib=ib,
+            risk=risk,
+            signals=test_data,
+            contract=top_stock,
+            counter = counter
+            )
 
-            trade_handler.execute_trade()
+        trade_handler.execute_trade()
 
-            counter += 1
-            print(counter)
+        counter += 1
+        print(counter)
 
 
-    ib = IB()
-    ib.connect("127.0.0.1", 7497, clientId=1)
+ib = IB()
+ib.connect("127.0.0.1", 7497, clientId=2)
 
-    #top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
-    #top_stock = top_gainers.contracts[0]
-    top_stock = Stock('SPRC', 'SMART', 'USD')
-    print(f"-------------------------{top_stock.symbol}-------------------------")
-    ib.qualifyContracts(top_stock)
+top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+top_stock = top_gainers.contracts[0]
+#top_stock = Stock('SPRC', 'SMART', 'USD')
+print(f"-------------------------{top_stock.symbol}-------------------------")
+ib.qualifyContracts(top_stock)
 
-    risk = Risk_Handler(
-        ib=ib,
-        perc_risk=0.2,
-        stop_time=None,
-        atr_perc=.1
-    )
-    bars = ib.reqHistoricalData(
-        contract=top_stock,
-        endDateTime= '',
-        durationStr='1 D',
-        barSizeSetting='5 secs',
-        whatToShow='TRADES',
-        useRTH=False,
-        keepUpToDate=True
-    )
-    df = DF_Manager(
-            bars=bars,
-            ticker=top_stock.symbol
-    )
-    trade_log = LogBook(ib=ib)
-    #trade_log.log_trades()
-    counter = 0
-    test_data = [0,0,0,0,1,0,0,0,0,-1,0,0,0,0]
+risk = Risk_Handler(
+    ib=ib,
+    perc_risk=0.1,
+    stop_time=None,
+    atr_perc=.1
+)
+bars = ib.reqHistoricalData(
+    contract=top_stock,
+    endDateTime= '',
+    durationStr='1 D',
+    barSizeSetting='5 secs',
+    whatToShow='TRADES',
+    useRTH=False,
+    keepUpToDate=True
+)
+df = DF_Manager(
+        bars=bars,
+        ticker=top_stock.symbol
+)
+trade_log = LogBook(ib=ib)
+#trade_log.log_trades()
+counter = 0
+test_data = [0,0,0,0,1,0,0,0,0,-1,0,0,0,0]
 
-    try:
-        bars.updateEvent.clear()
-        bars.updateEvent += onBarUpdate
-        ib.sleep(10000)
+try:
+    bars.updateEvent.clear()
+    bars.updateEvent += onBarUpdate
+    ib.sleep(30000)
 
-    except KeyboardInterrupt:
-        """fill doesn't have full shares executed ---- maybe some sleep"""
-        ib.cancelHistoricalData(bars)
-        trade_log.log_trades()
-        ib.disconnect()
+except KeyboardInterrupt:
+    """fill doesn't have full shares executed ---- maybe some sleep"""
+    ib.cancelHistoricalData(bars)
+    trade_log.log_trades()
+    ib.disconnect()
 
-    else:
-        ib.cancelHistoricalData(bars)
-        trade_log.log_trades()
-        ib.disconnect()
+else:
+    ib.cancelHistoricalData(bars)
+    trade_log.log_trades()
+    ib.disconnect()
 
-#test_strat_with_ib()
+'''
 
 

@@ -17,3 +17,7 @@ yfinance
 pip install yfinance
 
 will have to re-install ib-insync and ib_api
+
+when using gitbash must use prefix winpty to accept input and -u to print to terminal
+
+$ winpty python3 -u main.py

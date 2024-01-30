@@ -17,22 +17,22 @@ class Kefr_Kama(Strategy):
         #print(f'\nefraiot:{efratio_timeperiod}, threshold:{threshold}')
         # entrys
         efratios = self.calculate_efratio(efratio_timeperiod)
-        signals_ef = pd.Series(0, index=efratios.index)
-        signals_ef[efratios > threshold] = 1
+        signals = pd.Series(0, index=efratios.index)
+        signals[efratios > threshold] = 1
 
         # exits
         if self.risk:
             if self.risk.stop_time is not None:
-                signals_ef = self._stop_trading_time(signals_ef)
+                signals = self._stop_trading_time(signals)
             atr = ta.ATR(high, low, close, timeperiod=14)
 
             # will have to re-anable this if connect to IB
             if self.risk.ib is not None:
                 if self.risk.ib.positions():
-                    final_signals = self._process_atr_data(signals_ef, atr, close, high)
+                    signals = self._process_atr_data(signals, atr, close, high)
             else:
-                signals_after_atr = self._process_atr_data(signals_ef, atr, close, high)
-                final_signals = self._process_signal_data(signals=signals_after_atr)
+                signals = self._process_atr_data(signals, atr, close, high)
+                signals = self._process_signal_data(signals=signals)
 
                 #--------------------------Testing------------------------
                 #print(len(signals_with_efr))
@@ -52,9 +52,9 @@ class Kefr_Kama(Strategy):
                 
                 #print(f"atr signals: {signals[-1]}")
         else:
-            return final_signals
+            return signals
         
-        return final_signals
+        return signals
 
     def _efratio(self, prices):
         #print(self.data_1min.close)

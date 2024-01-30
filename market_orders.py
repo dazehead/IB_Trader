@@ -19,7 +19,7 @@ class Trade:
 
         market_data = self.ib.reqMktData(self.top_stock, '', False, False)
         # we can get a lot of different dat from this market data
-        # ticks, vwap, ticks, volume, low52wwk, high52week, ask, modelGreeks, bidGreeks
+        # ticks(), vwap(), ticks(), volume(), low52wwk(), high52week(), ask(), modelGreeks, bidGreeks
 
         self.halted = market_data.halted
         self.price = market_data.marketPrice()
@@ -28,6 +28,7 @@ class Trade:
 
     def execute_trade(self):
         """need functionality for if we bought ORTH and are selling RTH"""
+        print(f"Signal: {self.signal}")
         if self.halted == 0.0: # not halted
 
             if not self.ib.positions() and self.signal == 1:
@@ -41,14 +42,26 @@ class Trade:
                 """this section is to make sure that all positions were sold if not cancel and put in another market order"""
                 self._check_order()
         else: # trading halted passing until trading is resumed
-            pass
+            print("----Trading has been Halted----")
     
     def _buy_order(self, num_shares):
         """buys order at market order"""
-        buy_order = MarketOrder('BUY', num_shares)
-        buy_order.outsideRth = self.outside_rth
-        trade = self.ib.placeOrder(self.top_stock, buy_order)
-        self.risk.trade = trade
+        if self.risk.trade is not None:
+            updated_shares = self.risk.trade.order.filledQuantity
+            print(f"updated shares to purchase: {updated_shares}")
+            updated_shares = num_shares - updated_shares
+            self.ib.cancelOrder(self.risk.trade.order)
+            buy_order = MarketOrder('BUY', updated_shares)
+            buy_order.outsideRth = self.outside_rth
+            trade = self.ib.placeOrder(self.top_stock, buy_order)
+            self.risk.trade = trade
+            # this is where we cancel and rebuy but change the number of shares to what is left
+            
+        else:
+            buy_order = MarketOrder('BUY', num_shares)
+            buy_order.outsideRth = self.outside_rth
+            trade = self.ib.placeOrder(self.top_stock, buy_order)
+            self.risk.trade = trade
         
     
     def _sell_order(self):
@@ -69,7 +82,6 @@ class Trade:
                 #print(self.risk.trade.orderStatus.status)
 
                 if self.risk.trade.order.action == 'BUY':
-                    self.ib.cancelOrder(self.risk.trade.order)
                     self._buy_order(self.num_shares)
 
                 elif self.risk.trade.order.action == 'SELL':
