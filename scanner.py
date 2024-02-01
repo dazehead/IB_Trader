@@ -34,7 +34,7 @@ class Scanner:
                     return contract
                 else:
                     print("...Monitoring Percent Change")
-                    self.ib.cancelMktData()
+                    self.ib.cancelMktData(contract)
                     self.ib.sleep(time_interval)
 
 
