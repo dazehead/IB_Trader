@@ -24,17 +24,21 @@ class Trade:
         self.halted = market_data.halted
         self.price = market_data.marketPrice()
         self.num_shares = self.risk.balance_at_risk // self.price
+        self.ask = market_data.ask
+        self.bid = market_data.bid
+        #self.midpoint = market_data.midpoint
         
 
     def execute_trade(self):
         """Logic for when to buy and sell based off signals and if we already hold positions"""
-        print(f"\nSignal: {self.signal}")
+        print(f"Signal: {self.signal}")
+        print(f"Spread: {self.bid}-{self.ask}")
         if self.halted == 0.0: # not halted
 
             if not self.ib.positions() and self.signal == 1 and self.risk.trade is None:
                 self._buy_order(self.num_shares)
 
-            elif self.ib.positions() and (self.signal == -1) and (self.risk.trade == None):
+            elif self.ib.positions() and (self.signal == -1) and (self.risk.trade is None):
                 """sell order but we need to check if there is already an order that has not filled then cancel and resubmit"""
                 self._sell_order()
 
@@ -48,7 +52,7 @@ class Trade:
         """Buys order at market order"""
         if self.outside_rth:
             self.risk.trade_num_shares = num_shares
-            buy_order = MarketOrder('BUY', num_shares)
+            buy_order = LimitOrder('BUY', num_shares, self.ask)
             buy_order.outsideRth = self.outside_rth
             trade = self.ib.placeOrder(self.top_stock, buy_order)
             self.risk.trade = trade
@@ -64,10 +68,11 @@ class Trade:
     
     def _sell_order(self):
         if self.outside_rth:
+            print("outside RTH")
             """Sells open positions at market"""
             self.risk.trade = None
             positions = self.ib.positions()[0].position
-            sell_order = MarketOrder("SELL", positions)
+            sell_order = LimitOrder("SELL", positions, self.ask)
             sell_order.outsideRth = self.outside_rth
             trade = self.ib.placeOrder(self.top_stock, sell_order)
             self.risk.trade = trade
@@ -83,7 +88,7 @@ class Trade:
 
     def _check_order(self):
         """Checks to make sure the orders have been filled, if not then we cancel the orders and place the orders again with updated market"""
-        print("----------------in checking order----------------------------")
+        print("----------------in checking order----------------------------\n")
         if self.risk.trade is not None:
             #print(self.risk.trade)
             if self.risk.trade.orderStatus.status != 'Filled' and self.risk.trade.orderStatus.status != 'Cancelled':
@@ -94,7 +99,7 @@ class Trade:
                         self.risk.trade_counter = 0
                         shares_prev_bought = self.risk.trade.order.totalQuantity
                         self.num_shares = round(self.risk.trade_num_shares - shares_prev_bought, 1)
-                        print(f"filled: {shares_prev_bought} : needing: {self.num_shares}")
+                        #print(f"filled: {shares_prev_bought} : needing: {self.num_shares}")
                         self.ib.cancelOrder(self.risk.trade.order)
                         self._buy_order(self.num_shares)
                         print('canceling and re-buying with calculated shares')

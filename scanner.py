@@ -31,7 +31,7 @@ class Scanner:
                 market_data = self.ib.reqMktData(contract, '', False, False)
                 market_price = market_data.marketPrice()
                 self.percent_change[i].append(((market_price - self.prev_day_close[i]) / self.prev_day_close[i]) * 100)
-                if self.percent_change[i][-1] - self.percent_change[i][-2] > perc_threshold:
+                if (self.percent_change[i][-1] - self.percent_change[i][-2] > perc_threshold) and (self.percent_change[i][-1] > 0):
                     print(f"{self.tickers_list[i]} has broken the {perc_threshold} from {self.percent_change[i][-2]} to {self.percent_change[i][-1]}")
                     return contract
                 else:
@@ -138,7 +138,7 @@ class Scanner:
         for contract in self.contracts:
             self.tickers_list.append(contract.symbol)
 
-    def filter_floats(self, sec_data):
+    def filter_floats(self):
         """filters contracts by which ones are less than pre-determined float"""
         for data in self.ticker_floats:
             ticker = data[0]
@@ -150,10 +150,13 @@ class Scanner:
 
     def get_float_finviz(self):
         for ticker in self.tickers_list:
-            fin = finvizfinance(ticker).ticker_full_info()
-            numeric_part = float(fin['fundament']['Shs Float'][:-1])
-            final_float = int(numeric_part * 1_000_000)
-            self.ticker_floats.append((ticker, final_float))
+            fin = finvizfinance(ticker).ticker_fundament()
+            try:
+                numeric_part = float(fin['Shs Float'][:-1])
+                final_float = int(numeric_part * 1_000_000)
+                self.ticker_floats.append((ticker, final_float))
+            except ValueError:
+                print(f"{ticker} has no float: {fin['Shs Float']}")
 
     def filter_by_news(self):
         """gets news items for ticker; however, only 3 are available"""

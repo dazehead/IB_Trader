@@ -115,18 +115,10 @@ def test_scanner():
     print(f"BREAKING OUT : {top_stock}")
 #test_scanner()
 
-def get_float_finviz(tickers_list):
-    ticker = tickers_list[0]
-    fin = finvizfinance(ticker).ticker_full_info()
-    numeric_part = float(fin['fundament']['Shs Float'][:-1])
-    final_float = int(numeric_part * 1_000_000)
-    print(final_float)
-
-get_float_finviz(tickers_list)
 
 
 
-'''
+
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -179,7 +171,7 @@ df = DF_Manager(
 trade_log = LogBook(ib=ib)
 #trade_log.log_trades()
 counter = 0
-test_data = [0,0,0,0,1,0,0,0,0,0,0,0,0,0]
+test_data = [0,0,0,0,1,0,0,0,0,-1,0,0,0,0]
 
 try:
     bars.updateEvent.clear()
@@ -196,5 +188,5 @@ else:
     ib.cancelHistoricalData(bars)
     #trade_log.log_trades()
     ib.disconnect()
-'''
+
 
