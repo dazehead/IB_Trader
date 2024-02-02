@@ -31,6 +31,7 @@ class Risk_Handler:
             self.highest_high = None
             self.trade = None
             self.trade_num_shares = None
+            self.trade_counter = 0
 
             print(f"Account Balance: {self.balance}")
             print(f"Buying Power: {self.buying_power}")

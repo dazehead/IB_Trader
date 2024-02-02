@@ -1,6 +1,7 @@
 from ib_insync import *
 import pandas as pd
 import xml.etree.ElementTree as ET
+from finvizfinance.quote import finvizfinance
 
 class Scanner:
     """A class to handle Scanner lookup and paramters"""
@@ -11,10 +12,11 @@ class Scanner:
         self.parameters_df = None
         self.scancode = scancode
         self.tickers_list = []
-        self.company_float_threshold = 70000000
+        self.company_float_threshold = 50000000
         self.big_move = False
         self.prev_day_close = []
         self.percent_change = []
+        self.ticker_floats = []
         self.scan_market()
         print("...Scanner Initialized")
 
@@ -91,6 +93,8 @@ class Scanner:
         print(f'{len(scanDataList)} Tickers found.')
         self.get_prev_day_close()
         self.get_ticker_list()
+        self.get_float_finviz()
+
 
     def retreive_scanner_params(self):
         """Function to retreive all parameters available to use in a scanner"""
@@ -136,13 +140,21 @@ class Scanner:
 
     def filter_floats(self, sec_data):
         """filters contracts by which ones are less than pre-determined float"""
-        for data in sec_data:
+        for data in self.ticker_floats:
             ticker = data[0]
             company_float = data[1]
             if company_float > self.company_float_threshold:
                 self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
                 print(f"...{ticker} removed from list due to high float: {company_float}")
-                
+        self.get_ticker_list()
+
+    def get_float_finviz(self):
+        for ticker in self.tickers_list:
+            fin = finvizfinance(ticker).ticker_full_info()
+            numeric_part = float(fin['fundament']['Shs Float'][:-1])
+            final_float = int(numeric_part * 1_000_000)
+            self.ticker_floats.append((ticker, final_float))
+
     def filter_by_news(self):
         """gets news items for ticker; however, only 3 are available"""
         filtered_contracts = []

@@ -10,6 +10,10 @@ from market_orders import Trade
 import datetime
 from strategies.price_action import PriceAction
 from strategies.kefr_kama import Kefr_Kama
+from finvizfinance.quote import finvizfinance
+
+
+
 
 
 # CONSTANTS
@@ -101,8 +105,6 @@ def run_backtest(tickers_list):
 
 
 
-
-
 def test_scanner():
     ib = IB()
     ib.connect('127.0.0.1', 7497, clientId=1)
@@ -113,12 +115,18 @@ def test_scanner():
     print(f"BREAKING OUT : {top_stock}")
 #test_scanner()
 
+def get_float_finviz(tickers_list):
+    ticker = tickers_list[0]
+    fin = finvizfinance(ticker).ticker_full_info()
+    numeric_part = float(fin['fundament']['Shs Float'][:-1])
+    final_float = int(numeric_part * 1_000_000)
+    print(final_float)
+
+get_float_finviz(tickers_list)
 
 
 
-
-
-
+'''
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -145,7 +153,7 @@ ib.connect("127.0.0.1", 7497, clientId=2)
 
 #top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
 #top_stock = top_gainers.contracts[0]
-top_stock = Stock('NEXI', 'SMART', 'USD')
+top_stock = Stock('MINM', 'SMART', 'USD')
 print(f"-------------------------{top_stock.symbol}-------------------------")
 ib.qualifyContracts(top_stock)
 
@@ -171,7 +179,7 @@ df = DF_Manager(
 trade_log = LogBook(ib=ib)
 #trade_log.log_trades()
 counter = 0
-test_data = [0,0,0,0,1,0,0,0,0,-1,0,0,0,0]
+test_data = [0,0,0,0,1,0,0,0,0,0,0,0,0,0]
 
 try:
     bars.updateEvent.clear()
@@ -181,12 +189,12 @@ try:
 except KeyboardInterrupt:
     """fill doesn't have full shares executed ---- maybe some sleep"""
     ib.cancelHistoricalData(bars)
-    trade_log.log_trades()
+    #trade_log.log_trades()
     ib.disconnect()
 
 else:
     ib.cancelHistoricalData(bars)
-    trade_log.log_trades()
+    #trade_log.log_trades()
     ib.disconnect()
-
+'''
 

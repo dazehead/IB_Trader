@@ -9,6 +9,7 @@ from log import LogBook
 from backtest import BackTest
 import sys
 from strategies.kefr_kama import Kefr_Kama
+from sec_data import SEC_Data
 
 """
 7496 - live
@@ -64,16 +65,13 @@ def onBarUpdate(bars, hasNewBar):
 # initializing Scanner object
 if not ib.positions():
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+    top_gainers.filter_floats()
     print(top_gainers.tickers_list)
     top_gainers.calculate_percent_change()
     top_ticker = top_gainers.monitor_percent_change(perc_threshold=.06, time_interval=10)
 else:
     top_ticker =  Stock(ib.positions()[0].contract.symbol, 'SMART', 'USD')
     
-# getting float data from SEC        
-#sec_data = SEC_Data(top_gainers.tickers_list)
-#top_gainers.filter_floats(sec_data.company_float_list)
-# extracting best gainer
 
 print(f"--------------------------{top_ticker.symbol}--------------------------")
 print("Qualifing Contract...")
