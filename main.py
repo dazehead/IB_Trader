@@ -51,8 +51,9 @@ def onBarUpdate(bars, hasNewBar):
             risk=risk, 
             signals=signals,
             contract=top_ticker)
-
+    
         trade.execute_trade()
+        trade.save_signals()
         
         #if signals[-1] == 1 or signals[-1] == -1:
         #    backtest = BackTest(strat)

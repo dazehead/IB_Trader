@@ -3,7 +3,7 @@ from ib_insync import *
 
 class Trade:
     """A class to handle interactions with IB"""
-    def __init__(self, ib, risk, signals, contract, counter=None):
+    def __init__(self, ib, risk, signals, contract, counter=None, logbook=None):
         self.ib = ib
         self.risk = risk
         self.top_stock = contract
@@ -28,7 +28,6 @@ class Trade:
         self.bid = market_data.bid
         #self.midpoint = market_data.midpoint
         
-
     def execute_trade(self):
         """Logic for when to buy and sell based off signals and if we already hold positions"""
         print(f"Signal: {self.signal}")

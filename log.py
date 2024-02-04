@@ -7,6 +7,7 @@ import sqlite3
 import os
 import yfinance as yf
 import pandas_market_calendars as mcal
+from finvizfinance.quote import finvizfinance
 
 class Log:
     """A class to log trades and store backtest results for analysis"""
@@ -17,7 +18,17 @@ class Log:
         except:
             self.name = None
         self.next_node = next_node
-        self.list = []
+        self.float = None
+        if not self.value:
+            self.get_float()
+
+    def get_float(self):
+        fin = finvizfinance(self.head_node.get_name()).ticker_fundament()
+        try:
+            numeric_part = float(fin['Shs Float'][:-1])
+            self.float = int(numeric_part * 1_000_000)
+        except ValueError:
+            print(f"{ticker} has no float: {fin['Shs Float']}")
 
     def get_name(self):
         return self.name
@@ -27,14 +38,16 @@ class Log:
     
     def set_next_node(self, next_node):
         self.next_node = next_node
+    
 
 class LogBook:
     """Linked List that holds all logs"""
     def __init__(self, ib, value=None):
         self.head_node = Log(value)
         self.ib = ib
-        self.float = None
         self.get_charts()
+
+
 
     def get_head_node(self):
         return self.head_node
@@ -74,6 +87,9 @@ class LogBook:
                     current_node = None
                 else:
                     current_node = next_node
+
+    def save_signal(self, signal):
+        pass
 
     def export_hyper_to_db(self, name_of_strategy):
         """Function to export a hyper optimized backtest to a DB"""
@@ -149,10 +165,11 @@ class LogBook:
     def log_trades(self):
         """Function to retrieve trade information from IB"""
         # retrives trades, converts to df, creates new datframe with column names 
+        current_node = self.get_head_node
         trades = self.ib.trades()
         trades_df = util.df(trades)
         #print(trades_df.columns)
-        column_names = ['conId', 'symbol', 'action', 'orderType','shares', 'avg_price', 'commission', 'fill_amt', 'time']
+        column_names = ['conId','symbol', 'action', 'orderType', 'float','shares', 'avg_price', 'commission', 'fill_amt', 'time']
         new_df = pd.DataFrame(columns = column_names)
         
         # iterates through the trades and extracts disired data
@@ -164,6 +181,11 @@ class LogBook:
                 values.append(trades_df.contract.iloc[i].symbol)
                 values.append(trades_df.order.iloc[i].action)
                 values.append(trades_df.order.iloc[i].orderType)
+                while current_node:
+                    if trades_df.contract.iloc[i].symbol == current_node.get_name():
+                        values.append(current_node.float)
+                    current_node = current_node.get_next_node()
+
                 #values.append(trades_df.order.iloc[i].filledQuantity)
 
                 # fills is filled with all order information some multiple orders in order to get filled
