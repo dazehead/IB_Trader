@@ -1,9 +1,12 @@
 import pandas as pd
 import datetime
-from ib_insync import util
+from ib_insync import *
 import numpy as np
-from datetime import datetime
+import datetime
 import sqlite3
+import os
+import yfinance as yf
+import pandas_market_calendars as mcal
 
 class Log:
     """A class to log trades and store backtest results for analysis"""
@@ -30,6 +33,8 @@ class LogBook:
     def __init__(self, ib, value=None):
         self.head_node = Log(value)
         self.ib = ib
+        self.float = None
+        self.get_charts()
 
     def get_head_node(self):
         return self.head_node
@@ -74,16 +79,40 @@ class LogBook:
         """Function to export a hyper optimized backtest to a DB"""
         name = name_of_strategy
         current_node = self.get_head_node()
+        counter = 0
+        file_path = 'sql_info.txt'
+        with open(file_path, 'r')as file:
+            file_contents = file.read()
+            strip_q = file_contents.split('SELECT * FROM')
+            beginning = strip_q[0]
+            ending = strip_q[-1].split(')')[1:]
+            ending = ' '.join(ending)
+            final_string = beginning
 
         while current_node:
+            counter +=1
             df = current_node.value.returns.reset_index()
             # These must be the names of the parameters tested
             df.columns = ['cust_efratio_timeperiod', 'cust_threshold', 'cust_atr_perc', 'return']
         
             conn = sqlite3.connect('logbooks/hyper')
-            df.to_sql(f"{name}_{current_node.get_name()}", conn, if_exists='replace', index=False)
+            table_name = f"{name}_{current_node.get_name()}_{counter}"
+            df.to_sql(table_name, conn, if_exists='replace', index=False)
 
+            #insert save to name so we can copy paste in sql
+
+            if not current_node.get_next_node():
+                format_string = f'SELECT * FROM {table_name}\n){ending}'
+                final_string += format_string
+            else:
+                format_string = f'SELECT * FROM {table_name}\nUNION ALL\n\t'
+                #print(format_string)
+                final_string += format_string
             current_node = current_node.get_next_node()
+
+        with open(file_path, 'w') as file:
+            file.write(final_string)
+
 
 
 
@@ -197,6 +226,42 @@ class LogBook:
         result = merged_df[merged_df['_merge'] == 'left_only'].drop('_merge', axis=1)
 
         result.to_sql(name, conn, if_exists='append', index=False)
+
+    def get_charts(self):
+        """Function retrives Histrocial data for trades in trade log"""
+        conn = sqlite3.connect('logbooks/trade_log')
+
+        # When we get actual trades db we will have to change this SQL statement to that table
+        trade_df = pd.read_sql(r"SELECT symbol, strftime('%Y-%m-%d',time) AS time FROM paper_log", conn)
+        trade_df.drop_duplicates(subset=['symbol','time'], inplace=True)
+        
+        paper_df = pd.read_sql(r"SELECT symbol, strftime('%Y-%m-%d',time) AS time FROM paper_log", conn)
+        paper_df.drop_duplicates(subset=['symbol','time'], inplace=True)
+        trade_log = [trade_df, paper_df]
+        for df in trade_log:
+            
+            for i in range(len(df)):
+                symbol, date = df.iloc[i][0], df.iloc[i][1]
+                filename = f"historical_data/{date}_{symbol}.csv"
+                if not os.path.exists(filename):  
+                    print(f"...Retreiving Historical Data for {symbol} on {date}")
+                    date = pd.to_datetime(date).tz_localize('UTC')
+                    cal = mcal.get_calendar('NYSE')
+                    early = cal.schedule(start_date=date, end_date=datetime.datetime.now())
+                    date = early.iloc[0][1]
+                    contract = Stock(symbol, 'SMART', 'USD')
+                    self.ib.qualifyContracts(contract)
+                    bars = self.ib.reqHistoricalData(contract = contract,
+                        endDateTime= date,
+                        durationStr= '1 D',
+                        barSizeSetting= "5 secs",
+                        whatToShow= "TRADES",
+                        useRTH= False)
+                    self.ib.sleep(1)
+                    df = util.df(bars)
+                    df.to_csv(filename, index=False)
+                else:
+                    pass
 
     
 

@@ -1,5 +1,4 @@
 from ib_insync import *
-from strategies.engulfing import Engulfing
 from backtest import BackTest
 from risk_handler import Risk_Handler
 from get_data import upload_historical
@@ -11,6 +10,9 @@ import datetime
 from strategies.price_action import PriceAction
 from strategies.kefr_kama import Kefr_Kama
 from finvizfinance.quote import finvizfinance
+import yfinance as yf
+import os
+import re
 
 
 
@@ -119,6 +121,71 @@ def test_scanner():
 
 
 
+def test_ticker_retrieval():
+    folder_path = 'historical_data'
+    file_names = os.listdir(folder_path)
+    tickers = []
+    for name in file_names:
+        date, ticker = name.split('_')
+        ticker = ticker.split('.')[0]
+
+        print(date, ticker)
+
+    #print(file_names)
+
+#test_ticker_retrieval()
+        
+def test_update_sql():
+    file_path = 'sql_info.txt'
+    test = ['THIS_IS_THE_TEST1', 'THIS_IS_THE_TEST2', 'THIS_IS_THE_TEST3', 'THIS_IS_THE_TEST4']
+    with open(file_path, 'r') as file:
+        file_contents = file.read()
+        strip_q = file_contents.split('SELECT * FROM')
+        beginning = strip_q[0]
+        ending = strip_q[-1].split(')')[1:]
+        ending = ' '.join(ending)
+        last_i = len(test) - 1
+        final_string = beginning
+        print(final_string)
+
+        for i, table in enumerate(test):
+            print(i, last_i)
+            if i == last_i:
+                format_string = f'SELECT * FROM {table}\n){ending}'
+                final_string += format_string + ending
+            else:
+                format_string = f'SELECT * FROM {table}\nUNION ALL\n\t'
+                #print(format_string)
+                final_string += format_string
+        print(final_string)
+
+
+'''
+            else:
+                ending_list= table.split(' ')[2:]
+                ending = ' '.join(ending_list)
+                if i == last_i:
+                    string = f'SELECT * FROM {test}\n) {ending}'
+                    final_string += string
+                else:
+                    string = f'SELECT * FROM {test}\n {ending}'
+                    #print(string)
+                    final_string += string
+    with open(file_path, 'w') as file:
+        file.write(final_string)
+'''
+
+
+
+
+test_update_sql()
+
+
+
+
+
+
+"""
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -179,7 +246,7 @@ try:
     ib.sleep(30000)
 
 except KeyboardInterrupt:
-    """fill doesn't have full shares executed ---- maybe some sleep"""
+    '''fill doesn't have full shares executed ---- maybe some sleep'''
     ib.cancelHistoricalData(bars)
     #trade_log.log_trades()
     ib.disconnect()
@@ -189,4 +256,4 @@ else:
     #trade_log.log_trades()
     ib.disconnect()
 
-
+"""

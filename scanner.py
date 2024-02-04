@@ -149,6 +149,7 @@ class Scanner:
         self.get_ticker_list()
 
     def get_float_finviz(self):
+        
         for ticker in self.tickers_list:
             fin = finvizfinance(ticker).ticker_fundament()
             try:

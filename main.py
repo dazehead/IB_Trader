@@ -23,6 +23,7 @@ if ib.client.port == 7496:
     if to_go_on != 'Y':
         sys.exit()
 
+
 def onBarUpdate(bars, hasNewBar):
     """handles logic for new bar data- Main Loop"""
     if hasNewBar:
@@ -62,6 +63,10 @@ def onBarUpdate(bars, hasNewBar):
 
 
 """---------------------START OF PROGRAM--------------------------"""
+print("Initializing Trade Log...")
+trade_log = LogBook(ib=ib)
+print("Trade Log Initialized...")
+
 # initializing Scanner object
 if not ib.positions():
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
@@ -105,10 +110,6 @@ df = DF_Manager(
      bars=bars,
      ticker=top_ticker.symbol)
 print("DF intialized...")
-
-print("Initializing Trade Log...")
-trade_log = LogBook(ib=ib)
-print("Trade Log Initialized...")
 
 
 # CallBacks

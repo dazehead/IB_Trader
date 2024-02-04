@@ -1,0 +1,46 @@
+SELECT
+    cust_efratio_timeperiod,
+    cust_threshold,
+    cust_atr_perc,
+    AVG(return) AS average_return
+FROM (
+    SELECT * FROM KEFR_risk_MINM_1
+UNION ALL
+	SELECT * FROM KEFR_risk_CCTG_2
+UNION ALL
+	SELECT * FROM KEFR_risk_NRBO_3
+UNION ALL
+	SELECT * FROM KEFR_risk_MNTS_4
+UNION ALL
+	SELECT * FROM KEFR_risk_GHSI_5
+UNION ALL
+	SELECT * FROM KEFR_risk_PXLW_6
+UNION ALL
+	SELECT * FROM KEFR_risk_NEXI_7
+UNION ALL
+	SELECT * FROM KEFR_risk_GMBL_8
+UNION ALL
+	SELECT * FROM KEFR_risk_SPRC_9
+UNION ALL
+	SELECT * FROM KEFR_risk_SGMT_10
+UNION ALL
+	SELECT * FROM KEFR_risk_ELAB_11
+UNION ALL
+	SELECT * FROM KEFR_risk_SNTG_12
+UNION ALL
+	SELECT * FROM KEFR_risk_ACON_13
+UNION ALL
+	SELECT * FROM KEFR_risk_AIMD_14
+UNION ALL
+	SELECT * FROM KEFR_risk_MINM_15
+UNION ALL
+	SELECT * FROM KEFR_risk_NEXI_16
+UNION ALL
+	SELECT * FROM KEFR_risk_LBPH_17
+) AS combined_tables
+GROUP BY
+    cust_efratio_timeperiod,
+    cust_threshold,
+    cust_atr_perc
+ORDER BY
+    average_return DESC;

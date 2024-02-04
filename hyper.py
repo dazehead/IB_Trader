@@ -7,6 +7,7 @@ import numpy as np
 import vectorbt as vbt
 import datetime
 from ib_insync import *
+import os
 
 class HyperBT(BackTest):
     """A class to handle Hyper Optimization backtests"""
@@ -69,12 +70,15 @@ class HyperBT(BackTest):
 ######################## Below is code to run Hyper Optimized backtest ####################
 
 
-tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'SGMT', 'ELAB', 'SPRC']
+#tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'SGMT', 'ELAB', 'SPRC']
 
-def run_hyper(tickers_list):
+
+
+
+def run_hyper():
     """NOTE: update later so that it gets datetime by itself instead of manually inserting the date"""
     ##################### data for hyper ####################################
-    df_object_list = upload_historical(tickers=tickers_list)
+    df_object_list = upload_historical()
     """
     below is how we need to struture our data so that we can hyper optimize
     for all our tickers
@@ -126,5 +130,64 @@ def run_hyper(tickers_list):
         
     return logbook
 
-logbook = run_hyper(tickers_list=tickers_list)
-logbook.export_hyper_to_db('kefr_atr_thresh_time_atrperc')
+
+def test_multiple_tickers():
+    """NOTE: update later so that it gets datetime by itself instead of manually inserting the date"""
+    ##################### data for hyper ####################################
+    df_object_list = upload_historical()
+    """
+    below is how we need to struture our data so that we can hyper optimize
+    for all our tickers
+
+    end_time = datetime.datetime.now()
+    start_time = end_time - datetime.timedelta(days=2)
+    btc_price = vbt.YFData.download(
+        ['BTC-USD', 'ETH-USD'],
+        missing_index = 'drop',
+        start = start_time,
+        end = end_time,
+        interval = '1m').get('Close')
+    print(btc_price)
+    """
+    
+    risk = Risk_Handler(ib = None,
+                        perc_risk = 0.8,
+                        stop_time="10:00:00-05:00",
+                        atr_perc = .20)
+
+    # iterating of each DF_Manager and creating a strategy object with each manager
+    logbook = LogBook(None, None)
+    for i, manager in enumerate(df_object_list):
+        print(f"---------------------------{manager.ticker}---------------------------------------")
+        if i == 0:
+            strat = Kefr_Kama(
+                df_manager=manager,
+                barsize= "1min",
+                risk = risk)
+            backtest = HyperBT(strat)
+            logbook = LogBook(ib=None, value=backtest)
+        else:
+            strat = Kefr_Kama(
+                df_manager=manager,
+                barsize='1min',
+                risk=risk)
+            backtest = HyperBT(strat)
+            logbook.insert_beginning(new_value=backtest)
+
+        #print(backtest.returns)
+        #print(type(backtest.returns))
+        #df= backtest.returns.reset_index()
+        #df.columns = ['cust_efratio_timeperiod', 'cust_threshold', 'cust_atr_perc', 'return']
+        #print(df)
+        #print(backtest.returns.max())
+        #print(backtest.returns.idxmax())
+        backtest.graph_data_volume()
+
+        
+    return logbook
+
+
+
+
+logbook = run_hyper()
+logbook.export_hyper_to_db('KEFR_risk')

@@ -3,16 +3,39 @@ import pandas as pd
 from dataframe_manager import DF_Manager
 import os
 
-def upload_historical(tickers):
+def upload_historical(tickers=None):
     """ Retrieves any amount of historical data and creates a DF_Manager with data"""
-    if isinstance(tickers, str):
-        tickers = [tickers]
-    all_data = []
-    for ticker in tickers:
-        tickers_filename = f"{ticker}_5sec"
-        df = pd.read_csv(f'historical_data/{tickers_filename}.csv', delimiter=',')
-        df['date'] = pd.to_datetime(df['date'])
-        all_data.append(DF_Manager(df, ticker))
+    if not tickers:
+        folder_path = 'historical_data'
+        file_names = os.listdir(folder_path)
+        all_data = []
+        for name in file_names:
+            date, ticker = name.split('_')
+            ticker = ticker.split('.')[0]
+            df = pd.read_csv(f"historical_data/{date}_{ticker}.csv", delimiter=',')
+            df['date'] = pd.to_datetime(df['date'])
+            all_data.append(DF_Manager(df, ticker))
+
+    else:
+        if isinstance(tickers, str):
+            tickers = [tickers]
+        all_data = []
+
+        folder_path = 'historical_data'
+        file_names = os.listdir(folder_path)
+        
+        files_done = []
+        for ticker in tickers:
+            for name in file_names:
+                if ticker in name:
+                    date = name.split('_')[0]
+                    tickers_filename = f"{date}_{ticker}.csv"
+                    if tickers_filename in files_done:
+                        pass
+                    files_done.append(tickers_filename)
+                    df = pd.read_csv(f'historical_data/{tickers_filename}', delimiter=',')
+                    df['date'] = pd.to_datetime(df['date'])
+                    all_data.append(DF_Manager(df, ticker))
 
     return all_data
 
@@ -37,7 +60,10 @@ def download_historical(tickers_list, to_csv=True):
                 df.to_csv(filename, index=False)
         else:
             return df
-'''
+
+    def convert_for_hyper(df):
+        pass
+"""
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=1)
 tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'ELAB', 'SGMT', 'SPRC']
@@ -53,4 +79,4 @@ download_historical(tick_date_list, to_csv=True)
 #print(all_data)
 
 ib.disconnect()
-'''
+"""
