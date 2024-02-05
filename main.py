@@ -10,6 +10,7 @@ from backtest import BackTest
 import sys
 from strategies.kefr_kama import Kefr_Kama
 from sec_data import SEC_Data
+import datetime as dt
 
 """
 7496 - live
@@ -28,6 +29,7 @@ def onBarUpdate(bars, hasNewBar):
     """handles logic for new bar data- Main Loop"""
     if hasNewBar:
         global df
+        global signal_log
         #start_time = time.time()
         df.update(bars)
         open = df.data_1min.open
@@ -45,15 +47,17 @@ def onBarUpdate(bars, hasNewBar):
             high=high,
             low=low,
             close=close)
-        
+
         trade = Trade(
             ib=ib, 
             risk=risk, 
             signals=signals,
             contract=top_ticker)
+        
+        time_frame = close.index
+        signal_log.get_head_node().value = signals[time_frame] = signals
     
         trade.execute_trade()
-        trade.save_signals()
         
         #if signals[-1] == 1 or signals[-1] == -1:
         #    backtest = BackTest(strat)
@@ -74,7 +78,7 @@ if not ib.positions():
     top_gainers.filter_floats()
     print(top_gainers.tickers_list)
     top_gainers.calculate_percent_change()
-    top_ticker = top_gainers.monitor_percent_change(perc_threshold=.06, time_interval=10)
+    top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
 else:
     top_ticker =  Stock(ib.positions()[0].contract.symbol, 'SMART', 'USD')
     
@@ -112,6 +116,10 @@ df = DF_Manager(
      ticker=top_ticker.symbol)
 print("DF intialized...")
 
+signal_log = LogBook(ib=ib)
+signal_log.get_head_node().name = top_ticker.symbol
+
+
 
 # CallBacks
 try:
@@ -135,8 +143,10 @@ except KeyboardInterrupt:
             ib.sleep(5)
             while risk.trade:
                 trade.execute_trade()
+                signal_log.save_signal(dt.datetime.now(), -1)
                 ib.sleep(5)
     trade_log.log_trades()
+    signal_log.log_signals()
     ib.disconnect()
     sys.exit()
 else:
@@ -153,10 +163,12 @@ else:
                 signals = [-1, -1, -1, -1, -1, -1],
                 contract=top_ticker)
             trade.execute_trade()
+            signal_log.save_signal(dt.datetime.now(), -1)
             ib.sleep(5)
             while risk.trade:
                 trade.execute_trade()
                 ib.sleep(5)
     trade_log.log_trades()
+    signal_log.log_signals()
     ib.disconnect()
     sys.exit()

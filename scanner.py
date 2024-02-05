@@ -2,6 +2,8 @@ from ib_insync import *
 import pandas as pd
 import xml.etree.ElementTree as ET
 from finvizfinance.quote import finvizfinance
+import requests
+import numpy as np
 
 class Scanner:
     """A class to handle Scanner lookup and paramters"""
@@ -72,8 +74,7 @@ class Scanner:
         gainSub = ScannerSubscription(
             instrument="STK",
             locationCode="STK.US.MAJOR",
-            scanCode=self.scancode,
-            stockTypeFilter="CORP")
+            scanCode=self.scancode)
         
         # full list of filters
         """https://nbviewer.org/github/erdewit/ib_insync/blob/master/notebooks/scanners.ipynb"""
@@ -151,13 +152,25 @@ class Scanner:
     def get_float_finviz(self):
         
         for ticker in self.tickers_list:
-            fin = finvizfinance(ticker).ticker_fundament()
             try:
-                numeric_part = float(fin['Shs Float'][:-1])
-                final_float = int(numeric_part * 1_000_000)
-                self.ticker_floats.append((ticker, final_float))
-            except ValueError:
-                print(f"{ticker} has no float: {fin['Shs Float']}")
+                fin = finvizfinance(ticker).ticker_fundament()
+                try:
+                    numeric_part = float(fin['Shs Float'][:-1])
+                    final_float = int(numeric_part * 1_000_000)
+                    self.ticker_floats.append((ticker, final_float))
+                except ValueError:
+                    print(f"{ticker} has no float: {fin['Shs Float']}")
+            except requests.HTTPError as err:
+                if err.response.status_code == 404:
+                    print(f"Error 404: Ticker {ticker} not found on Finviz")
+                    # Handle the 404 error here
+                else:
+                    print(f"HTTPError: {err}")
+                    # Handle other HTTP errors here
+            except Exception as e:
+                print(f"An unexpected error occurred: {e}")
+                self.ticker_floats.append((ticker, np.NaN))
+                # Handle other unexpected errors here
 
     def filter_by_news(self):
         """gets news items for ticker; however, only 3 are available"""

@@ -159,33 +159,14 @@ def test_update_sql():
                 final_string += format_string
         print(final_string)
 
-
-'''
-            else:
-                ending_list= table.split(' ')[2:]
-                ending = ' '.join(ending_list)
-                if i == last_i:
-                    string = f'SELECT * FROM {test}\n) {ending}'
-                    final_string += string
-                else:
-                    string = f'SELECT * FROM {test}\n {ending}'
-                    #print(string)
-                    final_string += string
-    with open(file_path, 'w') as file:
-        file.write(final_string)
-'''
-
-
-
-
-test_update_sql()
+#test_update_sql()
 
 
 
 
 
 
-"""
+
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -255,5 +236,3 @@ else:
     ib.cancelHistoricalData(bars)
     #trade_log.log_trades()
     ib.disconnect()
-
-"""

@@ -19,11 +19,12 @@ class Log:
             self.name = None
         self.next_node = next_node
         self.float = None
-        if not self.value:
-            self.get_float()
+        if self.value is not None:
+            if not isinstance(self.value, list):
+                self.get_float()
 
     def get_float(self):
-        fin = finvizfinance(self.head_node.get_name()).ticker_fundament()
+        fin = finvizfinance(self.name).ticker_fundament()
         try:
             numeric_part = float(fin['Shs Float'][:-1])
             self.float = int(numeric_part * 1_000_000)
@@ -39,13 +40,17 @@ class Log:
     def set_next_node(self, next_node):
         self.next_node = next_node
     
+    def get_signals(self):
+        return self.value
+    
 
 class LogBook:
     """Linked List that holds all logs"""
     def __init__(self, ib, value=None):
         self.head_node = Log(value)
         self.ib = ib
-        self.get_charts()
+        if self.ib is not None:
+            self.get_charts()
 
 
 
@@ -88,8 +93,25 @@ class LogBook:
                 else:
                     current_node = next_node
 
-    def save_signal(self, signal):
-        pass
+    
+    def log_signals(self):
+        head_node = self.get_head_node()
+        file_path = 'historical_data/signal_data'
+        signals = head_node.value
+        name = head_node.name
+        date = head_node.value.index[0]
+        date = date.strftime("%Y-%m-%d")
+
+        filename = f"{file_path}/{date}_{name}_signals.csv"
+        if not os.path.exists(filename):  
+            signals.to_csv(filename, index=True)
+        else:
+            pass
+            # need to combine previous signal data with current signals
+            # this will include creating fake times and 0's to fill void
+
+
+        
 
     def export_hyper_to_db(self, name_of_strategy):
         """Function to export a hyper optimized backtest to a DB"""
@@ -139,6 +161,7 @@ class LogBook:
         conn = sqlite3.connect('logbooks/backtests')
         df.to_sql(name, conn, if_exists='replace', index=False)
         #df.to_csv(path, index=False)
+    
 
     def _convert_to_dataframe(self):
         """Helper function to convert a backtest information to a DataFrame"""
