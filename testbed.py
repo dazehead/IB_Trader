@@ -193,7 +193,7 @@ ib.connect("127.0.0.1", 7497, clientId=2)
 
 #top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
 #top_stock = top_gainers.contracts[0]
-top_stock = Stock('MINM', 'SMART', 'USD')
+top_stock = Stock('CHEA', 'SMART', 'USD')
 print(f"-------------------------{top_stock.symbol}-------------------------")
 ib.qualifyContracts(top_stock)
 

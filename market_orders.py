@@ -87,7 +87,7 @@ class Trade:
 
     def _check_order(self):
         """Checks to make sure the orders have been filled, if not then we cancel the orders and place the orders again with updated market"""
-        print("----------------in checking order----------------------------\n")
+        print("-in checking order-\n")
         if self.risk.trade is not None:
             #print(self.risk.trade)
             if self.risk.trade.orderStatus.status != 'Filled' and self.risk.trade.orderStatus.status != 'Cancelled':

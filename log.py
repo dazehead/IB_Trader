@@ -8,6 +8,8 @@ import os
 import yfinance as yf
 import pandas_market_calendars as mcal
 from finvizfinance.quote import finvizfinance
+import requests
+import datetime as dt
 
 class Log:
     """A class to log trades and store backtest results for analysis"""
@@ -28,6 +30,7 @@ class Log:
         try:
             numeric_part = float(fin['Shs Float'][:-1])
             self.float = int(numeric_part * 1_000_000)
+            print(f"retrived float: {self.float}")
         except ValueError:
             print(f"{ticker} has no float: {fin['Shs Float']}")
 
@@ -50,7 +53,8 @@ class LogBook:
         self.head_node = Log(value)
         self.ib = ib
         if self.ib is not None:
-            self.get_charts()
+            pass
+            #self.get_charts()
 
 
 
@@ -106,7 +110,7 @@ class LogBook:
         if not os.path.exists(filename):  
             signals.to_csv(filename, index=True)
         else:
-            pass
+            signals.to_csv(filename, index=True, mode='w')
             # need to combine previous signal data with current signals
             # this will include creating fake times and 0's to fill void
 
@@ -133,7 +137,7 @@ class LogBook:
             # These must be the names of the parameters tested
             df.columns = ['cust_efratio_timeperiod', 'cust_threshold', 'cust_atr_perc', 'return']
         
-            conn = sqlite3.connect('logbooks/hyper')
+            conn = sqlite3.connect('logbooks/hyper.db')
             table_name = f"{name}_{current_node.get_name()}_{counter}"
             df.to_sql(table_name, conn, if_exists='replace', index=False)
 
@@ -158,7 +162,7 @@ class LogBook:
         """Function to export a backtest to a db"""
         df = self._convert_to_dataframe()
         name = name_of_strategy
-        conn = sqlite3.connect('logbooks/backtests')
+        conn = sqlite3.connect('logbooks/backtests.db')
         df.to_sql(name, conn, if_exists='replace', index=False)
         #df.to_csv(path, index=False)
     
@@ -188,26 +192,49 @@ class LogBook:
     def log_trades(self):
         """Function to retrieve trade information from IB"""
         # retrives trades, converts to df, creates new datframe with column names 
-        current_node = self.get_head_node
         trades = self.ib.trades()
+        #print(trades)
         trades_df = util.df(trades)
-        #print(trades_df.columns)
-        column_names = ['conId','symbol', 'action', 'orderType', 'float','shares', 'avg_price', 'commission', 'fill_amt', 'time']
+        #print(trades_df)
+        column_names = ['conId','symbol', 'action', 'orderType', 'float', 'market_cap','shares', 'avg_price', 'commission', 'fill_amt', 'time']
         new_df = pd.DataFrame(columns = column_names)
         
         # iterates through the trades and extracts disired data
         try:
             for i in range(len(trades_df)):
+                current_node = self.get_head_node()
                 #print(f'\n---------------------------{i}----------------------------\n')
                 values = []
                 values.append(trades_df.contract.iloc[i].conId)
                 values.append(trades_df.contract.iloc[i].symbol)
                 values.append(trades_df.order.iloc[i].action)
                 values.append(trades_df.order.iloc[i].orderType)
-                while current_node:
-                    if trades_df.contract.iloc[i].symbol == current_node.get_name():
-                        values.append(current_node.float)
-                    current_node = current_node.get_next_node()
+
+                try:
+                    fin = finvizfinance(trades_df.contract.iloc[i].symbol).ticker_fundament()
+                    try:
+                        numeric_float = float(fin['Shs Float'][:-1])                   
+                        final_float = int(numeric_float * 1_000_000)
+                        values.append(final_float)
+                        #print(fin)
+                        numeric_cap = float(fin['Market Cap'][:-1])
+                        final_cap = int(numeric_cap * 1_000_000)
+                        values.append(final_cap)
+                    except ValueError:
+                        values.append(np.NaN)
+                        #print(f"{trades_df.contract.iloc[i].symbol} has no float: {fin['Shs Float']}")
+                except requests.HTTPError as err:
+                    if err.response.status_code == 404:
+                        #print(f"Error 404: Ticker {trades_df.contract.iloc[i].symbol} not found on Finviz")
+                        values.append(np.NaN)
+                        # Handle the 404 error here
+                    else:
+                        #print(f"HTTPError: {err}")
+                        values.append(np.Nan)
+                        # Handle other HTTP errors here
+                except Exception as e:
+                    #print(f"An unexpected error occurred: {e}")
+                    values.append(np.NaN)
 
                 #values.append(trades_df.order.iloc[i].filledQuantity)
 
@@ -244,10 +271,14 @@ class LogBook:
                     values.append(fills[-1].execution.time)
 
                     #print(trades_df.fills.iloc[i])
+                #print(values)
                 data_dict = dict(zip(column_names, values))
+                #print('\n')
+                #print(data_dict)
                 new_df = new_df._append(data_dict, ignore_index=True)
                 new_df.dropna(inplace=True)
                 new_df.sort_values(by='time', inplace=True)
+                #print(new_df)
             self.export_trades_to_db(new_df)
         except TypeError:
             print('Could not export logs as there are no trades for today')
@@ -255,7 +286,8 @@ class LogBook:
     
     def export_trades_to_db(self, df):
         """takes df and exports it to the trade_log, also logic for duplicates, will not overwrite"""
-        conn = sqlite3.connect('logbooks/trade_log')
+        conn = sqlite3.connect('logbooks/trade_log.db')
+        #print(df)
         if self.ib.client.port == 7497:
             # paper trading
             name = "paper_log"
@@ -272,16 +304,28 @@ class LogBook:
 
         result.to_sql(name, conn, if_exists='append', index=False)
 
+        #df_from_db = pd.read_sql('SELECT * FROM paper_log', conn)
+        #with pd.ExcelWriter(f'logbooks/trade_log.xlsx', mode='a', if_sheet_exists='replace') as writer:
+        #    df_from_db.to_excel(writer, sheet_name=name)
+
     def get_charts(self):
         """Function retrives Histrocial data for trades in trade log"""
-        conn = sqlite3.connect('logbooks/trade_log')
-
+        conn = sqlite3.connect('logbooks/trade_log.db')
         # When we get actual trades db we will have to change this SQL statement to that table
-        trade_df = pd.read_sql(r"SELECT symbol, strftime('%Y-%m-%d',time) AS time FROM paper_log", conn)
-        trade_df.drop_duplicates(subset=['symbol','time'], inplace=True)
+        try: 
+            trade_df = pd.read_sql(r"SELECT symbol, strftime('%Y-%m-%d',time) AS time FROM paper_log", conn)
+            trade_df.drop_duplicates(subset=['symbol','time'], inplace=True)
+        except sqlite3.OperationalError as e:
+            print("no such table")
+            return
+            
+        try:
+            paper_df = pd.read_sql(r"SELECT symbol, strftime('%Y-%m-%d',time) AS time FROM paper_log", conn)
+            paper_df.drop_duplicates(subset=['symbol','time'], inplace=True)
+        except sqlite3.OperationalError as e:
+            print("no such table")
+            return
         
-        paper_df = pd.read_sql(r"SELECT symbol, strftime('%Y-%m-%d',time) AS time FROM paper_log", conn)
-        paper_df.drop_duplicates(subset=['symbol','time'], inplace=True)
         trade_log = [trade_df, paper_df]
         for df in trade_log:
             

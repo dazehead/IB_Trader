@@ -144,7 +144,7 @@ class Scanner:
         for data in self.ticker_floats:
             ticker = data[0]
             company_float = data[1]
-            if company_float > self.company_float_threshold:
+            if company_float > self.company_float_threshold or np.isnan(company_float):
                 self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
                 print(f"...{ticker} removed from list due to high float: {company_float}")
         self.get_ticker_list()
@@ -160,16 +160,20 @@ class Scanner:
                     self.ticker_floats.append((ticker, final_float))
                 except ValueError:
                     print(f"{ticker} has no float: {fin['Shs Float']}")
+                    self.ticker_floats.append((ticker, np.NaN))
             except requests.HTTPError as err:
                 if err.response.status_code == 404:
                     print(f"Error 404: Ticker {ticker} not found on Finviz")
+                    self.ticker_floats.append((ticker, np.NaN))
                     # Handle the 404 error here
                 else:
                     print(f"HTTPError: {err}")
+                    self.ticker_floats.append((ticker, np.NaN))
                     # Handle other HTTP errors here
             except Exception as e:
                 print(f"An unexpected error occurred: {e}")
                 self.ticker_floats.append((ticker, np.NaN))
+                #self.ticker_floats.append((ticker, np.NaN))
                 # Handle other unexpected errors here
 
     def filter_by_news(self):

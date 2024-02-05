@@ -54,9 +54,7 @@ def onBarUpdate(bars, hasNewBar):
             signals=signals,
             contract=top_ticker)
         
-        time_frame = close.index
-        signal_log.get_head_node().value = signals[time_frame] = signals
-    
+        signal_log.get_head_node().value = signals[close.index] = signals
         trade.execute_trade()
         
         #if signals[-1] == 1 or signals[-1] == -1:
@@ -78,7 +76,8 @@ if not ib.positions():
     top_gainers.filter_floats()
     print(top_gainers.tickers_list)
     top_gainers.calculate_percent_change()
-    top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
+    #top_ticker = top_gainers.monitor_percent_change(perc_threshold=.0001, time_interval=10)
+    top_ticker = top_gainers.contracts[0]
 else:
     top_ticker =  Stock(ib.positions()[0].contract.symbol, 'SMART', 'USD')
     
@@ -143,7 +142,7 @@ except KeyboardInterrupt:
             ib.sleep(5)
             while risk.trade:
                 trade.execute_trade()
-                signal_log.save_signal(dt.datetime.now(), -1)
+                signal_log.get_head_node().value[dt.datetime.now()] = -1
                 ib.sleep(5)
     trade_log.log_trades()
     signal_log.log_signals()
@@ -163,7 +162,7 @@ else:
                 signals = [-1, -1, -1, -1, -1, -1],
                 contract=top_ticker)
             trade.execute_trade()
-            signal_log.save_signal(dt.datetime.now(), -1)
+            signal_log.get_head_node().value[dt.datetime.now()] = -1
             ib.sleep(5)
             while risk.trade:
                 trade.execute_trade()
