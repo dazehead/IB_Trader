@@ -122,6 +122,8 @@ class LogBook:
         name = name_of_strategy
         current_node = self.get_head_node()
         counter = 0
+
+        #Queary Genreation
         file_path = 'sql_info.txt'
         with open(file_path, 'r')as file:
             file_contents = file.read()
@@ -130,7 +132,8 @@ class LogBook:
             ending = strip_q[-1].split(')')[1:]
             ending = ' '.join(ending)
             final_string = beginning
-
+        
+        # Extracting data from nodes
         while current_node:
             counter +=1
             df = current_node.value.returns.reset_index()
@@ -142,7 +145,6 @@ class LogBook:
             df.to_sql(table_name, conn, if_exists='replace', index=False)
 
             #insert save to name so we can copy paste in sql
-
             if not current_node.get_next_node():
                 format_string = f'SELECT * FROM {table_name}\n){ending}'
                 final_string += format_string

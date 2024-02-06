@@ -36,6 +36,8 @@ class Strategy:
         if self.risk:
             if self.risk.stop_time is not None:
                 signals = self._stop_trading_time(signals)
+            if self.risk.start_time is not None:
+                signals = self._start_trading_time(signals)
             atr = ta.ATR(high, low, close, timeperiod=14)
             signals = self._process_atr_data(signals, atr, close, high)
             #print(f"Processed ATR signals: {signals[-1]}")
@@ -200,6 +202,30 @@ class Strategy:
         new_signals = np.concatenate((trading_time_array, stop_trading_array))
 
         return new_signals
+    
+    def _start_trading_time(self, signals):
+        #print("\n****************************")
+        if self.barsize == '10sec':
+            datetimes = self.data_10sec.index
+            date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.start_time}")
+            data = self.data_10sec
+        elif self.barsize == '1min':
+            datetimes = self.data_1min.index
+            date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.start_time}")
+            data = self.data_1min
+        elif self.barsize == '5min':
+            datetimes = self.data_5min.index
+            date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.start_time}")
+            data = self.data_5min
+
+        zeros_array = np.zeros_like(signals)
+        start_index = (datetimes == date).argmax()
+        trading_time_array = signals[start_index:]
+        start_trading_array = zeros_array[:start_index]
+        new_signals = np.concatenate((start_trading_array, trading_time_array))
+
+        return new_signals
+
 
 
     def graph_data(self, data):

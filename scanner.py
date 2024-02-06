@@ -147,8 +147,11 @@ class Scanner:
         for i,data in enumerate(self.ticker_floats):
             ticker = data[0]
             company_float = data[1]
+            if np.isnan(company_float):
+                pass
+            #print(self.ticker_float_percentage[i], i)
             float_percentage = self.ticker_float_percentage[i][1]
-            if company_float > self.company_float_threshold or np.isnan(company_float) or float_percentage > self.float_percentage_limit:
+            if company_float > self.company_float_threshold or float_percentage > self.float_percentage_limit:
                 self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
                 print(f"...{ticker} removed from list due to high float: {company_float} or float percentage {float_percentage} above {self.float_percentage_limit}")
         self.get_ticker_list()

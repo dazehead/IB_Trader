@@ -76,7 +76,7 @@ class HyperBT(BackTest):
 
 
 def run_hyper():
-    """NOTE: update later so that it gets datetime by itself instead of manually inserting the date"""
+    """note: update later so that it gets datetime by itself instead of manually inserting the date"""
     ##################### data for hyper ####################################
     df_object_list = upload_historical()
     """
@@ -96,7 +96,8 @@ def run_hyper():
     
     risk = Risk_Handler(ib = None,
                         perc_risk = 0.8,
-                        stop_time="10:00:00-05:00",
+                        stop_time="11:00:00-05:00",
+                        start_time="07:00:00-05:00",
                         atr_perc = .20)
 
     # iterating of each DF_Manager and creating a strategy object with each manager
@@ -125,7 +126,7 @@ def run_hyper():
         #print(df)
         #print(backtest.returns.max())
         #print(backtest.returns.idxmax())
-        backtest.graph_data_volume()
+        #backtest.graph_data_volume()
 
         
     return logbook
@@ -190,4 +191,4 @@ def test_multiple_tickers():
 
 
 logbook = run_hyper()
-logbook.export_hyper_to_db('KEFR_risk')
+logbook.export_hyper_to_db('KEFR_time')

@@ -74,7 +74,8 @@ def run_backtest(tickers_list):
 
     risk = Risk_Handler(ib = None,
                         perc_risk = 0.8,
-                        stop_time="10:00:00-05:00",
+                        stop_time="11:00:00-05:00",
+                        start_time="07:00:00-05:00",
                         atr_perc = .20)
 
     # iterating of each DF_Manager and creating a strategy object with each manager
@@ -99,7 +100,7 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-logbook = run_backtest(tickers_list = ['CCTG', 'NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM'])
+logbook = run_backtest(tickers_list = ['GHSI', 'SGMT', 'NEXI', 'CCTG', 'LBPH', 'MINM'])
 #logbook.export_backtest_to_db("KEFT-ATR_subatr_stop10")
 #df = logbook._convert_to_dataframe()
 #print(df)

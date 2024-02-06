@@ -20,13 +20,15 @@ class Kefr_Kama(Strategy):
         signals = pd.Series(0, index=efratios.index)
         signals[efratios > threshold] = 1
 
-        # exits
+        # trading times
         if self.risk:
             if self.risk.stop_time is not None:
                 signals = self._stop_trading_time(signals)
-            atr = ta.ATR(high, low, close, timeperiod=14)
+            if self.risk.start_time is not None:
+                signals = self._start_trading_time(signals)
 
-            # will have to re-anable this if connect to IB
+            # exits
+            atr = ta.ATR(high, low, close, timeperiod=14)
             if self.risk.ib is not None:
                 if self.risk.ib.positions():
                     signals = self._process_atr_data(signals, atr, close, high)

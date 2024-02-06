@@ -4,7 +4,7 @@ import sys
 
 class Risk_Handler:
     """A class to hanlde portfolio risk"""
-    def __init__(self, ib=None, perc_risk=0.8,stop_time=None, atr_perc= .10):
+    def __init__(self, ib=None, perc_risk=0.8,stop_time=None,start_time=None, atr_perc= .10):
         """Initializing Risk resources"""
         self.ib = ib
         if self.ib is not None:
@@ -41,6 +41,7 @@ class Risk_Handler:
         self.perc_risk = perc_risk
 
         self.stop_time = stop_time
+        self.start_time = start_time
         # this creates a 2/1 proffit/loss ratio
         self.atr_perc = atr_perc
         self.profit_target_perc = atr_perc * 2
