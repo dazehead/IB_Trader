@@ -75,10 +75,10 @@ class HyperBT(BackTest):
 
 
 
-def run_hyper():
+def run_hyper(tickers=None):
     """note: update later so that it gets datetime by itself instead of manually inserting the date"""
     ##################### data for hyper ####################################
-    df_object_list = upload_historical()
+    df_object_list = upload_historical(tickers)
     """
     below is how we need to struture our data so that we can hyper optimize
     for all our tickers
@@ -131,11 +131,17 @@ def run_hyper():
         
     return logbook
 
+logbook = run_hyper(['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG'])
+logbook.export_hyper_to_db('KEFR_time')
+
+
+
+
 
 def test_multiple_tickers():
     """NOTE: update later so that it gets datetime by itself instead of manually inserting the date"""
     ##################### data for hyper ####################################
-    df_object_list = upload_historical()
+    df_object_list = upload_historical(tickers=['GHSI'])
     """
     below is how we need to struture our data so that we can hyper optimize
     for all our tickers
@@ -182,13 +188,8 @@ def test_multiple_tickers():
         #print(df)
         #print(backtest.returns.max())
         #print(backtest.returns.idxmax())
-        backtest.graph_data_volume()
+        #backtest.graph_data_volume()
 
         
     return logbook
 
-
-
-
-logbook = run_hyper()
-logbook.export_hyper_to_db('KEFR_time')

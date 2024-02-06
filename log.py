@@ -30,7 +30,7 @@ class Log:
         try:
             numeric_part = float(fin['Shs Float'][:-1])
             self.float = int(numeric_part * 1_000_000)
-            print(f"retrived float: {self.float}")
+            #print(f"retrived float: {self.float}")
         except ValueError:
             print(f"{ticker} has no float: {fin['Shs Float']}")
 
@@ -100,7 +100,7 @@ class LogBook:
     
     def log_signals(self):
         head_node = self.get_head_node()
-        file_path = 'historical_data/signal_data'
+        file_path = 'signal_data/'
         signals = head_node.value
         name = head_node.name
         date = head_node.value.index[0]
@@ -119,10 +119,11 @@ class LogBook:
 
     def export_hyper_to_db(self, name_of_strategy):
         """Function to export a hyper optimized backtest to a DB"""
-        name = name_of_strategy
+        table_name = name_of_strategy
         current_node = self.get_head_node()
         counter = 0
-
+        final_df = None
+        """
         #Queary Genreation
         file_path = 'sql_info.txt'
         with open(file_path, 'r')as file:
@@ -132,18 +133,24 @@ class LogBook:
             ending = strip_q[-1].split(')')[1:]
             ending = ' '.join(ending)
             final_string = beginning
+        """
         
         # Extracting data from nodes
         while current_node:
             counter +=1
             df = current_node.value.returns.reset_index()
+            df.columns = ['_'.join(col.split('_')[1:])for col in df.columns]
             # These must be the names of the parameters tested
-            df.columns = ['cust_efratio_timeperiod', 'cust_threshold', 'cust_atr_perc', 'return']
-        
-            conn = sqlite3.connect('logbooks/hyper.db')
-            table_name = f"{name}_{current_node.get_name()}_{counter}"
-            df.to_sql(table_name, conn, if_exists='replace', index=False)
+            df['ticker'] = f"{current_node.get_name()}_{counter}"
+            if final_df is None:
+                final_df = df
+            else:
+                final_df = pd.concat([final_df, df], ignore_index=True)
+            current_node = current_node.get_next_node()
+        conn = sqlite3.connect('logbooks/hyper.db')
+        final_df.to_sql(table_name, conn, if_exists='replace', index=False)
 
+        """
             #insert save to name so we can copy paste in sql
             if not current_node.get_next_node():
                 format_string = f'SELECT * FROM {table_name}\n){ending}'
@@ -153,9 +160,10 @@ class LogBook:
                 #print(format_string)
                 final_string += format_string
             current_node = current_node.get_next_node()
+            """
 
-        with open(file_path, 'w') as file:
-            file.write(final_string)
+        #with open(file_path, 'w') as file:
+        #    file.write(final_string)
 
 
 
