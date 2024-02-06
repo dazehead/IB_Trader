@@ -69,7 +69,7 @@ def test_price_action():
 
 def run_backtest(tickers_list):
     """NOTE: update later so that it gets datetime by itself instead of manually inserting the date"""
-    #tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'SGMT', 'ELAB', 'SPRC']
+
     df_object_list = upload_historical(tickers=tickers_list)
 
     risk = Risk_Handler(ib = None,
@@ -99,7 +99,7 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-#logbook = run_backtest(tickers_list=tickers_list)
+logbook = run_backtest(tickers_list = ['CCTG', 'NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM'])
 #logbook.export_backtest_to_db("KEFT-ATR_subatr_stop10")
 #df = logbook._convert_to_dataframe()
 #print(df)
@@ -165,8 +165,7 @@ def test_update_sql():
 
 
 
-
-
+"""
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -236,3 +235,4 @@ else:
     ib.cancelHistoricalData(bars)
     #trade_log.log_trades()
     ib.disconnect()
+"""

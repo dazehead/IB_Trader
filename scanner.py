@@ -10,15 +10,18 @@ class Scanner:
     def __init__(self, ib, scancode):
         print("...Initializing Scanner")
         self.ib = ib
+        self.float_percentage_limit = 10.0
         self.contracts = []
         self.parameters_df = None
         self.scancode = scancode
         self.tickers_list = []
-        self.company_float_threshold = 50000000
+        self.company_float_threshold = 50
         self.big_move = False
         self.prev_day_close = []
         self.percent_change = []
         self.ticker_floats = []
+        self.ticker_market_cap = []
+        self.ticker_float_percentage = []
         self.scan_market()
         print("...Scanner Initialized")
 
@@ -94,7 +97,7 @@ class Scanner:
         print(f'{len(scanDataList)} Tickers found.')
         self.get_prev_day_close()
         self.get_ticker_list()
-        self.get_float_finviz()
+        self.get_finviz_stats()
 
 
     def retreive_scanner_params(self):
@@ -141,23 +144,29 @@ class Scanner:
 
     def filter_floats(self):
         """filters contracts by which ones are less than pre-determined float"""
-        for data in self.ticker_floats:
+        for i,data in enumerate(self.ticker_floats):
             ticker = data[0]
             company_float = data[1]
-            if company_float > self.company_float_threshold or np.isnan(company_float):
+            float_percentage = self.ticker_float_percentage[i][1]
+            if company_float > self.company_float_threshold or np.isnan(company_float) or float_percentage > self.float_percentage_limit:
                 self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
-                print(f"...{ticker} removed from list due to high float: {company_float}")
+                print(f"...{ticker} removed from list due to high float: {company_float} or float percentage {float_percentage} above {self.float_percentage_limit}")
         self.get_ticker_list()
 
-    def get_float_finviz(self):
+    def get_finviz_stats(self):
         
         for ticker in self.tickers_list:
             try:
                 fin = finvizfinance(ticker).ticker_fundament()
                 try:
-                    numeric_part = float(fin['Shs Float'][:-1])
-                    final_float = int(numeric_part * 1_000_000)
-                    self.ticker_floats.append((ticker, final_float))
+                    numeric_float = float(fin['Shs Float'][:-1])
+                    self.ticker_floats.append((ticker, numeric_float))
+
+                    numeric_market = float(fin['Market Cap'][:-1])
+                    self.ticker_market_cap.append((ticker, numeric_market))
+
+                    self.ticker_float_percentage.append((ticker, (numeric_float/numeric_market) * 100))
+
                 except ValueError:
                     print(f"{ticker} has no float: {fin['Shs Float']}")
                     self.ticker_floats.append((ticker, np.NaN))
