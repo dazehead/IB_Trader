@@ -4,9 +4,11 @@ import xml.etree.ElementTree as ET
 from finvizfinance.quote import finvizfinance
 import requests
 import numpy as np
+import datetime as dt
 
 class Scanner:
     """A class to handle Scanner lookup and paramters"""
+
     def __init__(self, ib, scancode):
         print("...Initializing Scanner")
         self.ib = ib
@@ -25,12 +27,55 @@ class Scanner:
         self.scan_market()
         print("...Scanner Initialized")
 
+    def archive_data_for_download(self):
+        """Function to archive or download data depending on time"""
+        new_tickers = []
+        market_close = "21:00:00"
+        date_now = dt.datetime.now().date()
+        market_close_time = dt.datetime.combine(date_now, dt.datetime.strptime(market_close, '%H:%M:%S').time())
+        file_path = 'to_be_downloaded.csv'
+        file = pd.read_csv(file_path)
+        file['date'] = pd.to_datetime(file['date'])
+        need_to_download = []
+        for i in range(len(file)):
+            if file.iloc[i]['date'] < dt.datetime.now():
+                need_to_download.append((file.iloc[i]['ticker'], file.iloc[i]['date']))
+        for i in range(len(need_to_download)):
+            pass
+
+        '''
+        try:
+            # Load the existing data from the CSV file
+            df = pd.read_csv(file_path)
+            
+            # Check if the ticker column is None or if it's the beginning of the day
+            if df['ticker'].isnull().all() or dt.datetime.strptime(df['date'].iloc[0], '%Y-%m-%d').date() < dt.datetime.now().date():
+                # Erase the file content and write 'ticker' as None with the current date
+                new_df = pd.DataFrame({'ticker': [None], 'date': [dt.datetime.now().strftime('%Y-%m-%d')]})
+                new_df.to_csv(file_path, index=False)
+            elif dt.datetime.strptime(df['date'].iloc[0], '%Y-%m-%d').date() == dt.datetime.now().date():
+                # Erase all existing data and create a CSV file with the current ticker and the current date
+                new_df = pd.DataFrame({'ticker': [None], 'date': [dt.datetime.now().strftime('%Y-%m-%d')]})
+                new_df.to_csv(file_path, index=False)
+            else:
+                # Append the current self.contract.symbol and datetime.now() to the existing CSV file
+                new_data = {'ticker': [self.contract.symbol], 'date': [dt.datetime.now().strftime('%Y-%m-%d')]}
+                df = df.append(pd.DataFrame(new_data), ignore_index=True)
+                df.to_csv(file_path, index=False)
+        except FileNotFoundError:
+            # If the file doesn't exist, create it with 'ticker' as None and the current date
+            new_df = pd.DataFrame({'ticker': [None], 'date': [dt.datetime.now().strftime('%Y-%m-%d')]})
+            new_df.to_csv(file_path, index=False)
+        '''
+
+
     def monitor_percent_change(self, perc_threshold, time_interval):
         """
         Monitors the percent change of all tickers return by scanner
         if percentage change exceeds threshold after a time_interval
         returns that contract 
         """
+
         while not self.big_move:
             for i, contract in enumerate(self.contracts):
                 market_data = self.ib.reqMktData(contract, '', False, False)
@@ -145,25 +190,31 @@ class Scanner:
     def filter_floats(self):
         """filters contracts by which ones are less than pre-determined float"""
         for i,data in enumerate(self.ticker_floats):
+            print(i, data)
             ticker = data[0]
             company_float = data[1]
             if np.isnan(company_float):
                 pass
-            #print(self.ticker_float_percentage[i], i)
-            float_percentage = self.ticker_float_percentage[i][1]
-            if company_float > self.company_float_threshold or float_percentage > self.float_percentage_limit:
-                self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
-                print(f"...{ticker} removed from list due to high float: {company_float} or float percentage {float_percentage} above {self.float_percentage_limit}")
+            else:
+                #print(self.ticker_float_percentage[i], i)
+                float_percentage = self.ticker_float_percentage[i][1]
+                if company_float > self.company_float_threshold or float_percentage > self.float_percentage_limit:
+                    self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
+                    print(f"...{ticker} removed from list due to high float: {company_float} or float percentage {float_percentage} above {self.float_percentage_limit}")
         self.get_ticker_list()
+        self.archive_data_for_download()
 
     def get_finviz_stats(self):
+        new_contracts = []
         
-        for ticker in self.tickers_list:
+        for contract in self.contracts:
+            ticker = contract.symbol
             try:
                 fin = finvizfinance(ticker).ticker_fundament()
                 try:
                     numeric_float = float(fin['Shs Float'][:-1])
                     self.ticker_floats.append((ticker, numeric_float))
+                    new_contracts.append(contract)
 
                     numeric_market = float(fin['Market Cap'][:-1])
                     self.ticker_market_cap.append((ticker, numeric_market))
@@ -172,21 +223,23 @@ class Scanner:
 
                 except ValueError:
                     print(f"{ticker} has no float: {fin['Shs Float']}")
-                    self.ticker_floats.append((ticker, np.NaN))
+                    #self.ticker_floats.append((ticker, np.NaN))
             except requests.HTTPError as err:
                 if err.response.status_code == 404:
                     print(f"Error 404: Ticker {ticker} not found on Finviz")
-                    self.ticker_floats.append((ticker, np.NaN))
+                    #self.ticker_floats.append((ticker, np.NaN))
                     # Handle the 404 error here
                 else:
                     print(f"HTTPError: {err}")
-                    self.ticker_floats.append((ticker, np.NaN))
+                    #self.ticker_floats.append((ticker, np.NaN))
                     # Handle other HTTP errors here
             except Exception as e:
                 print(f"An unexpected error occurred: {e}")
-                self.ticker_floats.append((ticker, np.NaN))
+                #self.ticker_floats.append((ticker, np.NaN))
                 #self.ticker_floats.append((ticker, np.NaN))
                 # Handle other unexpected errors here
+        self.contracts = new_contracts
+        self.get_ticker_list()
 
     def filter_by_news(self):
         """gets news items for ticker; however, only 3 are available"""

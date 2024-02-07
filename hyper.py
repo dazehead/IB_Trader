@@ -25,9 +25,9 @@ class HyperBT(BackTest):
             output_names = ['value']
             ).from_apply_func(
                 self.strategy.custom_indicator,
-                efratio_timeperiod=14,
-                threshold=0.6,
-                atr_perc=0.1,
+                efratio_timeperiod=9,
+                threshold=0.5,
+                atr_perc=0.9,
                 # param1
                 to_2d=False
             )
@@ -40,13 +40,13 @@ class HyperBT(BackTest):
             self.data.high,
             self.data.low,
             self.data.close,
-            np.arange(9,22, step=1, dtype=int),
-            np.arange(.5, 1.0, step=.1, dtype=float),
-            np.arange(.1, 1, step=.1, dtype=float),
+            efratio_timeperiod = np.arange(2,14, step=1, dtype=int),
+            threshold = np.arange(.5, 1.0, step=.1, dtype=float),
+            atr_perc = np.arange(.1, 2, step=.1, dtype=float),
             param_product=True
         )
         return res
-    
+
     def graph_data_volume(self):
         """ graphs a 3 parameter hyper optimization backtest"""
         fig = self.returns.vbt.volume(
@@ -98,7 +98,7 @@ def run_hyper(tickers=None):
                         perc_risk = 0.8,
                         stop_time="11:00:00-05:00",
                         start_time="07:00:00-05:00",
-                        atr_perc = .20)
+                        atr_perc = 1.5)
 
     # iterating of each DF_Manager and creating a strategy object with each manager
     logbook = LogBook(None, None)
@@ -132,7 +132,7 @@ def run_hyper(tickers=None):
     return logbook
 
 logbook = run_hyper(['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG'])
-logbook.export_hyper_to_db('KEFR_time')
+logbook.export_hyper_to_db('KEFR_param')
 
 
 

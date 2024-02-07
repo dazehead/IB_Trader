@@ -19,7 +19,6 @@ import re
 
 
 # CONSTANTS
-tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'SGMT', 'ELAB', 'SPRC']
 
 def test_strategy():
     ticker = ['LBPH']
@@ -76,7 +75,7 @@ def run_backtest(tickers_list):
                         perc_risk = 0.8,
                         stop_time="11:00:00-05:00",
                         start_time="07:00:00-05:00",
-                        atr_perc = .9)
+                        atr_perc = 1.5)
 
     # iterating of each DF_Manager and creating a strategy object with each manager
     logbook = LogBook(None, None)
@@ -100,7 +99,7 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-logbook = run_backtest(tickers_list = ['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG'])
+#logbook = run_backtest(tickers_list = ['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG'])
 #logbook.export_backtest_to_db("KEFT-ATR_subatr_stop10")
 #df = logbook._convert_to_dataframe()
 #print(df)
@@ -114,9 +113,9 @@ def test_scanner():
     
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     top_gainers.calculate_percent_change()
-    top_stock = top_gainers.monitor_percent_change(perc_threshold=.05, time_interval=10)
-    print(f"BREAKING OUT : {top_stock}")
-#test_scanner()
+    top_gainers.filter_floats()
+    print(top_gainers.tickers_list)
+test_scanner()
 
 
 

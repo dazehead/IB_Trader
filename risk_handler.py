@@ -4,7 +4,7 @@ import sys
 
 class Risk_Handler:
     """A class to hanlde portfolio risk"""
-    def __init__(self, ib=None, perc_risk=0.8,stop_time=None,start_time=None, atr_perc= .10):
+    def __init__(self, ib=None, perc_risk=0.8,stop_time=None,start_time=None, atr_perc= 1.5):
         """Initializing Risk resources"""
         self.ib = ib
         if self.ib is not None:
