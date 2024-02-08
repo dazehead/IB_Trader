@@ -2,6 +2,7 @@ from ib_insync import *
 import pandas as pd
 from dataframe_manager import DF_Manager
 import os
+import datetime as dt
 
 def upload_historical(tickers=None):
     """ Retrieves any amount of historical data and creates a DF_Manager with data"""
@@ -40,26 +41,31 @@ def upload_historical(tickers=None):
     return all_data
 
 
-def download_historical(tickers_list, to_csv=True):
+def download_historical(tickers_list, to_csv=True, ib=None):
     """Downloads historical data from IB"""
-    for ticker in tickers_list:
-        contract = Stock(ticker[0], 'SMART', 'USD')
-        ib.qualifyContracts(contract)
-        bars = ib.reqHistoricalData(contract = contract,
-            endDateTime= ticker[1],
-            durationStr= '1 D',
-            barSizeSetting= "5 secs",
-            whatToShow= "TRADES",
-            useRTH= False)
-        ib.sleep(1)
-        df = util.df(bars)
-        #ib.cancelHistoricalData(bars)
-        if to_csv:
-            filename = f"historical_data/{ticker[0]}_5sec.csv"
-            if not os.path.exists(filename):  
-                df.to_csv(filename, index=False)
-        else:
-            return df
+    if ib==None:
+        print("need IB to download data")
+    else:
+        for ticker in tickers_list:
+            ticker, date = ticker
+            contract = Stock(ticker, 'SMART', 'USD')
+            ib.qualifyContracts(contract)
+            bars = ib.reqHistoricalData(contract = contract,
+                endDateTime= date.tz_localize('EST'),
+                durationStr= '1 D',
+                barSizeSetting= "5 secs",
+                whatToShow= "TRADES",
+                useRTH= False)
+            ib.sleep(1)
+            df = util.df(bars)
+            #ib.cancelHistoricalData(bars)
+            if to_csv:
+                date = date.strftime('%Y-%m-%d')
+                filename = f"historical_data/{date}_{ticker}.csv"
+                if not os.path.exists(filename):  
+                    df.to_csv(filename, index=False)
+            else:
+                return df
 
     def convert_for_hyper(df):
         pass

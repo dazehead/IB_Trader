@@ -5,6 +5,7 @@ from finvizfinance.quote import finvizfinance
 import requests
 import numpy as np
 import datetime as dt
+from get_data import download_historical
 
 class Scanner:
     """A class to handle Scanner lookup and paramters"""
@@ -29,20 +30,36 @@ class Scanner:
 
     def archive_data_for_download(self):
         """Function to archive or download data depending on time"""
-        new_tickers = []
         market_close = "21:00:00"
         date_now = dt.datetime.now().date()
         market_close_time = dt.datetime.combine(date_now, dt.datetime.strptime(market_close, '%H:%M:%S').time())
         file_path = 'to_be_downloaded.csv'
         file = pd.read_csv(file_path)
         file['date'] = pd.to_datetime(file['date'])
+        
+        # grabbing data to download and indexes where there at to remove them
         need_to_download = []
+        indexes = []
         for i in range(len(file)):
             if file.iloc[i]['date'] < dt.datetime.now():
                 need_to_download.append((file.iloc[i]['ticker'], file.iloc[i]['date']))
-        for i in range(len(need_to_download)):
-            pass
+                indexes.append(i)
+        download_historical(need_to_download, to_csv=True, ib=self.ib)
 
+        file.drop(indexes, inplace=True)
+        file.reset_index(inplace=True, drop=True)
+        #print(file, '\n')
+        if self.contracts:
+            for contract in self.contracts:
+                symbol = contract.symbol
+                for i in range(len(file)):
+                    if file.iloc[i]['ticker'] == symbol and file.iloc[i]['date'] == market_close_time:
+                        break
+                file.loc[len(file.index)] = [symbol, market_close_time]
+            file.to_csv(file_path, index=False)
+        else:
+            # there are no contracts
+            pass
         '''
         try:
             # Load the existing data from the CSV file
@@ -139,7 +156,7 @@ class Scanner:
             stock = Stock(data.contractDetails.contract.symbol, 'SMART', 'USD')
             self.ib.qualifyContracts(stock)
             self.contracts.append(stock)
-        print(f'{len(scanDataList)} Tickers found.')
+        #print(f'{len(scanDataList)} Tickers found.')
         self.get_prev_day_close()
         self.get_ticker_list()
         self.get_finviz_stats()
@@ -190,7 +207,7 @@ class Scanner:
     def filter_floats(self):
         """filters contracts by which ones are less than pre-determined float"""
         for i,data in enumerate(self.ticker_floats):
-            print(i, data)
+            #print(i, data)
             ticker = data[0]
             company_float = data[1]
             if np.isnan(company_float):
@@ -200,7 +217,7 @@ class Scanner:
                 float_percentage = self.ticker_float_percentage[i][1]
                 if company_float > self.company_float_threshold or float_percentage > self.float_percentage_limit:
                     self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
-                    print(f"...{ticker} removed from list due to high float: {company_float} or float percentage {float_percentage} above {self.float_percentage_limit}")
+                    #print(f"...{ticker} removed from list due to high float: {company_float} or float percentage {float_percentage} above {self.float_percentage_limit}")
         self.get_ticker_list()
         self.archive_data_for_download()
 
@@ -222,19 +239,23 @@ class Scanner:
                     self.ticker_float_percentage.append((ticker, (numeric_float/numeric_market) * 100))
 
                 except ValueError:
-                    print(f"{ticker} has no float: {fin['Shs Float']}")
+                    pass
+                    #print(f"{ticker} has no float: {fin['Shs Float']}")
                     #self.ticker_floats.append((ticker, np.NaN))
             except requests.HTTPError as err:
                 if err.response.status_code == 404:
-                    print(f"Error 404: Ticker {ticker} not found on Finviz")
+                    pass
+                    #print(f"Error 404: Ticker {ticker} not found on Finviz")
                     #self.ticker_floats.append((ticker, np.NaN))
                     # Handle the 404 error here
                 else:
-                    print(f"HTTPError: {err}")
+                    pass
+                    #print(f"HTTPError: {err}")
                     #self.ticker_floats.append((ticker, np.NaN))
                     # Handle other HTTP errors here
             except Exception as e:
-                print(f"An unexpected error occurred: {e}")
+                pass
+                #print(f"An unexpected error occurred: {e}")
                 #self.ticker_floats.append((ticker, np.NaN))
                 #self.ticker_floats.append((ticker, np.NaN))
                 # Handle other unexpected errors here
