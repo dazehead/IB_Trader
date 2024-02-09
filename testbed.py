@@ -113,9 +113,10 @@ def test_scanner():
     
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     top_gainers.calculate_percent_change()
-    top_gainers.filter_floats()
+    #top_gainers.filter_by_news()
+    top_gainers.filter_floats(archive=False)
     print(top_gainers.tickers_list)
-test_scanner()
+#test_scanner()
 
 
 
@@ -165,7 +166,7 @@ def test_update_sql():
 
 
 
-"""
+
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -235,4 +236,3 @@ else:
     ib.cancelHistoricalData(bars)
     #trade_log.log_trades()
     ib.disconnect()
-"""

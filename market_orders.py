@@ -28,7 +28,7 @@ class Trade:
         self.bid = market_data.bid
         #self.midpoint = market_data.midpoint
         
-    def execute_trade(self):
+    def execute_trade(self, sell_now = False):
         """Logic for when to buy and sell based off signals and if we already hold positions"""
         print(f"Signal: {self.signal}")
         print(f"Spread: {self.bid}-{self.ask}")
@@ -40,6 +40,10 @@ class Trade:
             elif self.ib.positions() and (self.signal == -1) and (self.risk.trade is None):
                 """sell order but we need to check if there is already an order that has not filled then cancel and resubmit"""
                 self._sell_order()
+            elif self.ib.positions() and (self.signal == 0) and (self.risk.trade.order.action == 'SELL'):
+                self._check_order()
+            elif self.ib.positions() and (self.signal == -1) and (self.risk.trade.order.action == 'SELL'):
+                self._sell_order(sell_now=True)
 
             else:
                 """this section is to make sure that all positions were sold if not cancel and put in another market order"""
@@ -58,28 +62,35 @@ class Trade:
             print("----BOUGHT----")
         else:
             self.risk.trade_num_shares = num_shares
-            buy_order = MarketOrder('BUY', num_shares)
+            buy_order = LimitOrder('BUY', num_shares, self.ask)
             buy_order.outsideRth = self.outside_rth
             trade = self.ib.placeOrder(self.top_stock, buy_order)
             self.risk.trade = trade
             print("----BOUGHT----")
         
     
-    def _sell_order(self):
+    def _sell_order(self, sell_now = False):
         if self.outside_rth:
             print("outside RTH")
             """Sells open positions at market"""
-            self.risk.trade = None
+            #self.risk.trade = None
             positions = self.ib.positions()[0].position
-            sell_order = LimitOrder("SELL", positions, self.ask)
+            sell_order = StopOrder("SELL", positions, self.risk.stop_loss)
+            if sell_now:
+                self.ib.cancelOrder(self.risk.trade.order)
+                sell_order = LimitOrder("SELL", positions, self.bid)
             sell_order.outsideRth = self.outside_rth
             trade = self.ib.placeOrder(self.top_stock, sell_order)
             self.risk.trade = trade
         else:
             """Sells open positions at market"""
-            self.risk.trade = None
+            #self.risk.trade = None
             positions = self.ib.positions()[0].position
-            sell_order = MarketOrder("SELL", positions)
+            sell_order = StopOrder("SELL", positions, self.risk.stop_loss)
+            print(f"stop_loss --------: {self.risk.stop_loss}")
+            if sell_now:
+                self.ib.cancelOrder(self.risk.trade.order)
+                sell_order = LimitOrder("SELL", positions, self.bid)
             sell_order.outsideRth = self.outside_rth
             trade = self.ib.placeOrder(self.top_stock, sell_order)
             self.risk.trade = trade
@@ -89,29 +100,40 @@ class Trade:
         """Checks to make sure the orders have been filled, if not then we cancel the orders and place the orders again with updated market"""
         print("-in checking order-\n")
         if self.risk.trade is not None:
-            #print(self.risk.trade)
+            print(f"Order Status: {self.risk.trade.orderStatus.status}")  
             if self.risk.trade.orderStatus.status != 'Filled' and self.risk.trade.orderStatus.status != 'Cancelled':
                 print(f"Order Status: {self.risk.trade.orderStatus.status}")             
 
                 if self.risk.trade.order.action == 'BUY':
                     if self.risk.trade_counter == 3:
+                        """when the buy order still hasn't been filled and 3 iterations have passed"""
                         self.risk.trade_counter = 0
-                        shares_prev_bought = self.risk.trade.order.totalQuantity
-                        self.num_shares = round(self.risk.trade_num_shares - shares_prev_bought, 1)
-                        #print(f"filled: {shares_prev_bought} : needing: {self.num_shares}")
+                        # below is what we previous did still need to verify the .remaining give correct shares
+                        #shares_prev_bought = self.risk.trade.order.totalQuantity
+                        #self.num_shares = round(self.risk.trade_num_shares - shares_prev_bought, 1)
+                        print(f"filled: {self.risk.trade.orderStatus.filled} : needing: {self.risk.trade.orderStatus.remaining}")
+                        self.num_shares = self.risk.trade.orderStatus.remaining
                         self.ib.cancelOrder(self.risk.trade.order)
                         self._buy_order(self.num_shares)
                         print('canceling and re-buying with calculated shares')
                     elif self.risk.trade.orderStatus.status == 'PreSubmitted':
                         self.risk.trade_counter += 1
-                    elif self.risk.tradeorderStatus.status == 'Submitted':
+                    elif self.risk.trade.orderStatus.status == 'Submitted':
                         self.risk.trade_counter += 1
- 
 
-                elif self.risk.trade.order.action == 'SELL':
-                    self.ib.cancelOrder(self.risk.trade.order)
-                    self._sell_order()    
-
+                elif self.risk.trade.order.action == 'SELL' and self.risk.trade.orderStatus.status == 'PreSubmitted':
+                    if self.risk.trade_counter == 12:
+                        self.risk.trade_counter == 0
+                        self.ib.cancelOrder(self.risk.trade.order)
+                        self._sell_order()
+                    print(self.risk.trade_counter)
+                    self.risk.trade_counter += 1
+            elif self.risk.trade.orderStatus.status == 'Filled' and self.risk.trade.order.action == 'BUY':
+                if self.risk.stop_loss == None:
+                    print(f"stop_loss is None")
+                    pass
+                else:
+                    self._sell_order()
             else:
                 self.risk.trade = None
         pass

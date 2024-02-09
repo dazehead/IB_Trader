@@ -73,17 +73,17 @@ class Strategy:
                     self.risk.highest_high = close[-1]
                 
 
-                stop_loss = self.risk.highest_high - (atr[-1]*2 + self.risk.atr_perc)
+                self.risk.stop_loss = round(self.risk.highest_high - (atr[-1]*2 + self.risk.atr_perc), 2)
                 print(f"Highest Close: {self.risk.highest_high}")
                 #print(f"ATR: {atr[-1]}")
                 print(f"Purchase Price: {price_at_purchase}")
                 #print(f"ATR perc_risk = {self.risk.atr_perc}")
-                print(f"Stop Loss: {stop_loss}")
-                if close[-1] < stop_loss:
+                print(f"Stop Loss: {self.risk.stop_loss}")
+                if close[-1] < self.risk.stop_loss:
                     """SELL"""
                     new_signals = signals
                     new_signals[-1] = -1
-                elif close[-1] > stop_loss:
+                elif close[-1] > self.risk.stop_loss:
                     new_signals = signals
         else:
             """If we are only backtesting and NOT connect to IB"""
@@ -117,27 +117,27 @@ class Strategy:
                                 new_high = price#high[i+14]
                             
                             """Below code for a percentage based atr """
-                            #stop_loss = new_high - (price_at_purchase * (atr[i] + self.risk.atr_perc))
+                            #self.risk.stop_loss = new_high - (price_at_purchase * (atr[i] + self.risk.atr_perc))
                             #profit_target = price_at_purchase + (price_at_purchase * (atr[i] + self.risk.profit_target_perc))
                             
                             """Below code for subtracting the atr"""
-                            stop_loss = new_high - (atr[i]*2 + self.risk.atr_perc)
+                            self.risk.stop_loss = round(new_high - (atr[i]*2 + self.risk.atr_perc), 2)
                             profit_target = price_at_purchase + (atr[i] + self.risk.atr_perc)
 
                             #print(f"PROFIT TARGET: {profit_target}")
-                            #print(f"STOP LOSS: {stop_loss}")
+                            #print(f"STOP LOSS: {self.risk.stop_loss}")
                             #print(f"PRICE: {price}")
                             #print(f"NEW HIGH: {new_high}")
-                            if price < stop_loss:
+                            if price < self.risk.stop_loss:
                                 # hit our stop loss need to SELL
                                 new_signals[i] = -1
                                 in_trade = False
                                 #print(f"PROFIT TARGET: {profit_target}")
-                                #print(f"STOP LOSS: {stop_loss}")
+                                #print(f"STOP LOSS: {self.risk.stop_loss}")
                                 #print(f"PRICE: {price}")
                                 #print(f"NEW HIGH: {new_high}")
                                 #print("SELL\n")
-                            elif new_signals[i] == -1 and price > stop_loss and price < profit_target:
+                            elif new_signals[i] == -1 and price > self.risk.stop_loss and price < profit_target:
                                 # SELL signal but stop loss not hit and profit target not hit: keep going
                                 #print("PROFIT NOT HIT AND STOP LOSS NOT HIT")              
                                 new_signals[i] = 0

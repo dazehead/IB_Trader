@@ -45,6 +45,7 @@ class Risk_Handler:
         # this creates a 2/1 proffit/loss ratio
         self.atr_perc = atr_perc
         self.profit_target_perc = atr_perc * 2
+        self.stop_loss = None
 
 
     def get_directive(self):

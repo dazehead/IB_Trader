@@ -58,33 +58,7 @@ class Scanner:
                 file.loc[len(file.index)] = [symbol, market_close_time]
             file.to_csv(file_path, index=False)
         else:
-            # there are no contracts
             pass
-        '''
-        try:
-            # Load the existing data from the CSV file
-            df = pd.read_csv(file_path)
-            
-            # Check if the ticker column is None or if it's the beginning of the day
-            if df['ticker'].isnull().all() or dt.datetime.strptime(df['date'].iloc[0], '%Y-%m-%d').date() < dt.datetime.now().date():
-                # Erase the file content and write 'ticker' as None with the current date
-                new_df = pd.DataFrame({'ticker': [None], 'date': [dt.datetime.now().strftime('%Y-%m-%d')]})
-                new_df.to_csv(file_path, index=False)
-            elif dt.datetime.strptime(df['date'].iloc[0], '%Y-%m-%d').date() == dt.datetime.now().date():
-                # Erase all existing data and create a CSV file with the current ticker and the current date
-                new_df = pd.DataFrame({'ticker': [None], 'date': [dt.datetime.now().strftime('%Y-%m-%d')]})
-                new_df.to_csv(file_path, index=False)
-            else:
-                # Append the current self.contract.symbol and datetime.now() to the existing CSV file
-                new_data = {'ticker': [self.contract.symbol], 'date': [dt.datetime.now().strftime('%Y-%m-%d')]}
-                df = df.append(pd.DataFrame(new_data), ignore_index=True)
-                df.to_csv(file_path, index=False)
-        except FileNotFoundError:
-            # If the file doesn't exist, create it with 'ticker' as None and the current date
-            new_df = pd.DataFrame({'ticker': [None], 'date': [dt.datetime.now().strftime('%Y-%m-%d')]})
-            new_df.to_csv(file_path, index=False)
-        '''
-
 
     def monitor_percent_change(self, perc_threshold, time_interval):
         """
@@ -92,19 +66,36 @@ class Scanner:
         if percentage change exceeds threshold after a time_interval
         returns that contract 
         """
-
+        counter = 0
         while not self.big_move:
-            for i, contract in enumerate(self.contracts):
-                market_data = self.ib.reqMktData(contract, '', False, False)
-                market_price = market_data.marketPrice()
-                self.percent_change[i].append(((market_price - self.prev_day_close[i]) / self.prev_day_close[i]) * 100)
-                if (self.percent_change[i][-1] - self.percent_change[i][-2] > perc_threshold) and (self.percent_change[i][-1] > 0):
-                    print(f"{self.tickers_list[i]} has broken the {perc_threshold} from {self.percent_change[i][-2]} to {self.percent_change[i][-1]}")
-                    return contract
-                else:
-                    print("...Monitoring Percent Change")
-                    self.ib.cancelMktData(contract)
-                    self.ib.sleep(time_interval)
+            if self.contracts:
+                for i, contract in enumerate(self.contracts):
+                    market_data = self.ib.reqMktData(contract, '', False, False)
+                    market_price = market_data.marketPrice()
+                    self.percent_change[i].append(((market_price - self.prev_day_close[i]) / self.prev_day_close[i]) * 100)
+                    if (self.percent_change[i][-1] - self.percent_change[i][-2] > perc_threshold) and (self.percent_change[i][-1] > 0):
+                        print(f"{self.tickers_list[i]} has broken the {perc_threshold} from {self.percent_change[i][-2]} to {self.percent_change[i][-1]}")
+                        return contract
+                    else:
+                        print("...Monitoring Percent Change")
+                        self.ib.cancelMktData(contract)
+                        self.ib.sleep(time_interval)
+            else:
+                self.ib.sleep(time_interval)
+                self.scan_market()
+                if counter == 6:
+                    counter = 0
+                    print("\t----------Update----------")
+                    for i in range(len(self.tickers_list)):
+                        print(f'\n\t-------------{i+1}------------')
+                        print(f'\tTicker: {self.tickers_list[i]}')
+                        print(f'\tFloat : {self.ticker_float_percentage[i][1]}')
+                self.filter_floats()
+                self.calculate_percent_change()
+                print("...actively scanning markets for moves")
+                print(f"Tickers: {self.tickers_list}")
+                counter += 1
+                
 
 
     def calculate_percent_change(self):
@@ -131,7 +122,7 @@ class Scanner:
             df = util.df(bars)
             df['date'] = df['date'].apply(lambda x: str(x).split()[0])
             prev_df = df[df['date'] == df['date'].unique()[0]]
-            self.prev_day_close.append(prev_df.iloc[-1]['close'])            
+            self.prev_day_close.append(prev_df.iloc[-1]['close'])
 
 
     def scan_market(self):
@@ -156,10 +147,13 @@ class Scanner:
             stock = Stock(data.contractDetails.contract.symbol, 'SMART', 'USD')
             self.ib.qualifyContracts(stock)
             self.contracts.append(stock)
-        #print(f'{len(scanDataList)} Tickers found.')
+        print(f'\n{len(scanDataList)} Tickers found.')
+        self.ib.cancelScannerSubscription(scanDataList)
+
         self.get_prev_day_close()
         self.get_ticker_list()
         self.get_finviz_stats()
+
 
 
     def retreive_scanner_params(self):
@@ -204,7 +198,7 @@ class Scanner:
         for contract in self.contracts:
             self.tickers_list.append(contract.symbol)
 
-    def filter_floats(self):
+    def filter_floats(self, archive = True):
         """filters contracts by which ones are less than pre-determined float"""
         for i,data in enumerate(self.ticker_floats):
             #print(i, data)
@@ -219,7 +213,8 @@ class Scanner:
                     self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
                     #print(f"...{ticker} removed from list due to high float: {company_float} or float percentage {float_percentage} above {self.float_percentage_limit}")
         self.get_ticker_list()
-        self.archive_data_for_download()
+        if archive:
+            self.archive_data_for_download()
 
     def get_finviz_stats(self):
         new_contracts = []
@@ -241,24 +236,16 @@ class Scanner:
                 except ValueError:
                     pass
                     #print(f"{ticker} has no float: {fin['Shs Float']}")
-                    #self.ticker_floats.append((ticker, np.NaN))
             except requests.HTTPError as err:
                 if err.response.status_code == 404:
                     pass
                     #print(f"Error 404: Ticker {ticker} not found on Finviz")
-                    #self.ticker_floats.append((ticker, np.NaN))
-                    # Handle the 404 error here
                 else:
                     pass
                     #print(f"HTTPError: {err}")
-                    #self.ticker_floats.append((ticker, np.NaN))
-                    # Handle other HTTP errors here
             except Exception as e:
                 pass
                 #print(f"An unexpected error occurred: {e}")
-                #self.ticker_floats.append((ticker, np.NaN))
-                #self.ticker_floats.append((ticker, np.NaN))
-                # Handle other unexpected errors here
         self.contracts = new_contracts
         self.get_ticker_list()
 
@@ -266,6 +253,7 @@ class Scanner:
         """gets news items for ticker; however, only 3 are available"""
         filtered_contracts = []
         news_providers = self.ib.reqNewsProviders()
+        print(news_providers)
         codes = '+'.join(np.code for np in news_providers)
 
         for contract in self.contracts:
@@ -278,6 +266,9 @@ class Scanner:
                 totalResults=10
                 )
             try:
+                for news_event in headlines:
+                    print(news_event)
+                    print('\n')
                 latest = headlines[0]
                 article = self.ib.reqNewsArticle(
                     providerCode=latest.providerCode,
@@ -285,6 +276,6 @@ class Scanner:
                     )
                 filtered_contracts.append(contract)
             except IndexError:
-                pass
-        self.contracts = filtered_contracts
-        self.get_ticker_list()
+                print(f'No News for {contract.symbol}')
+        #self.contracts = filtered_contracts
+        #self.get_ticker_list()
