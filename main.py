@@ -73,7 +73,8 @@ print("Trade Log Initialized...")
 # initializing Scanner object
 if not ib.positions():
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
-    top_gainers.filter_floats(archive=True)
+    print(top_gainers.tickers_list)
+    top_gainers.filter_floats(float_percentage_limit= 10, archive=True)
     print(top_gainers.tickers_list)
     top_gainers.calculate_percent_change()
     top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)

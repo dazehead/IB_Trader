@@ -14,11 +14,9 @@ import yfinance as yf
 import os
 import re
 
-
-
-
-
 # CONSTANTS
+tickers_list = ['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'TENX', 'SYRA']
+
 
 def test_strategy():
     ticker = ['LBPH']
@@ -99,8 +97,8 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-#logbook = run_backtest(tickers_list = ['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG'])
-#logbook.export_backtest_to_db("KEFT-ATR_subatr_stop10")
+logbook = run_backtest(tickers_list)
+logbook.export_backtest_to_db("KEFR_time_efr4_p5_1p5")
 #df = logbook._convert_to_dataframe()
 #print(df)
 
@@ -166,7 +164,7 @@ def test_update_sql():
 
 
 
-
+"""
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
@@ -236,3 +234,4 @@ else:
     ib.cancelHistoricalData(bars)
     #trade_log.log_trades()
     ib.disconnect()
+"""

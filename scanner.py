@@ -13,12 +13,12 @@ class Scanner:
     def __init__(self, ib, scancode):
         print("...Initializing Scanner")
         self.ib = ib
-        self.float_percentage_limit = 10.0
+        self.float_percentage_limit = None
         self.contracts = []
         self.parameters_df = None
         self.scancode = scancode
         self.tickers_list = []
-        self.company_float_threshold = 50
+        self.company_float_threshold = 50000000
         self.big_move = False
         self.prev_day_close = []
         self.percent_change = []
@@ -78,23 +78,36 @@ class Scanner:
                         return contract
                     else:
                         print("...Monitoring Percent Change")
+                        if counter ==2:
+                            print("\n\t----------Update----------")
+                            for i in range(len(self.tickers_list)):
+                                print(f'\n\t-------------{i+1}------------')
+                                print(f'\tTicker: {self.tickers_list[i]}')  
+                                #print(f'\tFloat Percentage: {round(self.ticker_float_percentage[i][1], 2)}')
+                                #print(f'\tFloat: {self.ticker_floats[i][1]}')
+                        counter += 1
+                        if counter > 3:
+                            counter = 0
                         self.ib.cancelMktData(contract)
                         self.ib.sleep(time_interval)
             else:
-                self.ib.sleep(time_interval)
+                print("\n\n... Scanning Market for Tickers with Specified Parameters")
                 self.scan_market()
-                if counter == 6:
-                    counter = 0
+                print(f"Tickers: {self.tickers_list}")
+                if counter == 2:
                     print("\t----------Update----------")
                     for i in range(len(self.tickers_list)):
                         print(f'\n\t-------------{i+1}------------')
-                        print(f'\tTicker: {self.tickers_list[i]}')
-                        print(f'\tFloat : {self.ticker_float_percentage[i][1]}')
-                self.filter_floats()
+                        print(f'\tTicker: {self.tickers_list[i]}')  
+                        print(f'\tFloat Percentage: {round(self.ticker_float_percentage[i][1], 2)}')
+                        print(f'\tFloat: {self.ticker_floats[i][1]}')
+                self.filter_floats(self.float_percentage_limit)
                 self.calculate_percent_change()
-                print("...actively scanning markets for moves")
-                print(f"Tickers: {self.tickers_list}")
+                self.ticker_floats = []
                 counter += 1
+                if counter > 3:
+                    counter = 0
+                self.ib.sleep(time_interval)
                 
 
 
@@ -198,8 +211,10 @@ class Scanner:
         for contract in self.contracts:
             self.tickers_list.append(contract.symbol)
 
-    def filter_floats(self, archive = True):
+    def filter_floats(self, float_percentage_limit=None, archive = True):
         """filters contracts by which ones are less than pre-determined float"""
+        self.float_percentage_limit = float_percentage_limit
+        new_contracts = []
         for i,data in enumerate(self.ticker_floats):
             #print(i, data)
             ticker = data[0]
@@ -209,9 +224,16 @@ class Scanner:
             else:
                 #print(self.ticker_float_percentage[i], i)
                 float_percentage = self.ticker_float_percentage[i][1]
-                if company_float > self.company_float_threshold or float_percentage > self.float_percentage_limit:
-                    self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
-                    #print(f"...{ticker} removed from list due to high float: {company_float} or float percentage {float_percentage} above {self.float_percentage_limit}")
+                #print(float_percentage)
+                if not float_percentage_limit:
+                    if company_float > self.company_float_threshold or float_percentage > float_percentage_limit:
+                        self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
+                        #print(f'\n{ticker} removed due to high float or precentage too high')
+                        #print(f'Float: {company_float}, Percentage: {float_percentage}')
+                else:
+                    if company_float > self.company_float_threshold:
+                        self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
+
         self.get_ticker_list()
         if archive:
             self.archive_data_for_download()
@@ -224,28 +246,42 @@ class Scanner:
             try:
                 fin = finvizfinance(ticker).ticker_fundament()
                 try:
-                    numeric_float = float(fin['Shs Float'][:-1])
-                    self.ticker_floats.append((ticker, numeric_float))
                     new_contracts.append(contract)
-
+                    numeric_float = float(fin['Shs Float'][:-1])
                     numeric_market = float(fin['Market Cap'][:-1])
-                    self.ticker_market_cap.append((ticker, numeric_market))
+                    float_mb = fin['Shs Float'][-1]
+                    market_mb = fin['Market Cap'][-1]
+                    if float_mb == 'M':
+                        final_float = int(numeric_float * 1_000_000)
+                    elif float_mb == 'B':
+                        final_float = int(numeric_float * 1_000_000_000)
 
-                    self.ticker_float_percentage.append((ticker, (numeric_float/numeric_market) * 100))
+                    if market_mb == 'M':
+                        final_market = int(numeric_market * 1_000_000)
+                    elif market_mb == 'B':
+                        final_market = int(numeric_market * 1_000_000_000)
+
+                    self.ticker_floats.append((ticker, final_float))
+                    self.ticker_market_cap.append((ticker, final_market))
+                    #print(f"\ncontaract: {contract.symbol}")
+                    #print(f"Float: {final_float}, Market: {final_market}")
+                    #print(f"Percentage: {(final_float/final_market)*100}")
+
+                    self.ticker_float_percentage.append((ticker, (final_float/final_market) * 100))
 
                 except ValueError:
-                    pass
                     #print(f"{ticker} has no float: {fin['Shs Float']}")
+                    new_contracts.pop(-1)
             except requests.HTTPError as err:
                 if err.response.status_code == 404:
                     pass
-                    #print(f"Error 404: Ticker {ticker} not found on Finviz")
+                    print(f"\nError 404: Ticker {ticker} not found on Finviz")
                 else:
                     pass
-                    #print(f"HTTPError: {err}")
+                    print(f"\nHTTPError: {err}")
             except Exception as e:
                 pass
-                #print(f"An unexpected error occurred: {e}")
+                print(f"\nAn unexpected error occurred: {e}")
         self.contracts = new_contracts
         self.get_ticker_list()
 

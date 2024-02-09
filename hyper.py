@@ -70,15 +70,15 @@ class HyperBT(BackTest):
 ######################## Below is code to run Hyper Optimized backtest ####################
 
 
-#tickers_list = ['LBPH', 'NEXI', 'MINM', 'AIMD', 'ACON', 'SNTG', 'SGMT', 'ELAB', 'SPRC']
+tickers_list = ['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'TENX', 'SYRA']
 
 
 
 
-def run_hyper(tickers=None):
+def run_hyper(tickers_list=None):
     """note: update later so that it gets datetime by itself instead of manually inserting the date"""
     ##################### data for hyper ####################################
-    df_object_list = upload_historical(tickers)
+    df_object_list = upload_historical(tickers_list)
     """
     below is how we need to struture our data so that we can hyper optimize
     for all our tickers
@@ -131,8 +131,8 @@ def run_hyper(tickers=None):
         
     return logbook
 
-logbook = run_hyper(['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG'])
-logbook.export_hyper_to_db('KEFR_param')
+logbook = run_hyper()
+logbook.export_hyper_to_db('KEFR_time_all')
 
 
 
@@ -190,6 +190,5 @@ def test_multiple_tickers():
         #print(backtest.returns.idxmax())
         #backtest.graph_data_volume()
 
-        
     return logbook
 

@@ -123,7 +123,7 @@ class Trade:
 
                 elif self.risk.trade.order.action == 'SELL' and self.risk.trade.orderStatus.status == 'PreSubmitted':
                     if self.risk.trade_counter == 12:
-                        self.risk.trade_counter == 0
+                        self.risk.trade_counter = 0
                         self.ib.cancelOrder(self.risk.trade.order)
                         self._sell_order()
                     print(self.risk.trade_counter)

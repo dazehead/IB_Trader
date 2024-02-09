@@ -32,7 +32,7 @@ class Log:
             self.float = int(numeric_part * 1_000_000)
             #print(f"retrived float: {self.float}")
         except ValueError:
-            print(f"{ticker} has no float: {fin['Shs Float']}")
+            print(f"{self.name} has no float: {fin['Shs Float']}")
 
     def get_name(self):
         return self.name
