@@ -56,6 +56,7 @@ class Scanner:
                     if file.iloc[i]['ticker'] == symbol and file.iloc[i]['date'] == market_close_time:
                         break
                 file.loc[len(file.index)] = [symbol, market_close_time]
+            file.drop_duplicates(inplace=True)
             file.to_csv(file_path, index=False)
         else:
             pass
@@ -225,8 +226,8 @@ class Scanner:
                 #print(self.ticker_float_percentage[i], i)
                 float_percentage = self.ticker_float_percentage[i][1]
                 #print(float_percentage)
-                if not float_percentage_limit:
-                    if company_float > self.company_float_threshold or float_percentage > float_percentage_limit:
+                if self.float_percentage_limit is not None:
+                    if company_float > self.company_float_threshold or float_percentage > self.float_percentage_limit:
                         self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
                         #print(f'\n{ticker} removed due to high float or precentage too high')
                         #print(f'Float: {company_float}, Percentage: {float_percentage}')

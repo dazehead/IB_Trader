@@ -74,10 +74,10 @@ print("Trade Log Initialized...")
 if not ib.positions():
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     print(top_gainers.tickers_list)
-    top_gainers.filter_floats(float_percentage_limit= 10, archive=True)
+    top_gainers.filter_floats(float_percentage_limit= None, archive=True)
     print(top_gainers.tickers_list)
     top_gainers.calculate_percent_change()
-    top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
+    top_ticker = top_gainers.monitor_percent_change(perc_threshold=.02, time_interval=10)
     #top_ticker = top_gainers.contracts[0]
 else:
     top_ticker =  Stock(ib.positions()[0].contract.symbol, 'SMART', 'USD')
@@ -142,6 +142,7 @@ except KeyboardInterrupt:
                 contract=top_ticker)
             trade.execute_trade(sell_now=True)
             ib.sleep(5)
+            counter = 0
             while risk.trade:
                 trade.execute_trade(sell_now=True)
                 signal_log.get_head_node().value[dt.datetime.now()] = -1

@@ -77,6 +77,8 @@ class Trade:
             positions = self.ib.positions()[0].position
             sell_order = StopOrder("SELL", positions, self.risk.stop_loss)
             if sell_now:
+                market_data = self.ib.reqMktData(self.top_stock, '', False, False)
+                self.bid = market_data.bid
                 self.ib.cancelOrder(self.risk.trade.order)
                 sell_order = LimitOrder("SELL", positions, self.bid)
             sell_order.outsideRth = self.outside_rth
@@ -89,6 +91,8 @@ class Trade:
             sell_order = StopOrder("SELL", positions, self.risk.stop_loss)
             print(f"stop_loss --------: {self.risk.stop_loss}")
             if sell_now:
+                market_data = self.ib.reqMktData(self.top_stock, '', False, False)
+                self.bid = market_data.bid
                 self.ib.cancelOrder(self.risk.trade.order)
                 sell_order = LimitOrder("SELL", positions, self.bid)
             sell_order.outsideRth = self.outside_rth
@@ -100,9 +104,9 @@ class Trade:
         """Checks to make sure the orders have been filled, if not then we cancel the orders and place the orders again with updated market"""
         print("-in checking order-\n")
         if self.risk.trade is not None:
-            print(f"Order Status: {self.risk.trade.orderStatus.status}")  
+            #print(f"Order Status: {self.risk.trade.orderStatus.status}")  
             if self.risk.trade.orderStatus.status != 'Filled' and self.risk.trade.orderStatus.status != 'Cancelled':
-                print(f"Order Status: {self.risk.trade.orderStatus.status}")             
+                #print(f"Order Status: {self.risk.trade.orderStatus.status}")             
 
                 if self.risk.trade.order.action == 'BUY':
                     if self.risk.trade_counter == 3:
@@ -122,11 +126,17 @@ class Trade:
                         self.risk.trade_counter += 1
 
                 elif self.risk.trade.order.action == 'SELL' and self.risk.trade.orderStatus.status == 'PreSubmitted':
-                    if self.risk.trade_counter == 12:
+                    if self.risk.trade_counter == 13:
                         self.risk.trade_counter = 0
+                        print("Updating Stop Loss")
+                        # below does not update unsure how to modify existing order
+                        #updated_order = self.risk.trade.order.update(stopPrice=self.risk.stop_loss)
+                        #self.ib.placeOrder(self.top_stock, updated_order)
+
+                        # As of right now we have to cancel and resubmit
                         self.ib.cancelOrder(self.risk.trade.order)
                         self._sell_order()
-                    print(self.risk.trade_counter)
+                    #print(self.risk.trade_counter)
                     self.risk.trade_counter += 1
             elif self.risk.trade.orderStatus.status == 'Filled' and self.risk.trade.order.action == 'BUY':
                 if self.risk.stop_loss == None:
@@ -137,6 +147,7 @@ class Trade:
             else:
                 self.risk.trade = None
         pass
+
 
     def check_RTH(self):
         """returns whether it is oRTH or not"""
