@@ -92,7 +92,7 @@ print("Contract Qualified")
 print("Initializing Risk_Handler...")
 risk = Risk_Handler(
      ib=ib,
-     backtest_db_name="KEFR_below10_efr5_p9_1p5",
+     backtest_db_name="KEFR_below10_efr4_p9_1p5",
      stop_time=None,
      start_time=None,
      atr_perc=1.5)

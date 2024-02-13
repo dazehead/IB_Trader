@@ -20,7 +20,7 @@ import numpy as np
 
 # CONSTANTS
 tickers_list = ['GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'MSS']
-
+tickers_list_below_10 = ['GHSI', 'SUGP', 'SMGT', 'NEXI', 'PLCE', 'CCTG', 'LBPH', 'MGIH', 'BMR', 'MSS', 'MINM']
 
 def test_strategy():
     ticker = ['LBPH']
@@ -101,8 +101,8 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-#logbook = run_backtest(tickers_list)
-#logbook.export_backtest_to_db("KEFR_below10_efr5_p9_1p5")
+#logbook = run_backtest(tickers_list_below_10)
+#logbook.export_backtest_to_db("KEFR_below10_efr4_p9_1p5")
 
 #df = logbook._convert_to_dataframe()
 #print(df)
@@ -165,9 +165,9 @@ def test_update_sql():
 
 #test_update_sql()
         
-def plot_from_db():
+def plot_from_db(table_name):
     conn= sqlite3.connect("logbooks/hyper.db")
-    df = pd.read_sql('SELECT AVG(return) AS average_return FROM KEFR_below_10 GROUP BY efratio_timeperiod, threshold, atr_perc ORDER BY average_return DESC', conn)
+    df = pd.read_sql(f'SELECT AVG(return) AS average_return FROM {table_name} GROUP BY efratio_timeperiod, threshold, atr_perc ORDER BY average_return DESC', conn)
     mean = np.mean(df['average_return'])
     standard_dev = np.std(df['average_return'])
     std_1 = mean-standard_dev
@@ -186,28 +186,22 @@ def plot_from_db():
     plt.legend()
     plt.show()
     
+        
+#plot_from_db('KEFR_below_10')
 
-def kelly(backtest_db_name):
+def kelly_criterion(table):
     conn = sqlite3.connect('logbooks/backtests.db')
-    df = pd.read_sql(f'SELECT "Total Return [%]" as total_return FROM {backtest_db_name};', conn)
+    df = pd.read_sql(f'SELECT "Total Return [%]" as total_return FROM {table};', conn)
     returns = df['total_return'].to_numpy()
-    print(returns)
     positive_count = np.sum(returns > 0)
     negative_count = np.sum(returns < 0)
     total_count = len(returns)
     ratio = positive_count/ negative_count
     win_percentage = positive_count / total_count
-    print(f'R= {ratio}, W= {win_percentage}')
     kelly_percentage = win_percentage - ((1-win_percentage)/ ratio)
-    print(f"KELLY = {kelly_percentage}")
-    
 
-kelly('KEFR_below10_efr5_p9_1p5')
-        
-
-#plot_from_db()
-
-
+    return kelly_percentage
+print(kelly_criterion('KEFR_below10_efr4_p9_1p5'))
 
 """
 def onBarUpdate(bars, hasNewBar):

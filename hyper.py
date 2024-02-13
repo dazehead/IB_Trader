@@ -71,6 +71,8 @@ class HyperBT(BackTest):
 
 
 tickers_list = ['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'TENX', 'SYRA']
+#tickers_list_below_10 = ['GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'MSS']
+tickers_list_below_10 = ['GHSI', 'SUGP', 'SMGT', 'NEXI', 'PLCE', 'CCTG', 'LBPH', 'MGIH', 'BMR', 'MSS', 'MINM']
 
 
 
@@ -95,7 +97,6 @@ def run_hyper(tickers_list=None):
     """
     
     risk = Risk_Handler(ib = None,
-                        perc_risk = 0.8,
                         stop_time="11:00:00-05:00",
                         start_time="07:00:00-05:00",
                         atr_perc = 1.5)
@@ -131,6 +132,6 @@ def run_hyper(tickers_list=None):
         
     return logbook
 
-logbook = run_hyper(tickers_list = ['GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'MSS'])
+logbook = run_hyper(tickers_list_below_10)
 logbook.export_hyper_to_db('KEFR_below_10')
 

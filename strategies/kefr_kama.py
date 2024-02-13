@@ -11,7 +11,7 @@ class Kefr_Kama(Strategy):
         """Initiate class resources"""
         super().__init__(df_manager = df_manager, risk=risk, barsize=barsize)
     
-    def custom_indicator(self, open, high, low, close, efratio_timeperiod=5, threshold=0.9, atr_perc = 1.5):
+    def custom_indicator(self, open, high, low, close, efratio_timeperiod=4, threshold=0.9, atr_perc = 1.5):
         """Actual strategy to be used"""
         self.risk.atr_perc = atr_perc
         #print(f'\nefraiot:{efratio_timeperiod}, threshold:{threshold}')

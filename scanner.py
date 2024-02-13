@@ -6,6 +6,7 @@ import requests
 import numpy as np
 import datetime as dt
 from get_data import download_historical
+import sqlite3
 
 class Scanner:
     """A class to handle Scanner lookup and paramters"""
@@ -36,7 +37,10 @@ class Scanner:
         file_path = 'to_be_downloaded.csv'
         file = pd.read_csv(file_path)
         file['date'] = pd.to_datetime(file['date'])
-        
+
+        conn = sqlite3.connect('logbooks/tickers.db')
+        file.to_sql('statistics', conn, if_exists='append', index=False)
+
         # grabbing data to download and indexes where there at to remove them
         need_to_download = []
         indexes = []
@@ -44,18 +48,42 @@ class Scanner:
             if file.iloc[i]['date'] < dt.datetime.now():
                 need_to_download.append((file.iloc[i]['ticker'], file.iloc[i]['date']))
                 indexes.append(i)
+        print('...downloading historical')
         download_historical(need_to_download, to_csv=True, ib=self.ib)
+        print('...finished downloading historical')
 
+        # dropping all that have been downloading
         file.drop(indexes, inplace=True)
         file.reset_index(inplace=True, drop=True)
-        #print(file, '\n')
+
+        float_perc_df = pd.DataFrame(self.ticker_float_percentage, columns=['ticker', 'float_perc'])
+        market_cap_df = pd.DataFrame(self.ticker_market_cap, columns=['ticker', 'market_cap'])
+        floats_df = pd.DataFrame(self.ticker_floats, columns=['ticker', 'float'])
+
+
+        # new_data that will be downloaded
+
         if self.contracts:
             for contract in self.contracts:
                 symbol = contract.symbol
+                float_perc = float_perc_df['float_perc'][float_perc_df['ticker'] == symbol]
+                market_cap = market_cap_df['market_cap'][float_perc_df['ticker'] == symbol]
+                float = floats_df['float'][floats_df['ticker']==symbol]
                 for i in range(len(file)):
                     if file.iloc[i]['ticker'] == symbol and file.iloc[i]['date'] == market_close_time:
                         break
-                file.loc[len(file.index)] = [symbol, market_close_time]
+                file.loc[len(file.index)] = [
+                    symbol,
+                    market_close_time,
+                    float_perc,
+                    market_cap,
+                    float
+                    ]
+
+            #result = pd.merge(file, float_perc_df, on='ticker', how='left')
+            #result = pd.merge(result, market_cap_df, on='ticker', how='left')
+            #result = pd.merge(result, floats_df, on='ticker', how='left')
+            print(file.head())
             file.drop_duplicates(inplace=True)
             file.to_csv(file_path, index=False)
         else:
@@ -215,7 +243,6 @@ class Scanner:
     def filter_floats(self, float_percentage_limit=None, archive = True):
         """filters contracts by which ones are less than pre-determined float"""
         self.float_percentage_limit = float_percentage_limit
-        new_contracts = []
         for i,data in enumerate(self.ticker_floats):
             #print(i, data)
             ticker = data[0]
@@ -237,6 +264,7 @@ class Scanner:
 
         self.get_ticker_list()
         if archive:
+            print('...archiving data')
             self.archive_data_for_download()
 
     def get_finviz_stats(self):
