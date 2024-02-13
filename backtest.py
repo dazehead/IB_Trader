@@ -34,8 +34,8 @@ class BackTest:
             output_names = ['value']
             ).from_apply_func(
                 self.strategy.custom_indicator,
-                efratio_timeperiod=9,
-                threshold=.5,
+                efratio_timeperiod=5,
+                threshold=.9,
                 atr_perc=1.5,
                 # param1
                 to_2d=False

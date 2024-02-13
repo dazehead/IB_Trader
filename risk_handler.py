@@ -1,10 +1,12 @@
 from ib_insync import *
 import pandas as pd
 import sys
+import sqlite3
+import numpy as np
 
 class Risk_Handler:
     """A class to hanlde portfolio risk"""
-    def __init__(self, ib=None, perc_risk=0.8,stop_time=None,start_time=None, atr_perc= 1.5):
+    def __init__(self, ib=None, backtest_db_table = None ,stop_time=None,start_time=None, atr_perc= 1.5):
         """Initializing Risk resources"""
         self.ib = ib
         if self.ib is not None:
@@ -17,7 +19,7 @@ class Risk_Handler:
                 self.account_summary.loc[self.account_summary['tag'] == 'BuyingPower', 'value'].iloc[0]
                 )
             
-            self.perc_risk = perc_risk
+            self.perc_risk = self.kelly_criterion(backtest_db_table)
             self.balance_at_risk = self.balance * self.perc_risk
             if self.buying_power < self.balance_at_risk:
                 print("!!!!!!!!BUYING POWER TOO LOW!!!!!!!!")
@@ -38,7 +40,7 @@ class Risk_Handler:
             print(f"balance to trade: {self.balance_at_risk}")
             #self.view_account_summary()
 
-        self.perc_risk = perc_risk
+        #self.perc_risk = self.kelly_criterion(backtest_db_table)
 
         self.stop_time = stop_time
         self.start_time = start_time
@@ -47,6 +49,20 @@ class Risk_Handler:
         self.profit_target_perc = atr_perc * 2
         self.stop_loss = None
 
+    def kelly_criterion(self, table):
+        conn = sqlite3.connect('logbooks/backtests.db')
+        df = pd.read_sql(f'SELECT "Total Return [%]" as total_return FROM {table};', conn)
+        returns = df['total_return'].to_numpy()
+        positive_count = np.sum(returns > 0)
+        negative_count = np.sum(returns < 0)
+        total_count = len(returns)
+        ratio = positive_count/ negative_count
+        win_percentage = positive_count / total_count
+        kelly_percentage = win_percentage - ((1-win_percentage)/ ratio)
+
+        return kelly_percentage
+
+        
 
     def get_directive(self):
         """Returns the directory of IB class"""

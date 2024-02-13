@@ -74,8 +74,8 @@ print("Trade Log Initialized...")
 if not ib.positions():
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     print(top_gainers.tickers_list)
-    top_gainers.filter_floats(float_percentage_limit= None, archive=True)
-    print(top_gainers.tickers_list)
+    top_gainers.filter_floats(float_percentage_limit= 10, archive=True)
+    print(f"Tickers after filter: {top_gainers.tickers_list}")
     top_gainers.calculate_percent_change()
     top_ticker = top_gainers.monitor_percent_change(perc_threshold=.02, time_interval=10)
     #top_ticker = top_gainers.contracts[0]
@@ -92,7 +92,7 @@ print("Contract Qualified")
 print("Initializing Risk_Handler...")
 risk = Risk_Handler(
      ib=ib,
-     perc_risk=0.1,
+     backtest_db_name="KEFR_below10_efr5_p9_1p5",
      stop_time=None,
      start_time=None,
      atr_perc=1.5)

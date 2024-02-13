@@ -13,9 +13,13 @@ from finvizfinance.quote import finvizfinance
 import yfinance as yf
 import os
 import re
+import sqlite3
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 
 # CONSTANTS
-tickers_list = ['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'TENX', 'SYRA']
+tickers_list = ['GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'MSS']
 
 
 def test_strategy():
@@ -70,7 +74,7 @@ def run_backtest(tickers_list):
     df_object_list = upload_historical(tickers=tickers_list)
 
     risk = Risk_Handler(ib = None,
-                        perc_risk = 0.8,
+                        backtest_db_table="KEFR_below10_efr5_p9_1p5",
                         stop_time="11:00:00-05:00",
                         start_time="07:00:00-05:00",
                         atr_perc = 1.5)
@@ -97,8 +101,9 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-logbook = run_backtest(tickers_list)
-logbook.export_backtest_to_db("KEFR_time_efr4_p5_1p5")
+#logbook = run_backtest(tickers_list)
+#logbook.export_backtest_to_db("KEFR_below10_efr5_p9_1p5")
+
 #df = logbook._convert_to_dataframe()
 #print(df)
 
@@ -159,8 +164,48 @@ def test_update_sql():
         print(final_string)
 
 #test_update_sql()
+        
+def plot_from_db():
+    conn= sqlite3.connect("logbooks/hyper.db")
+    df = pd.read_sql('SELECT AVG(return) AS average_return FROM KEFR_below_10 GROUP BY efratio_timeperiod, threshold, atr_perc ORDER BY average_return DESC', conn)
+    mean = np.mean(df['average_return'])
+    standard_dev = np.std(df['average_return'])
+    std_1 = mean-standard_dev
+    std_2 = mean + standard_dev
+    std_3 = std_1-standard_dev
+    std_4 = std_2 + standard_dev
+    print(standard_dev)
 
+    
+    plt.hist(df['average_return'], bins=30)
+    plt.axvline(mean, color='red', label=f'mean: {mean}')
+    plt.axvline(std_1,color='orange')
+    plt.axvline(std_2, color='orange')
+    plt.axvline(std_3,color='orange')
+    plt.axvline(std_4, color='orange')
+    plt.legend()
+    plt.show()
+    
 
+def kelly(backtest_db_name):
+    conn = sqlite3.connect('logbooks/backtests.db')
+    df = pd.read_sql(f'SELECT "Total Return [%]" as total_return FROM {backtest_db_name};', conn)
+    returns = df['total_return'].to_numpy()
+    print(returns)
+    positive_count = np.sum(returns > 0)
+    negative_count = np.sum(returns < 0)
+    total_count = len(returns)
+    ratio = positive_count/ negative_count
+    win_percentage = positive_count / total_count
+    print(f'R= {ratio}, W= {win_percentage}')
+    kelly_percentage = win_percentage - ((1-win_percentage)/ ratio)
+    print(f"KELLY = {kelly_percentage}")
+    
+
+kelly('KEFR_below10_efr5_p9_1p5')
+        
+
+#plot_from_db()
 
 
 
