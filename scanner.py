@@ -93,6 +93,7 @@ class Scanner:
             combined.reset_index(inplace=True, drop=True)
             combined['date'] = pd.to_datetime(combined['date'])
             combined['float_perc'] = round(combined['float_perc'], 2)
+            combined = combined.sort_values(by='date')
             print(combined)
             combined.to_sql('statistics', conn, if_exists='replace', index=False)
 

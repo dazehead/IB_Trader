@@ -22,6 +22,28 @@ import numpy as np
 tickers_list = ['GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'MSS']
 tickers_list_below_10 = ['GHSI', 'SUGP', 'SMGT', 'NEXI', 'PLCE', 'CCTG', 'LBPH', 'MGIH', 'BMR', 'MSS', 'MINM']
 
+
+def get_tickers_below(float_perc):
+    conn = sqlite3.connect('logbooks/tickers.db')
+    tickers_list = pd.read_sql(f"SELECT ticker FROM statistics WHERE float_perc < {float_perc};", conn)
+    tickers_list = tickers_list['ticker'].tolist()
+
+    path = 'historical_data'
+    historical_data_raw = os.listdir(path)
+    historical_data_list = []
+    
+    # retrives only tickers
+    for row in historical_data_raw:
+        matches = re.findall(r'_(.*?)\.', row)
+        historical_data_list.append(matches[0])
+
+    # filters any tickers that we dont have historical data for i.e. todays tickers
+    historical_set = set(historical_data_list)
+    tickers_list = [value for value in tickers_list if value in historical_set]
+    
+    return tickers_list
+print(get_tickers_below(10))
+
 def test_strategy():
     ticker = ['LBPH']
     df_manager = upload_historical(tickers=ticker)
@@ -201,7 +223,7 @@ def kelly_criterion(table):
     kelly_percentage = win_percentage - ((1-win_percentage)/ ratio)
 
     return kelly_percentage
-print(kelly_criterion('KEFR_below10_efr4_p9_1p5'))
+#print(kelly_criterion('KEFR_below10_efr4_p9_1p5'))
 
 """
 def onBarUpdate(bars, hasNewBar):
