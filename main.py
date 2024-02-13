@@ -77,7 +77,12 @@ if not ib.positions():
     top_gainers.filter_floats(float_percentage_limit= 10, archive=True)
     print(f"Tickers after filter: {top_gainers.tickers_list}")
     top_gainers.calculate_percent_change()
-    top_ticker = top_gainers.monitor_percent_change(perc_threshold=.02, time_interval=10)
+    top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
+    choice = input(f"{top_ticker.symbol} has been chosen.\nDo you want to trade this Ticker Y or N?\n").upper()
+    while choice not in ['Y']:
+        top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
+        choice = input(f"Y or N? for {top_ticker.symbol}\n")
+
     #top_ticker = top_gainers.contracts[0]
 else:
     top_ticker =  Stock(ib.positions()[0].contract.symbol, 'SMART', 'USD')
@@ -92,7 +97,7 @@ print("Contract Qualified")
 print("Initializing Risk_Handler...")
 risk = Risk_Handler(
      ib=ib,
-     backtest_db_name="KEFR_below10_efr4_p9_1p5",
+     backtest_db_table="KEFR_below10_efr4_p9_1p5",
      stop_time=None,
      start_time=None,
      atr_perc=1.5)
