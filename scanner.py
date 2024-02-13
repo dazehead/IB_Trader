@@ -30,7 +30,7 @@ class Scanner:
 
     def archive_data_for_download(self):
         """Function to archive or download data depending on time"""
-        market_close = "21:00:00"
+        market_close = "20:00:00"
         date_now = dt.datetime.now().date()
         market_close_time = dt.datetime.combine(date_now, dt.datetime.strptime(market_close, '%H:%M:%S').time())
         file_path = 'to_be_downloaded.csv'
