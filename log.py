@@ -201,6 +201,7 @@ class LogBook:
     
     def log_trades(self):
         """Function to retrieve trade information from IB"""
+        print('...Logging Trades')
         # retrives trades, converts to df, creates new datframe with column names 
         trades = self.ib.trades()
         #print(trades)
@@ -303,9 +304,9 @@ class LogBook:
             name = "paper_log"
         else:
             # 7496 -- real account
-            name = "trading_log"
+            name = "account_log"
 
-        df_from_db= pd.read_sql('SELECT time FROM paper_log', conn)
+        df_from_db= pd.read_sql(f'SELECT * FROM {name}', conn)
         df_from_db['time'] = pd.to_datetime(df_from_db['time'])
         df['time'] = pd.to_datetime(df['time'])
 
@@ -314,9 +315,6 @@ class LogBook:
 
         result.to_sql(name, conn, if_exists='append', index=False)
 
-        #df_from_db = pd.read_sql('SELECT * FROM paper_log', conn)
-        #with pd.ExcelWriter(f'logbooks/trade_log.xlsx', mode='a', if_sheet_exists='replace') as writer:
-        #    df_from_db.to_excel(writer, sheet_name=name)
 
     def get_charts(self):
         """Function retrives Histrocial data for trades in trade log"""
