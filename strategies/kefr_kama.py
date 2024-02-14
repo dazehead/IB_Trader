@@ -51,10 +51,7 @@ class Kefr_Kama(Strategy):
                 print(len(final_signals))
                 graph_signals = pd.Series(final_signals, index=self.data_1min.index)
                 self.graph_data(graph_signals, efratio_timeperiod, efratios, 'final_signals')
-                """          
-        else:
-            return signals
-        
+                """        
         return signals
 
     def _efratio(self, prices):

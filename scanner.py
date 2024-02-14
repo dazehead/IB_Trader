@@ -85,16 +85,13 @@ class Scanner:
     def update_statistics_db(self, file_to_check):
             conn = sqlite3.connect('logbooks/tickers.db')
             stats_db = pd.read_sql('SELECT * FROM statistics;', conn)
-            print(stats_db)
             stats_db['date'] = pd.to_datetime(stats_db['date'])
-            print(file_to_check)
             combined = pd.concat([stats_db, file_to_check])
             combined.drop_duplicates(subset=["ticker", "date"], inplace=True)
             combined.reset_index(inplace=True, drop=True)
             combined['date'] = pd.to_datetime(combined['date'])
             combined['float_perc'] = round(combined['float_perc'], 2)
             combined = combined.sort_values(by='date')
-            print(combined)
             combined.to_sql('statistics', conn, if_exists='replace', index=False)
 
     def monitor_percent_change(self, perc_threshold, time_interval):

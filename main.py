@@ -79,7 +79,7 @@ if not ib.positions():
     top_gainers.calculate_percent_change()
     top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
     choice = input(f"{top_ticker.symbol} has been chosen.\nDo you want to trade this Ticker Y or N?\n").upper()
-    while choice not in ['Y']:
+    while choice != 'Y':
         top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
         choice = input(f"Y or N? for {top_ticker.symbol}\n")
 
