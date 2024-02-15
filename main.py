@@ -149,8 +149,8 @@ df = DF_Manager(
      ticker=top_ticker.symbol)
 print("DF intialized...")
 
-signal_log = LogBook(ib=ib)
-signal_log.get_head_node().name = top_ticker.symbol
+#signal_log = LogBook(ib=ib)
+#signal_log.get_head_node().name = top_ticker.symbol
 
 
 
@@ -177,10 +177,10 @@ except KeyboardInterrupt:
             counter = 0
             while risk.trade:
                 trade.execute_trade(sell_now=True)
-                signal_log.get_head_node().value[dt.datetime.now()] = -1
+                #signal_log.get_head_node().value[dt.datetime.now()] = -1
                 ib.sleep(5)
     trade_log.log_trades()
-    signal_log.log_signals()
+    #signal_log.log_signals()
     ib.disconnect()
     sys.exit()
 else:
@@ -203,6 +203,6 @@ else:
                 trade.execute_trade(sell_now=True)
                 ib.sleep(5)
     trade_log.log_trades()
-    signal_log.log_signals()
+    #signal_log.log_signals()
     ib.disconnect()
     sys.exit()

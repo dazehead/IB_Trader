@@ -50,9 +50,7 @@ class Risk_Handler:
         self.stop_loss = None
 
         self.active_buy_monitoring = True
-        self.active_buy_counter = 0
-        self.prev_close = None
-        self.prev_open = None
+        self.started_buy_monitoring = False
 
     def kelly_criterion(self, table):
         if table is not None:

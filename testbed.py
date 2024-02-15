@@ -122,8 +122,8 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-logbook = run_backtest(tickers_list_below_10)
-logbook.export_backtest_to_db("KEFR_below10_efr4_p5_1p5")
+#logbook = run_backtest(tickers_list_below_10)
+#logbook.export_backtest_to_db("KEFR_below10_efr4_p5_1p5")
 
 #df = logbook._convert_to_dataframe()
 #print(df)
@@ -208,7 +208,8 @@ def plot_from_db(table_name):
     plt.show()
     
         
-#plot_from_db('KEFR_below_10')
+plot_from_db('KEFR_below_10')
+plot_from_db('KEFR_below_10_active_buying')
 
 def kelly_criterion(table):
     conn = sqlite3.connect('logbooks/backtests.db')

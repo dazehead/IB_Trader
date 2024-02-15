@@ -134,5 +134,5 @@ def run_hyper(tickers_list=None):
     return logbook
 print(tickers_list_below_10)
 logbook = run_hyper(tickers_list_below_10)
-logbook.export_hyper_to_db('KEFR_below_10')
+logbook.export_hyper_to_db('KEFR_below_10_active_buying')
 
