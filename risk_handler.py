@@ -49,18 +49,26 @@ class Risk_Handler:
         self.profit_target_perc = atr_perc * 2
         self.stop_loss = None
 
-    def kelly_criterion(self, table):
-        conn = sqlite3.connect('logbooks/backtests.db')
-        df = pd.read_sql(f'SELECT "Total Return [%]" as total_return FROM {table};', conn)
-        returns = df['total_return'].to_numpy()
-        positive_count = np.sum(returns > 0)
-        negative_count = np.sum(returns < 0)
-        total_count = len(returns)
-        ratio = positive_count/ negative_count
-        win_percentage = positive_count / total_count
-        kelly_percentage = win_percentage - ((1-win_percentage)/ ratio)
+        self.active_buy_monitoring = True
+        self.active_buy_counter = 0
+        self.prev_close = None
+        self.prev_open = None
 
-        return kelly_percentage
+    def kelly_criterion(self, table):
+        if table is not None:
+            conn = sqlite3.connect('logbooks/backtests.db')
+            df = pd.read_sql(f'SELECT "Total Return [%]" as total_return FROM {table};', conn)
+            returns = df['total_return'].to_numpy()
+            positive_count = np.sum(returns > 0)
+            negative_count = np.sum(returns < 0)
+            total_count = len(returns)
+            ratio = positive_count/ negative_count
+            win_percentage = positive_count / total_count
+            kelly_percentage = win_percentage - ((1-win_percentage)/ ratio)
+
+            return kelly_percentage
+        else:
+            return .10
 
         
 

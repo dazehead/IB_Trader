@@ -8,6 +8,7 @@ import vectorbt as vbt
 import datetime
 from ib_insync import *
 import os
+from get_data import get_tickers_below
 
 class HyperBT(BackTest):
     """A class to handle Hyper Optimization backtests"""
@@ -72,7 +73,7 @@ class HyperBT(BackTest):
 
 tickers_list = ['NRBO', 'GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'TENX', 'SYRA']
 #tickers_list_below_10 = ['GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'MSS']
-tickers_list_below_10 = ['GHSI', 'SUGP', 'SMGT', 'NEXI', 'PLCE', 'CCTG', 'LBPH', 'MGIH', 'BMR', 'MSS', 'MINM']
+tickers_list_below_10 = get_tickers_below(10)
 
 
 
@@ -131,7 +132,7 @@ def run_hyper(tickers_list=None):
 
         
     return logbook
-
+print(tickers_list_below_10)
 logbook = run_hyper(tickers_list_below_10)
 logbook.export_hyper_to_db('KEFR_below_10')
 

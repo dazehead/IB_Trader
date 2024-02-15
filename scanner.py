@@ -26,6 +26,7 @@ class Scanner:
         self.ticker_floats = []
         self.ticker_market_cap = []
         self.ticker_float_percentage = []
+        self.archive = False
         self.scan_market()
         print("...Scanner Initialized")
 
@@ -45,9 +46,7 @@ class Scanner:
             if file.iloc[i]['date'] < dt.datetime.now():
                 need_to_download.append((file.iloc[i]['ticker'], file.iloc[i]['date']))
                 indexes.append(i)
-        print('...downloading historical')
-        download_historical(need_to_download, to_csv=True, ib=self.ib)
-        print('...finished downloading historical')
+
         # dropping all that have been downloading
         file.drop(indexes, inplace=True)
         file.reset_index(inplace=True, drop=True)
@@ -79,6 +78,10 @@ class Scanner:
             file.reset_index(inplace=True, drop=True)
             self.update_statistics_db(file)
             file.to_csv(file_path, index=False)
+
+            print('...downloading historical')
+            download_historical(need_to_download, to_csv=True, ib=self.ib)
+            print('...finished downloading historical')
         else:
             pass
 
@@ -135,7 +138,8 @@ class Scanner:
                         print(f'\tTicker: {self.tickers_list[i]}')  
                         print(f'\tFloat Percentage: {round(self.ticker_float_percentage[i][1], 2)}')
                         print(f'\tFloat: {self.ticker_floats[i][1]}')
-                self.filter_floats(self.float_percentage_limit)
+                self.filter_floats(self.float_percentage_limit, archive=self.archive)
+                print(f'Filtered Tickers: {self.tickers_list}')
                 self.calculate_percent_change()
                 self.ticker_floats = []
                 counter += 1
@@ -247,6 +251,7 @@ class Scanner:
 
     def filter_floats(self, float_percentage_limit=None, archive = True):
         """filters contracts by which ones are less than pre-determined float"""
+        self.archive = archive
         self.float_percentage_limit = float_percentage_limit
         for i,data in enumerate(self.ticker_floats):
             #print(i, data)
@@ -268,7 +273,7 @@ class Scanner:
                         self.contracts = [contract for contract in self.contracts if contract.symbol != ticker]
 
         self.get_ticker_list()
-        if archive:
+        if self.archive:
             print('...archiving data')
             self.archive_data_for_download()
 

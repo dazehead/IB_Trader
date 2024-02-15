@@ -54,8 +54,35 @@ def onBarUpdate(bars, hasNewBar):
             signals=signals,
             contract=top_ticker)
         
-        signal_log.get_head_node().value = signals[close.index] = signals
         trade.execute_trade()
+        
+        # monitoring for 2 green candles in a row - ensures not buying at high
+        '''
+        if signals[-1] == 0 and risk.active_buy_monitoring:
+            if risk.active_buy_counter == 0:
+                print('')
+                signals[-1] == 0
+                risk.prev_close = df.data_10sec.iloc[-1].close
+                risk.prev_open = df.dat_10sec.iloc[-1].open
+                risk.active_buy_counter += 1
+                #signal_log.get_head_node().value = signals[close.index] = signals
+                trade.execute_trade()
+            else:
+                current_close = df.data_10sec.iloc[-1].close
+                current_open = df.data_10sec.iloc[-1].open
+                risk.active_buy_counter += 1
+                if risk.prev_open < risk.prev_close and current_open < current_close and risk.prev_close < current_close:
+                    signals[-1] == 1
+                    risk.active_buy_counter = 0
+                    risk.prev_close = None
+                    risk.prev_open = None
+                    #3signal_log.get_head_node().value = signals[close.index] = signals
+                    trade.execute_trade()
+                    risk.active_buy_monitoring = False
+                else:
+                    #signal_log.get_head_node().value = signals[close.index] = signals
+                    trade.execute_trade()
+        '''
         
         #if signals[-1] == 1 or signals[-1] == -1:
         #    backtest = BackTest(strat)
@@ -74,7 +101,7 @@ print("Trade Log Initialized...")
 if not ib.positions():
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     print(top_gainers.tickers_list)
-    top_gainers.filter_floats(float_percentage_limit= 10, archive=True)
+    top_gainers.filter_floats(float_percentage_limit= 10, archive=False)
     print(f"Tickers after filter: {top_gainers.tickers_list}")
     top_gainers.calculate_percent_change()
     top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)

@@ -35,7 +35,11 @@ class Trade:
         if self.halted == 0.0: # not halted
 
             if not self.ib.positions() and self.signal == 1 and self.risk.trade is None:
-                self._buy_order(self.num_shares)
+                if self.risk.active_buy_monitoring:
+                    # need to put stuff here for active_buy_monitoring
+                    self._buy_order(self.num_shares)
+                else:
+                    self._buy_order(self.num_shares)
 
             elif self.ib.positions() and (self.signal == -1) and (self.risk.trade is None):
                 """sell order but we need to check if there is already an order that has not filled then cancel and resubmit"""

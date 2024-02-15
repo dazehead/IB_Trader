@@ -3,6 +3,8 @@ import pandas as pd
 from dataframe_manager import DF_Manager
 import os
 import datetime as dt
+import sqlite3
+import re
 
 def upload_historical(tickers=None):
     """ Retrieves any amount of historical data and creates a DF_Manager with data"""
@@ -67,8 +69,25 @@ def download_historical(tickers_list, to_csv=True, ib=None):
             else:
                 return df
 
-    def convert_for_hyper(df):
-        pass
+def get_tickers_below(float_perc):
+    conn = sqlite3.connect('logbooks/tickers.db')
+    tickers_list = pd.read_sql(f"SELECT ticker FROM statistics WHERE float_perc < {float_perc};", conn)
+    tickers_list = tickers_list['ticker'].tolist()
+
+    path = 'historical_data'
+    historical_data_raw = os.listdir(path)
+    historical_data_list = []
+    
+    # retrives only tickers
+    for row in historical_data_raw:
+        matches = re.findall(r'_(.*?)\.', row)
+        historical_data_list.append(matches[0])
+
+    # filters any tickers that we dont have historical data for i.e. todays tickers
+    historical_set = set(historical_data_list)
+    tickers_list = [value for value in tickers_list if value in historical_set]
+    
+    return list(set(tickers_list))
 """
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=1)
