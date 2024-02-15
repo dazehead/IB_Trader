@@ -22,17 +22,14 @@ class Kefr_Kama(Strategy):
 
         # if the last 2 bars are green
         if prev_close < current_close and prev_open < prev_close and current_open < current_close:
-            if self.volume[-2] < self.volume[-1]:
-                result = 1
-                self.risk.started_buy_monitoring = False
-            else:
-                result = 0
+            result = 1
+            self.risk.started_buy_monitoring = False
         else:
             result = 0 
 
         return result
     
-    def custom_indicator(self, open, high, low, close, efratio_timeperiod=4, threshold=0.5, atr_perc = 1.5):
+    def custom_indicator(self, open, high, low, close, efratio_timeperiod=3, threshold=0.5, atr_perc = 1.2):
         """Actual strategy to be used"""
         self.risk.atr_perc = atr_perc
         #print(f'\nefraiot:{efratio_timeperiod}, threshold:{threshold}')
@@ -102,22 +99,25 @@ class Kefr_Kama(Strategy):
                 new_signals.append(0)
             elif monitoring and signals[i] != -1:
                 if open[i-1] < close[i-1] and open[i] < close[i] and close[i-1] < close[i]:
-                    look_back = -2
-                    while current_volume == 0.0 or prev_volume == 0.0:
+                    #look_back = -2
+                    #while current_volume == 0.0 or prev_volume == 0.0:
                         #print(f"Prev Volume: {prev_volume}, Current Volume: {current_volume}")
-                        if current_volume != 0.0 and prev_volume == 0.0:
-                            prev_volume = self.volume[i-look_back]
-                            look_back -= -1
-                        else:
-                            current_volume = prev_volume
-                            prev_volume = self.volume[i-look_back]
-                            look_back -= -1
+                        #if current_volume != 0.0 and prev_volume == 0.0:
+                            #prev_volume = self.volume[i-look_back]
+                            #look_back -= -1
+                        #else:
+                            #current_volume = prev_volume
+                            #prev_volume = self.volume[i-look_back]
+                            #look_back -= -1
+                    new_signals.append(1)
+                    monitoring = False
+                    
 
-                    if prev_volume < current_volume:                
-                        new_signals.append(1)
-                        monitoring = False
-                    else:
-                        new_signals.append(0)
+                    #if prev_volume < current_volume:                
+                        #new_signals.append(1)
+                        #monitoring = False
+                    #else:
+                    #    new_signals.append(0)
                 else:
                     new_signals.append(0)
             else:

@@ -50,9 +50,9 @@ class BackTest:
             self.data.high,
             self.data.low,
             self.data.close,
-            efratio_timeperiod=4,
-            threshold=.9,
-            atr_perc=1.5,
+            efratio_timeperiod=3,
+            threshold=.5,
+            atr_perc=1.2,
             #np.arange(70,100, step=2, dtype=int)
             param_product=True
         )

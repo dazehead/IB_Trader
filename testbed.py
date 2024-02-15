@@ -98,7 +98,7 @@ def run_backtest(tickers_list):
     risk = Risk_Handler(ib = None,
                         stop_time="11:00:00-05:00",
                         start_time="07:00:00-05:00",
-                        atr_perc = 1.5)
+                        atr_perc = 1.2)
 
     # iterating of each DF_Manager and creating a strategy object with each manager
     logbook = LogBook(None, None)
@@ -122,8 +122,8 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-#logbook = run_backtest(tickers_list_below_10)
-#logbook.export_backtest_to_db("KEFR_below10_efr4_p5_1p5")
+logbook = run_backtest(tickers_list_below_10)
+logbook.export_backtest_to_db("KEFR_below10_candle_efr3_p5_1p2")
 
 #df = logbook._convert_to_dataframe()
 #print(df)
@@ -208,8 +208,8 @@ def plot_from_db(table_name):
     plt.show()
     
         
-plot_from_db('KEFR_below_10')
-plot_from_db('KEFR_below_10_active_buying')
+#plot_from_db('KEFR_below_10')
+#plot_from_db('KEFR_below_10_active_buying')
 
 def kelly_criterion(table):
     conn = sqlite3.connect('logbooks/backtests.db')
