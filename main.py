@@ -101,7 +101,7 @@ print("Trade Log Initialized...")
 if not ib.positions():
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     print(top_gainers.tickers_list)
-    top_gainers.filter_floats(float_percentage_limit= 10, archive=False)
+    top_gainers.filter_floats(float_percentage_limit= 10, archive=True)
     print(f"Tickers after filter: {top_gainers.tickers_list}")
     top_gainers.calculate_percent_change()
     top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
@@ -149,8 +149,8 @@ df = DF_Manager(
      ticker=top_ticker.symbol)
 print("DF intialized...")
 
-signal_log = LogBook(ib=ib)
-signal_log.get_head_node().name = top_ticker.symbol
+#signal_log = LogBook(ib=ib)
+#signal_log.get_head_node().name = top_ticker.symbol
 
 
 
@@ -177,10 +177,10 @@ except KeyboardInterrupt:
             counter = 0
             while risk.trade:
                 trade.execute_trade(sell_now=True)
-                signal_log.get_head_node().value[dt.datetime.now()] = -1
+                #signal_log.get_head_node().value[dt.datetime.now()] = -1
                 ib.sleep(5)
     trade_log.log_trades()
-    signal_log.log_signals()
+    #signal_log.log_signals()
     ib.disconnect()
     sys.exit()
 else:
@@ -203,6 +203,6 @@ else:
                 trade.execute_trade(sell_now=True)
                 ib.sleep(5)
     trade_log.log_trades()
-    signal_log.log_signals()
+    #signal_log.log_signals()
     ib.disconnect()
     sys.exit()
