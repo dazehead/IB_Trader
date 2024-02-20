@@ -34,9 +34,9 @@ class BackTest:
             output_names = ['value']
             ).from_apply_func(
                 self.strategy.custom_indicator,
-                efratio_timeperiod=3,
-                threshold=.9,
-                atr_perc=1.5,
+                efratio_timeperiod=10,
+                threshold=.8,
+                atr_perc=.4,
                 # param1
                 to_2d=False
             )
@@ -50,9 +50,9 @@ class BackTest:
             self.data.high,
             self.data.low,
             self.data.close,
-            efratio_timeperiod=3,
-            threshold=.5,
-            atr_perc=1.2,
+            efratio_timeperiod=10,
+            threshold=.8,
+            atr_perc=.4,
             #np.arange(70,100, step=2, dtype=int)
             param_product=True
         )

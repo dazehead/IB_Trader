@@ -122,8 +122,8 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-logbook = run_backtest(tickers_list_below_10)
-#logbook.export_backtest_to_db("KEFR_below10_candle_efr3_p5_1p2")
+#logbook = run_backtest(tickers_list_below_10)
+#logbook.export_backtest_to_db("KEFR_KAMA_ATR_below10")
 
 #df = logbook._convert_to_dataframe()
 #print(df)
@@ -222,8 +222,12 @@ def kelly_criterion(table):
     win_percentage = positive_count / total_count
     kelly_percentage = win_percentage - ((1-win_percentage)/ ratio)
 
+    print(f"Win Ratio: {ratio}")
+    print(f"Win Percentage: {win_percentage}")
+    print(f"Kelly Percentage: {kelly_percentage}")
+
     return kelly_percentage
-#print(kelly_criterion('KEFR_below10_efr4_p9_1p5'))
+kelly_criterion('KEFR_KAMA_ATR_below10')
 
 """
 def onBarUpdate(bars, hasNewBar):

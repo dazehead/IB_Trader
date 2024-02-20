@@ -26,9 +26,9 @@ class HyperBT(BackTest):
             output_names = ['value']
             ).from_apply_func(
                 self.strategy.custom_indicator,
-                efratio_timeperiod=9,
+                efratio_timeperiod=3,
                 threshold=0.5,
-                atr_perc=1.5,
+                atr_perc=1.2,
                 # param1
                 to_2d=False
             )
@@ -43,7 +43,7 @@ class HyperBT(BackTest):
             self.data.close,
             efratio_timeperiod = np.arange(2,14, step=1, dtype=int),
             threshold = np.arange(.5, 1.0, step=.1, dtype=float),
-            atr_perc = np.arange(.1, 2, step=.1, dtype=float),
+            atr_perc = np.arange(-2, 2, step=.1, dtype=float),
             param_product=True
         )
         return res
@@ -100,7 +100,8 @@ def run_hyper(tickers_list=None):
     risk = Risk_Handler(ib = None,
                         stop_time="11:00:00-05:00",
                         start_time="07:00:00-05:00",
-                        atr_perc = 1.5)
+                        atr_perc = 0.0)
+                        
 
     # iterating of each DF_Manager and creating a strategy object with each manager
     logbook = LogBook(None, None)
@@ -134,5 +135,5 @@ def run_hyper(tickers_list=None):
     return logbook
 print(tickers_list_below_10)
 logbook = run_hyper(tickers_list_below_10)
-logbook.export_hyper_to_db('KEFR_below_10_active_candle')
+logbook.export_hyper_to_db('KEFR_KAMA_ATR_below10')
 

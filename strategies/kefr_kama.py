@@ -79,7 +79,7 @@ class Kefr_Kama(Strategy):
 
         if self.risk.ib is not None:
             """if we are connected to IB"""
-            self.risk.stop_loss = self.kama[-1] - atr[-1]
+            self.risk.stop_loss = self.kama[-1] - atr[-1] * self.risk.atr_perc
 
             if close[-1] < self.risk.stop_loss:
                 """SELL"""
@@ -104,14 +104,14 @@ class Kefr_Kama(Strategy):
                     if np.isnan(atr[i]):
                         pass
                     else:
-                        self.risk.stop_loss = self.kama[i] - atr[i]
+                        self.risk.stop_loss = self.kama[i] - atr[i] * self.risk.atr_perc
                         if new_signals[i] == 1 and not in_trade:
-                            print(i, price, self.kama[i], price > self.kama[i])  
+                            #print(i, price, self.kama[i], price > self.kama[i])  
                             if price > self.kama[i]:
                             # assigns the price of stock during a BUY signal 
                                 in_trade = True
-                                print('BUY')
-                                print(i, new_signals[i], price, self.kama[i], price > self.kama[i])
+                                #print('BUY')
+                                #print(i, new_signals[i], price, self.kama[i], price > self.kama[i])
                             else:
                                 new_signals[i] = 0
                         elif in_trade:
@@ -131,7 +131,7 @@ class Kefr_Kama(Strategy):
         return new_signals
 
 
-    def custom_indicator(self, open, high, low, close, efratio_timeperiod=3, threshold=0.5, atr_perc = 1.2):
+    def custom_indicator(self, open, high, low, close, efratio_timeperiod=10, threshold=0.8, atr_perc = .4):
         """Actual strategy to be used"""
         self.risk.atr_perc = atr_perc
         # entrys
