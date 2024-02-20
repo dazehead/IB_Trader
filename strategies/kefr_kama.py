@@ -5,12 +5,15 @@ from strategies.strategy import Strategy
 import plotly.graph_objects as go
 import pandas as pd
 import talib as ta
+import numpy as np
+import math
 
 class Kefr_Kama(Strategy):
     def __init__(self, df_manager, risk=None, barsize=None):
         """Initiate class resources"""
         super().__init__(df_manager = df_manager, risk=risk, barsize=barsize)
         self.volume = df_manager.data_10sec.volume
+        self.kama = None
 
 
     def active_buy_monitor(self, close, open):
@@ -29,14 +32,118 @@ class Kefr_Kama(Strategy):
 
         return result
     
+    def calculate_kama(self, efratios, close):
+        fast_period = 30
+        slow_period = 3
+        fast_ma = ta.EMA(close, timeperiod=fast_period)
+        slow_ma = ta.EMA(close, timeperiod=slow_period)
+        # fast_ma has unstable period equal to fast_period
+        kama = []
+        for i in range(len(close)):
+            if i < fast_period:
+                kama.append(np.NaN)
+            else:                          #print(sc)
+                if i == fast_period:
+                    kama.append(close[i])
+                else:
+                    fastest = (2/(fast_ma[i] + 1))
+                    slowest = (2/(slow_ma[i] + 1))
+                    mapping = {i:2-0.043 * (i-1) for i in range(1,21)}
+                    key = int(round(close[i],0))
+                    if key > 20:
+                        key = 20
+                    k = 60
+                    n = mapping[key]
+                    #print(n)
+                    x = k/ close[i]**n
+                    #print(x)
+                    sc = (efratios[i] * (fastest - slowest) + slowest)**x
+                    kama.append(kama[-1] + sc * (close[i] - kama[-1]))
+        return kama
+    
+    def process_kama(self, signals, close):
+        new_signals = []
+        for i in range(len(signals)):
+            if signals[i] == 1:
+                if close[i] > self.kama[i]:
+                    new_signals.append(1)
+                else:
+                    new_signals.append(0)
+            else:
+                new_signals.append(0)
+        new_signals - pd.Series(new_signals, index=signals.index)
+
+        return new_signals
+    
+    def simple_atr_process(self, signals, atr, close):
+
+        if self.risk.ib is not None:
+            """if we are connected to IB"""
+            self.risk.stop_loss = self.kama[-1] - atr[-1]
+
+            if close[-1] < self.risk.stop_loss:
+                """SELL"""
+                new_signals = signals
+                new_signals[-1] = -1
+            elif close[-1] > self.risk.stop_loss:
+                new_signals = signals
+        else:
+            """If we are only backtesting and NOT connected to IB"""
+            stop_index = np.where(~np.isnan(atr))[0][0]
+            zeros_array = np.zeros_like(signals)
+            is_trading = signals[stop_index:]
+            not_trading = zeros_array[:stop_index]
+            new_signals = np.concatenate((is_trading, not_trading))
+
+            in_trade = False
+            for i,price in enumerate(close):
+                try:
+                    price = close[i+14]
+                    #print(f"------------------------{i}------------------------")
+                    # skips until atr has values populated
+                    if np.isnan(atr[i]):
+                        pass
+                    else:
+                        self.risk.stop_loss = self.kama[i] - atr[i]
+                        if new_signals[i] == 1 and not in_trade:
+                            print(i, price, self.kama[i], price > self.kama[i])  
+                            if price > self.kama[i]:
+                            # assigns the price of stock during a BUY signal 
+                                in_trade = True
+                                print('BUY')
+                                print(i, new_signals[i], price, self.kama[i], price > self.kama[i])
+                            else:
+                                new_signals[i] = 0
+                        elif in_trade:
+                            if price < self.risk.stop_loss:
+                                """SELL"""
+                                new_signals[i] = -1
+                                in_trade = False
+                            elif price > self.risk.stop_loss:
+                                new_signals[i] = 0
+
+                except IndexError:
+                    pass
+            #add 14 zeros to the front of atr
+            temp_signals = new_signals[:-14]
+            new_signals = np.concatenate((np.zeros(14), temp_signals))
+
+        return new_signals
+
+
     def custom_indicator(self, open, high, low, close, efratio_timeperiod=3, threshold=0.5, atr_perc = 1.2):
         """Actual strategy to be used"""
         self.risk.atr_perc = atr_perc
-        #print(f'\nefraiot:{efratio_timeperiod}, threshold:{threshold}')
         # entrys
         efratios = self.calculate_efratio(efratio_timeperiod)
+        #print(efratios)
+        """insert KAMA here"""
+        kama = self.calculate_kama(efratios, close)
+        self.kama = pd.Series(kama, index=efratios.index)
         signals = pd.Series(0, index=efratios.index)
         signals[efratios > threshold] = 1
+
+        signals = self.process_kama(signals, close)
 
         # trading times
         if self.risk:
@@ -49,7 +156,8 @@ class Kefr_Kama(Strategy):
             atr = ta.ATR(high, low, close, timeperiod=14)
             if self.risk.ib is not None:
                 if self.risk.ib.positions():
-                    signals = self._process_atr_data(signals, atr, close, high)
+                    self.simple_atr_process(signals, atr, close)
+                    #signals = self._process_atr_data(signals, atr, close, high)
 
                     # active buy monitoring function logic
                 if self.risk.active_buy_monitoring:
@@ -65,7 +173,8 @@ class Kefr_Kama(Strategy):
             else:
                 if self.risk.active_buy_monitoring:
                     signals = self._process_buy_monitoring(signals=signals, close=close, open=open)
-                signals = self._process_atr_data(signals, atr, close, high)
+                signals = self.simple_atr_process(signals, atr, close)
+                #signals = self._process_atr_data(signals, atr, close, high)
                 signals = self._process_signal_data(signals=signals)
                 #print(f"atr signals: {signals[-1]}")
 
@@ -99,25 +208,8 @@ class Kefr_Kama(Strategy):
                 new_signals.append(0)
             elif monitoring and signals[i] != -1:
                 if open[i-1] < close[i-1] and open[i] < close[i] and close[i-1] < close[i]:
-                    #look_back = -2
-                    #while current_volume == 0.0 or prev_volume == 0.0:
-                        #print(f"Prev Volume: {prev_volume}, Current Volume: {current_volume}")
-                        #if current_volume != 0.0 and prev_volume == 0.0:
-                            #prev_volume = self.volume[i-look_back]
-                            #look_back -= -1
-                        #else:
-                            #current_volume = prev_volume
-                            #prev_volume = self.volume[i-look_back]
-                            #look_back -= -1
                     new_signals.append(1)
                     monitoring = False
-                    
-
-                    #if prev_volume < current_volume:                
-                        #new_signals.append(1)
-                        #monitoring = False
-                    #else:
-                    #    new_signals.append(0)
                 else:
                     new_signals.append(0)
             else:

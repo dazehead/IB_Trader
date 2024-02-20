@@ -34,7 +34,7 @@ class BackTest:
             output_names = ['value']
             ).from_apply_func(
                 self.strategy.custom_indicator,
-                efratio_timeperiod=4,
+                efratio_timeperiod=3,
                 threshold=.9,
                 atr_perc=1.5,
                 # param1
@@ -83,4 +83,5 @@ class BackTest:
             self.data.close, fig=fig)
         fig = self.exits.vbt.signals.plot_as_exit_markers(
             self.data.close, fig=fig)
+        fig = self.strategy.kama.vbt.plot(trace_kwargs=dict(line=dict(color='blue')), fig=fig)
         fig.show()

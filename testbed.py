@@ -123,7 +123,7 @@ def run_backtest(tickers_list):
         backtest.graph_data()
     return logbook
 logbook = run_backtest(tickers_list_below_10)
-logbook.export_backtest_to_db("KEFR_below10_candle_efr3_p5_1p2")
+#logbook.export_backtest_to_db("KEFR_below10_candle_efr3_p5_1p2")
 
 #df = logbook._convert_to_dataframe()
 #print(df)
