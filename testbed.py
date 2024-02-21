@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # CONSTANTS
-tickers_list = ['GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'MSS']
+#tickers_list = ['GHSI', 'SGMT', 'NEXI', 'LBPH', 'MINM', 'CCTG', 'MSS']
 tickers_list_below_10 = ['GHSI', 'SUGP', 'SMGT', 'NEXI', 'PLCE', 'CCTG', 'LBPH', 'MGIH', 'BMR', 'MSS', 'MINM']
 
 
@@ -122,8 +122,8 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-#logbook = run_backtest(tickers_list_below_10)
-#logbook.export_backtest_to_db("KEFR_KAMA_ATR_below10")
+logbook = run_backtest(get_tickers_below(10))
+logbook.export_backtest_to_db("KEFR_KAMA_ATR_below10")
 
 #df = logbook._convert_to_dataframe()
 #print(df)
@@ -208,7 +208,7 @@ def plot_from_db(table_name):
     plt.show()
     
         
-#plot_from_db('KEFR_below_10')
+#plot_from_db('KEFR_KAMA_ATR_below10')
 #plot_from_db('KEFR_below_10_active_buying')
 
 def kelly_criterion(table):
@@ -227,7 +227,7 @@ def kelly_criterion(table):
     print(f"Kelly Percentage: {kelly_percentage}")
 
     return kelly_percentage
-kelly_criterion('KEFR_KAMA_ATR_below10')
+#kelly_criterion('KEFR_KAMA_ATR_below10')
 
 """
 def onBarUpdate(bars, hasNewBar):

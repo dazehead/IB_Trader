@@ -181,7 +181,8 @@ class Scanner:
         gainSub = ScannerSubscription(
             instrument="STK",
             locationCode="STK.US.MAJOR",
-            scanCode=self.scancode)
+            scanCode=self.scancode,
+            stockTypeFilter="CORP")
         
         # full list of filters
         """https://nbviewer.org/github/erdewit/ib_insync/blob/master/notebooks/scanners.ipynb"""

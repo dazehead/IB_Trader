@@ -41,9 +41,9 @@ class HyperBT(BackTest):
             self.data.high,
             self.data.low,
             self.data.close,
-            efratio_timeperiod = np.arange(2,14, step=1, dtype=int),
-            threshold = np.arange(.5, 1.0, step=.1, dtype=float),
-            atr_perc = np.arange(-2, 2, step=.1, dtype=float),
+            efratio_timeperiod = np.arange(2,18, step=1, dtype=int),
+            threshold = np.arange(.3, 1.0, step=.1, dtype=float),
+            atr_perc = np.arange(-.5, 2, step=.1, dtype=float),
             param_product=True
         )
         return res

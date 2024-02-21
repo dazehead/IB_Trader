@@ -131,7 +131,7 @@ class Kefr_Kama(Strategy):
         return new_signals
 
 
-    def custom_indicator(self, open, high, low, close, efratio_timeperiod=10, threshold=0.8, atr_perc = .4):
+    def custom_indicator(self, open, high, low, close, efratio_timeperiod=6, threshold=0.9, atr_perc = .6):
         """Actual strategy to be used"""
         self.risk.atr_perc = atr_perc
         # entrys
