@@ -7,6 +7,8 @@ import pandas as pd
 import talib as ta
 import numpy as np
 import math
+import time
+from numba import njit
 
 class Kefr_Kama(Strategy):
     def __init__(self, df_manager, risk=None, barsize=None):
@@ -35,43 +37,37 @@ class Kefr_Kama(Strategy):
     def calculate_kama(self, efratios, close):
         fast_period = 30
         slow_period = 3
+
         fast_ma = ta.EMA(close, timeperiod=fast_period)
         slow_ma = ta.EMA(close, timeperiod=slow_period)
-        # fast_ma has unstable period equal to fast_period
-        kama = []
-        for i in range(len(close)):
-            if i < fast_period:
-                kama.append(np.NaN)
-            else:                          #print(sc)
-                if i == fast_period:
-                    kama.append(close[i])
-                else:
-                    fastest = (2/(fast_ma[i] + 1))
-                    slowest = (2/(slow_ma[i] + 1))
-                    mapping = {i:2-0.043 * (i-1) for i in range(1,21)}
-                    key = int(round(close[i],0))
-                    if key > 20:
-                        key = 20
-                    k = 60
-                    n = mapping[key]
-                    #print(n)
-                    x = k/ close[i]**n
-                    #print(x)
-                    sc = (efratios[i] * (fastest - slowest) + slowest)**x
-                    kama.append(kama[-1] + sc * (close[i] - kama[-1]))
+
+        kama = np.full_like(close, np.nan)  # Initialize kama array with NaNs
+
+        # Calculate KAMA using vectorized operations
+        fastest = (2 / (fast_ma + 1))
+        slowest = (2 / (slow_ma + 1))
+
+        mapping = {i: 2 - 0.043 * (i - 1) for i in range(1, 21)}
+        keys = np.minimum(np.round(close), 20).astype(int)
+        n_values = np.array([mapping[key] for key in keys])
+
+        k = 60
+        x = k / np.power(close, n_values)
+
+        sc = (efratios * (fastest - slowest) + slowest) ** x
+
+        kama[fast_period - 1] = close[fast_period - 1]  # Set initial value for kama
+
+        for i in range(fast_period, len(close)):
+            kama[i] = kama[i - 1] + sc[i] * (close[i] - kama[i - 1])
+
         return kama
     
     def process_kama(self, signals, close):
-        new_signals = []
-        for i in range(len(signals)):
-            if signals[i] == 1:
-                if close[i] > self.kama[i]:
-                    new_signals.append(1)
-                else:
-                    new_signals.append(0)
-            else:
-                new_signals.append(0)
-        new_signals - pd.Series(new_signals, index=signals.index)
+        signals = np.array(signals)
+        close = np.array(close)
+        new_signals = np.zeros_like(signals)
+        new_signals[(signals==1) & (close > self.kama)] = 1
 
         return new_signals
     
@@ -133,6 +129,7 @@ class Kefr_Kama(Strategy):
 
     def custom_indicator(self, open, high, low, close, efratio_timeperiod=6, threshold=0.9, atr_perc = .6):
         """Actual strategy to be used"""
+        start = time.time()
         self.risk.atr_perc = atr_perc
         # entrys
         efratios = self.calculate_efratio(efratio_timeperiod)
@@ -192,7 +189,8 @@ class Kefr_Kama(Strategy):
                 print(len(final_signals))
                 graph_signals = pd.Series(final_signals, index=self.data_1min.index)
                 self.graph_data(graph_signals, efratio_timeperiod, efratios, 'final_signals')
-                """        
+                """     
+        print(f"Total Time Elapsed: {time.time() - start}")   
         return signals
 
     def _process_buy_monitoring(self,signals, close, open):
@@ -219,11 +217,8 @@ class Kefr_Kama(Strategy):
 
 
 
-
     def _efratio(self, prices):
         """Helper function to calculate single Effecincy Ratio"""
-        #print(self.data_1min.close)
-
         #Calculate price changes and absolute price changes
         price_changes = [prices[i]-prices[i-1] for i in range(1, len(prices))]
         absolute_price_changes = [abs(change) for change in price_changes]
@@ -253,8 +248,10 @@ class Kefr_Kama(Strategy):
 
             efratios.append(window_efratio)
 
-        zeros = [0 for i in range(time_period-1)]
-        efratios = zeros + efratios
+        #zeros = [0 for i in range(time_period-1)]
+        #efratios = zeros + efratios
+        zeros = np.zeros(time_period-1)
+        efratios = np.concatenate((zeros, efratios))
         efratios = pd.Series(efratios, index=self.data_1min.index)
         return efratios
     

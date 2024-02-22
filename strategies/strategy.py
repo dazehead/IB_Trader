@@ -181,48 +181,42 @@ class Strategy:
         return signals
     
     def _stop_trading_time(self, signals):
-        #print("\n****************************")
         if self.barsize == '10sec':
             datetimes = self.data_10sec.index
             date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.stop_time}")
-            data = self.data_10sec
         elif self.barsize == '1min':
             datetimes = self.data_1min.index
             date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.stop_time}")
-            data = self.data_1min
         elif self.barsize == '5min':
             datetimes = self.data_5min.index
             date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.stop_time}")
-            data = self.data_5min
 
-        zeros_array = np.zeros_like(signals)
         stop_index = (datetimes == date).argmax()
-        trading_time_array = signals[:stop_index]
-        stop_trading_array = zeros_array[stop_index:]
-        new_signals = np.concatenate((trading_time_array, stop_trading_array))
+
+        new_signals = signals.copy()
+        new_signals[stop_index:] = 0
 
         return new_signals
     
     def _start_trading_time(self, signals):
-        #print("\n****************************")
+        start_time = self.risk.start_time
+
         if self.barsize == '10sec':
             datetimes = self.data_10sec.index
-            date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.start_time}")
             data = self.data_10sec
         elif self.barsize == '1min':
             datetimes = self.data_1min.index
-            date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.start_time}")
             data = self.data_1min
         elif self.barsize == '5min':
             datetimes = self.data_5min.index
-            date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.start_time}")
             data = self.data_5min
 
-        zeros_array = np.zeros_like(signals)
-        start_index = (datetimes == date).argmax()
-        trading_time_array = signals[start_index:]
-        start_trading_array = zeros_array[:start_index]
-        new_signals = np.concatenate((start_trading_array, trading_time_array))
+        date_str = f"{str(datetimes[0]).split()[0]} {start_time}"
+        date = pd.to_datetime(date_str)
+        start_index = np.argmax(datetimes == date)
+
+        new_signals = np.zeros_like(signals)
+        new_signals[start_index:] = signals[start_index:]
 
         return new_signals
 

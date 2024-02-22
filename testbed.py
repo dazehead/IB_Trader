@@ -122,8 +122,8 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-logbook = run_backtest(get_tickers_below(10))
-logbook.export_backtest_to_db("KEFR_KAMA_ATR_below10")
+logbook = run_backtest(get_tickers_below(10)[0])
+#logbook.export_backtest_to_db("KEFR_KAMA_ATR_below10")
 
 #df = logbook._convert_to_dataframe()
 #print(df)

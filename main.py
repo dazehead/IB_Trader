@@ -55,41 +55,6 @@ def onBarUpdate(bars, hasNewBar):
             contract=top_ticker)
         
         trade.execute_trade()
-        
-        # monitoring for 2 green candles in a row - ensures not buying at high
-        '''
-        if signals[-1] == 0 and risk.active_buy_monitoring:
-            if risk.active_buy_counter == 0:
-                print('')
-                signals[-1] == 0
-                risk.prev_close = df.data_10sec.iloc[-1].close
-                risk.prev_open = df.dat_10sec.iloc[-1].open
-                risk.active_buy_counter += 1
-                #signal_log.get_head_node().value = signals[close.index] = signals
-                trade.execute_trade()
-            else:
-                current_close = df.data_10sec.iloc[-1].close
-                current_open = df.data_10sec.iloc[-1].open
-                risk.active_buy_counter += 1
-                if risk.prev_open < risk.prev_close and current_open < current_close and risk.prev_close < current_close:
-                    signals[-1] == 1
-                    risk.active_buy_counter = 0
-                    risk.prev_close = None
-                    risk.prev_open = None
-                    #3signal_log.get_head_node().value = signals[close.index] = signals
-                    trade.execute_trade()
-                    risk.active_buy_monitoring = False
-                else:
-                    #signal_log.get_head_node().value = signals[close.index] = signals
-                    trade.execute_trade()
-        '''
-        
-        #if signals[-1] == 1 or signals[-1] == -1:
-        #    backtest = BackTest(strat)
-        #    backtest.graph_data()
-        #print(f"Elapsed Time: {time.time() - start_time}")
-        #print("------------------------------------------------------------\n")
-
 
 
 """---------------------START OF PROGRAM--------------------------"""
@@ -124,7 +89,7 @@ print("Contract Qualified")
 print("Initializing Risk_Handler...")
 risk = Risk_Handler(
      ib=ib,
-     backtest_db_table="KEFR_below10_efr4_p9_1p5",
+     backtest_db_table="KEFR_KAMA_ATR_below10",
      stop_time=None,
      start_time=None,
      atr_perc=1.5)
