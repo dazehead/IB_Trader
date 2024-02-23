@@ -73,7 +73,7 @@ if not ib.positions():
     choice = input(f"{top_ticker.symbol} has been chosen.\nDo you want to trade this Ticker Y or N?\n").upper()
     while choice != 'Y':
         top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
-        choice = input(f"Y or N? for {top_ticker.symbol}\n")
+        choice = input(f"Y or N? for {top_ticker.symbol}\n").upper()
 
     #top_ticker = top_gainers.contracts[0]
 else:
@@ -107,7 +107,7 @@ bars = ib.reqHistoricalData(contract = top_ticker,
                      )
 print("Market Data Subscription Successful...")
 ib.sleep(1)
-
+print(bars.barSizeSetting)
 print("Initializing DF...")
 df = DF_Manager(
      bars=bars,

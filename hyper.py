@@ -9,6 +9,7 @@ import datetime
 from ib_insync import *
 import os
 from get_data import get_tickers_below
+import time
 
 class HyperBT(BackTest):
     """A class to handle Hyper Optimization backtests"""
@@ -134,6 +135,8 @@ def run_hyper(tickers_list=None):
         
     return logbook
 print(tickers_list_below_10)
+start = time.time()
 logbook = run_hyper(tickers_list_below_10)
+print(f"Total Time: {time.time() - start}")
 logbook.export_hyper_to_db('KEFR_KAMA_ATR_below10')
 

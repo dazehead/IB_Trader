@@ -129,7 +129,7 @@ class Kefr_Kama(Strategy):
 
     def custom_indicator(self, open, high, low, close, efratio_timeperiod=6, threshold=0.9, atr_perc = .6):
         """Actual strategy to be used"""
-        start = time.time()
+        #start = time.time()
         self.risk.atr_perc = atr_perc
         # entrys
         efratios = self.calculate_efratio(efratio_timeperiod)
@@ -190,7 +190,7 @@ class Kefr_Kama(Strategy):
                 graph_signals = pd.Series(final_signals, index=self.data_1min.index)
                 self.graph_data(graph_signals, efratio_timeperiod, efratios, 'final_signals')
                 """     
-        print(f"Total Time Elapsed: {time.time() - start}")   
+        #print(f"Total Time Elapsed: {time.time() - start}")   
         return signals
 
     def _process_buy_monitoring(self,signals, close, open):
