@@ -11,10 +11,10 @@ import time
 from numba import njit
 
 class Kefr_Kama(Strategy):
-    def __init__(self, df_manager, risk=None, barsize=None):
+    def __init__(self, df_manager, risk=None, barsize=None, index=None):
         """Initiate class resources"""
-        super().__init__(df_manager = df_manager, risk=risk, barsize=barsize)
-        self.volume = df_manager.data_10sec.volume
+        super().__init__(df_manager = df_manager, risk=risk, barsize=barsize, index=index)
+        #self.volume = df_manager.data_10sec.volume
         self.kama = None
 
 
@@ -76,7 +76,6 @@ class Kefr_Kama(Strategy):
         if self.risk.ib is not None:
             """if we are connected to IB"""
             self.risk.stop_loss = self.kama[-1] - atr[-1] * self.risk.atr_perc
-
             if close[-1] < self.risk.stop_loss:
                 """SELL"""
                 new_signals = signals
@@ -153,6 +152,7 @@ class Kefr_Kama(Strategy):
             atr = ta.ATR(high, low, close, timeperiod=14)
             if self.risk.ib is not None:
                 if self.risk.ib.positions():
+                    """ASSIGNS THE STOP LOSS TO RISK.STOPLOSS, THIS COULD BE ALL WE WANT"""
                     self.simple_atr_process(signals, atr, close)
                     #signals = self._process_atr_data(signals, atr, close, high)
 

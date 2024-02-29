@@ -100,7 +100,7 @@ print("Starting Market Data Subscription...")
 bars = ib.reqHistoricalData(contract = top_ticker,
                      endDateTime = '',
                      durationStr = '1 D',
-                     barSizeSetting='5 secs',
+                     barSizeSetting='1 min',
                      whatToShow='TRADES',
                      useRTH=False,
                      keepUpToDate=True
