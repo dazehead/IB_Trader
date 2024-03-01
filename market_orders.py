@@ -16,17 +16,24 @@ class Trade:
             self.signal = signals[counter]
         else:
             self.signal = signals[-1]
-
         market_data = self.ib.reqMktData(self.top_stock, '', False, False)
         # we can get a lot of different dat from this market data
         # ticks(), vwap(), ticks(), volume(), low52wwk(), high52week(), ask(), modelGreeks, bidGreeks
-
         self.halted = market_data.halted
         self.price = market_data.marketPrice()
         self.num_shares = self.risk.balance_at_risk // self.price
         self.ask = market_data.ask
         self.bid = market_data.bid
+        self.symbol_has_positions, self.open_positions = self.check_and_match_positions()
         #self.midpoint = market_data.midpoint
+    
+    def check_and_match_positions(self):
+        print(self.top_stock.symbol)
+        for position in self.ib.positions():
+            if position.contract.symbol == self.top_stock.symbol:
+                print('should return true')
+                return True, position
+        return False, []
         
     def execute_trade(self, sell_now = False):
         """Logic for when to buy and sell based off signals and if we already hold positions"""
@@ -34,19 +41,19 @@ class Trade:
         print(f"Spread: {self.bid}-{self.ask}")
         if self.halted == 0.0: # not halted
 
-            if not self.ib.positions() and self.signal == 1 and self.risk.trade is None:
+            if not self.symbol_has_positions and self.signal == 1 and self.risk.trade is None:
                 if self.risk.active_buy_monitoring:
                     # need to put stuff here for active_buy_monitoring
                     self._buy_order(self.num_shares)
                 else:
                     self._buy_order(self.num_shares)
 
-            elif self.ib.positions() and (self.signal == -1) and (self.risk.trade is None):
+            elif self.symbol_has_positions and (self.signal == -1) and (self.risk.trade is None):
                 """sell order but we need to check if there is already an order that has not filled then cancel and resubmit"""
                 self._sell_order()
-            elif self.ib.positions() and (self.signal == 0) and (self.risk.trade.order.action == 'SELL'):
+            elif self.symbol_has_positions and (self.signal == 0) and (self.risk.trade.order.action == 'SELL'):
                 self._check_order()
-            elif self.ib.positions() and (self.signal == -1) and (self.risk.trade.order.action == 'SELL'):
+            elif self.symbol_has_positions and (self.signal == -1) and (self.risk.trade.order.action == 'SELL'):
                 self._sell_order(sell_now=True)
 
             else:
@@ -78,7 +85,7 @@ class Trade:
             print("outside RTH")
             """Sells open positions at market"""
             #self.risk.trade = None
-            positions = self.ib.positions()[0].position
+            positions = self.open_positions.position
             sell_order = StopOrder("SELL", positions, self.risk.stop_loss)
             if sell_now:
                 market_data = self.ib.reqMktData(self.top_stock, '', False, False)
@@ -91,7 +98,7 @@ class Trade:
         else:
             """Sells open positions at market"""
             #self.risk.trade = None
-            positions = self.ib.positions()[0].position
+            positions = self.open_positions.position
             sell_order = StopOrder("SELL", positions, self.risk.stop_loss)
             print(f"stop_loss --------: {self.risk.stop_loss}")
             if sell_now:

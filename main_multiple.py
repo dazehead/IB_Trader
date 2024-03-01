@@ -48,34 +48,38 @@ print("Trade Log Initialized...")
 #     top_ticker =  Stock(ib.positions()[0].contract.symbol, 'SMART', 'USD')
 
 symbols = ['BAND', 'AAPL']
+contracts = []
+for symbol in symbols:
+    contracts.append(Stock(symbol, 'SMART', 'USD'))
 
-print("Initializing Risk_Handler...")
+print("\nInitializing Risk_Handler...")
 risk = Risk_Handler(
      ib=ib,
      backtest_db_table="KEFR_KAMA_ATR_below10",
      stop_time=None,
      start_time=None,
      atr_perc=1.5)
-print("Risk_Handler Initialized...")
+print("\nRisk_Handler Initialized...")
 
 
 live_bars_dict = {}
 barsize = '5 secs'
-for symbol in symbols:
-    live_bars_dict[symbol] = ib.reqHistoricalData(
-        contract = Stock(symbol, 'SMART', 'USD'),
+for i, contract_obj in enumerate(contracts):
+    live_bars_dict[contract_obj.symbol] = ib.reqHistoricalData(
+        contract = contract_obj,
         endDateTime= '',
         durationStr= '1 D',
-        barSizeSetting= '5 secs',
+        barSizeSetting= barsize,
         whatToShow = 'TRADES',
         useRTH= False,
         keepUpToDate= True)
     ib.sleep(1)
-
+print("\nInitiliazing DataFrame Mananger...")
 df = DF_Manager(
     bars=live_bars_dict,
     ticker=symbols,
     barsize = barsize)
+print("\nDataFrame Mananger Initialized...")
 
     
 #print(live_bars_dict['BAND'][-1])
@@ -101,33 +105,32 @@ def on_bar_update(bars, hasNewBar):
     global df
     if hasNewBarForAllSymbols(live_bars_dict):
         df.update(live_bars_dict)
-        for i, symbol in enumerate(symbols):
-            open = df.data[i].open
-            high = df.data[i].high
-            low = df.data[i].low
-            close = df.data[i].close
 
+        for i, contract_obj in enumerate(contracts):
+            open = df.main_data[i].open
+            high = df.main_data[i].high
+            low = df.main_data[i].low
+            close = df.main_data[i].close
             strat = Kefr_Kama(
                 df_manager=df,
                 risk=risk,
-                barsize='1min',
+                barsize=barsize,
                 index=i)
-            print("--------------------------------strat good----------------------------------------")
             
             signals = strat.custom_indicator(
                 open=open,
                 high=high,
                 low=low,
                 close=close)
-            print(symbol, signals[-1])
 
-            # trade = Trade(
-            #     ib=ib, 
-            #     risk=risk, 
-            #     signals=signals,
-            #     contract=top_ticker)
+            trade = Trade(
+                ib=ib, 
+                risk=risk, 
+                signals=signals,
+                contract=contract_obj)
             
-            # trade.execute_trade()
+            trade.execute_trade()
+        print('-------------------------------------------------------------')
 
         
 ib.barUpdateEvent.clear()
