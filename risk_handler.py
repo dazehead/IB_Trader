@@ -6,7 +6,7 @@ import numpy as np
 
 class Risk_Handler:
     """A class to hanlde portfolio risk"""
-    def __init__(self, ib=None, backtest_db_table = None ,stop_time=None,start_time=None, atr_perc= 1.5):
+    def __init__(self, ib=None, backtest_db_table = None ,stop_time=None,start_time=None, atr_perc= 1.5, contracts = None):
         """Initializing Risk resources"""
         self.ib = ib
         if self.ib is not None:
@@ -31,9 +31,12 @@ class Risk_Handler:
                 elif to_go_on == 'N':
                     sys.exit()
             self.highest_high = None
-            self.trade = None
+            self.trade = {}
             self.trade_num_shares = None
-            self.trade_counter = 0
+            self.trade_counter = {}
+            for contract in contracts:
+                self.trade[contract.symbol] = None
+                self.trade_counter[contract.symbol] = 0
 
             print(f"Account Balance: {self.balance}")
             print(f"Buying Power: {self.buying_power}")

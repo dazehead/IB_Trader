@@ -58,7 +58,8 @@ risk = Risk_Handler(
      backtest_db_table="KEFR_KAMA_ATR_below10",
      stop_time=None,
      start_time=None,
-     atr_perc=1.5)
+     atr_perc=1.5,
+     contracts = contracts)
 print("\nRisk_Handler Initialized...")
 
 
