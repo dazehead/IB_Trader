@@ -11,10 +11,10 @@ import time
 from numba import njit
 
 class Kefr_Kama(Strategy):
-    def __init__(self, df_manager, risk=None, barsize=None):
+    def __init__(self, df_manager, risk=None, barsize=None, index=None):
         """Initiate class resources"""
-        super().__init__(df_manager = df_manager, risk=risk, barsize=barsize)
-        self.volume = df_manager.data_10sec.volume
+        super().__init__(df_manager = df_manager, risk=risk, barsize=barsize, index=index)
+        #self.volume = df_manager.data_10sec.volume
         self.kama = None
 
 
@@ -76,7 +76,6 @@ class Kefr_Kama(Strategy):
         if self.risk.ib is not None:
             """if we are connected to IB"""
             self.risk.stop_loss = self.kama[-1] - atr[-1] * self.risk.atr_perc
-
             if close[-1] < self.risk.stop_loss:
                 """SELL"""
                 new_signals = signals
@@ -140,6 +139,7 @@ class Kefr_Kama(Strategy):
         signals = pd.Series(0, index=efratios.index)
         signals[efratios > threshold] = 1
 
+
         signals = self.process_kama(signals, close)
 
         # trading times
@@ -153,6 +153,7 @@ class Kefr_Kama(Strategy):
             atr = ta.ATR(high, low, close, timeperiod=14)
             if self.risk.ib is not None:
                 if self.risk.ib.positions():
+                    """ASSIGNS THE STOP LOSS TO RISK.STOPLOSS, THIS COULD BE ALL WE WANT"""
                     self.simple_atr_process(signals, atr, close)
                     #signals = self._process_atr_data(signals, atr, close, high)
 
@@ -218,6 +219,7 @@ class Kefr_Kama(Strategy):
 
 
     def _efratio(self, prices):
+        
         """Helper function to calculate single Effecincy Ratio"""
         #Calculate price changes and absolute price changes
         price_changes = [prices[i]-prices[i-1] for i in range(1, len(prices))]
@@ -231,7 +233,7 @@ class Kefr_Kama(Strategy):
 
         if sum_absolute_price_changes == 0:
             return 0
-        
+
         kaufman_ratio = net_price_change / sum_absolute_price_changes
 
         return round(kaufman_ratio, 3)
@@ -240,11 +242,10 @@ class Kefr_Kama(Strategy):
         """Logic to calculate Effieciency Ratio """
         efratios = []
         close_prices = self.data_1min.close
-
         for i in range(len(close_prices) - time_period + 1):
             window_prices = close_prices[i:i + time_period]
 
-            window_efratio = self._efratio(window_prices)
+            window_efratio = self._efratio(list(window_prices))
 
             efratios.append(window_efratio)
 

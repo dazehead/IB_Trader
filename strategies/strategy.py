@@ -10,22 +10,26 @@ import sys
 
 class Strategy:
     """Class to store strategy resources"""
-    def __init__(self, df_manager, risk=None, barsize=None):
+    def __init__(self, df_manager, risk=None, barsize=None, index=None):
         """Initialize Class Resources"""
-        if barsize is None:
+        self.barsize = barsize
+        self.risk = risk
+        if self.barsize is None:
             print("You need to define barsize")
             sys.exit()
 
         """Initialize different bar data"""
-        self.ticker = df_manager.ticker
-        self.risk = risk
-        self.barsize = barsize
-        #print("...Initializing Stategy")
-        self.data_5sec = df_manager.data_5sec
-        self.data_10sec = df_manager.data_10sec
-        self.data_1min = df_manager.data_1min
-        self.data_5min = df_manager.data_5min
-        #print("...Strategy Initialized")
+        if index is not None:
+            self.ticker = df_manager.ticker[index]
+            self.data_1min = df_manager.main_data[index]
+        else:
+            self.ticker = df_manager.ticker
+            """These are used for stop trading time"""
+            #self.data_5sec = df_manager.data_5sec
+            #self.data_10sec = df_manager.data_10sec
+            self.data_1min = df_manager.data_1min
+            self.data_5min = df_manager.data_5min
+
 
     def custom_indicator(self, open, high, low, close):
         """Actual Strategy to be used"""
