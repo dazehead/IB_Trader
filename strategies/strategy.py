@@ -25,8 +25,8 @@ class Strategy:
         else:
             self.ticker = df_manager.ticker
             """These are used for stop trading time"""
-            self.data_5sec = df_manager.data_5sec
-            self.data_10sec = df_manager.data_10sec
+            #self.data_5sec = df_manager.data_5sec
+            #self.data_10sec = df_manager.data_10sec
             self.data_1min = df_manager.data_1min
             self.data_5min = df_manager.data_5min
 

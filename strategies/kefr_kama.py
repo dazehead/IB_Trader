@@ -139,6 +139,7 @@ class Kefr_Kama(Strategy):
         signals = pd.Series(0, index=efratios.index)
         signals[efratios > threshold] = 1
 
+
         signals = self.process_kama(signals, close)
 
         # trading times
@@ -218,6 +219,7 @@ class Kefr_Kama(Strategy):
 
 
     def _efratio(self, prices):
+        
         """Helper function to calculate single Effecincy Ratio"""
         #Calculate price changes and absolute price changes
         price_changes = [prices[i]-prices[i-1] for i in range(1, len(prices))]
@@ -231,7 +233,7 @@ class Kefr_Kama(Strategy):
 
         if sum_absolute_price_changes == 0:
             return 0
-        
+
         kaufman_ratio = net_price_change / sum_absolute_price_changes
 
         return round(kaufman_ratio, 3)
@@ -240,11 +242,10 @@ class Kefr_Kama(Strategy):
         """Logic to calculate Effieciency Ratio """
         efratios = []
         close_prices = self.data_1min.close
-
         for i in range(len(close_prices) - time_period + 1):
             window_prices = close_prices[i:i + time_period]
 
-            window_efratio = self._efratio(window_prices)
+            window_efratio = self._efratio(list(window_prices))
 
             efratios.append(window_efratio)
 

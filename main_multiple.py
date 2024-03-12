@@ -30,24 +30,42 @@ print("Initializing Trade Log...")
 trade_log = LogBook(ib=ib)
 print("Trade Log Initialized...")
 
-# initializing Scanner object
-# if not ib.positions():
-#     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
-#     print(top_gainers.tickers_list)
-#     top_gainers.filter_floats(float_percentage_limit= 10, archive=True)
-#     print(f"Tickers after filter: {top_gainers.tickers_list}")
-#     top_gainers.calculate_percent_change()
-#     top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
-#     choice = input(f"{top_ticker.symbol} has been chosen.\nDo you want to trade this Ticker Y or N?\n").upper()
-#     while choice != 'Y':
-#         top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
-#         choice = input(f"Y or N? for {top_ticker.symbol}\n").upper()
+#initializing Scanner object
+if not ib.positions():
+    top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+    print(top_gainers.tickers_list)
+    top_gainers.filter_floats(float_percentage_limit= 10, archive=True)
+    print(f"Tickers after filter: {top_gainers.tickers_list}")
+    symbols = top_gainers.tickers_list
+    for i ,symbol in enumerate(symbols):
+        print(f'{i+1}. {symbol}')
+    choice = input('Would you like to remove any of these tickers?\n').lower()
+    while choice != 'n':
+        to_be_removed = int(choice) - 1
+        symbols.pop(to_be_removed)
+        for i, symbol in enumerate(symbols):
+            print(f'{i+1}. {symbol}')
+        choice = input('Would you like to remove any more of these tickers?\n').lower()
+else:
+    print('Tickers with open positions have been added to the list')
+    top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+    top_gainers.filter_floats(float_percentage_limit= 10, archive=True)
+    open_positions = ib.positions()
+    for symbol in open_positions.contract.symbol:
+        if symbol not in top_gainers.tickers_list:
+            top_gainers.tickers_list.append(symbol)
+    symbols = top_gainers.tickers_list
+    for i ,symbol in enumerate(symbols):
+        print(f'{i+1}. {symbol}')
+    choice = input('Would you like to remove any of these tickers?\n').lower()
+    while choice != 'n':
+        to_be_removed = int(choice) - 1
+        symbols.pop(to_be_removed)
+        for i, symbol in enumerate(symbols):
+            print(f'{i+1}. {symbol}')
+        choice = input('Would you like to remove any more of these tickers?\n').lower()
 
-#     #top_ticker = top_gainers.contracts[0]
-# else:
-#     top_ticker =  Stock(ib.positions()[0].contract.symbol, 'SMART', 'USD')
 
-symbols = ['BAND', 'AAPL']
 contracts = []
 for symbol in symbols:
     contracts.append(Stock(symbol, 'SMART', 'USD'))
@@ -64,7 +82,7 @@ print("\nRisk_Handler Initialized...")
 
 
 live_bars_dict = {}
-barsize = '5 secs'
+barsize = '1 min'
 for i, contract_obj in enumerate(contracts):
     live_bars_dict[contract_obj.symbol] = ib.reqHistoricalData(
         contract = contract_obj,
@@ -86,7 +104,8 @@ print("\nDataFrame Mananger Initialized...")
 #print(live_bars_dict['BAND'][-1])
 #print(live_bars_dict['AAPL'][-1].date)
 
-last_update_time = live_bars_dict['BAND'][-1].date
+last_update_time = live_bars_dict[symbols[0]][-1].date
+
 def hasNewBarForAllSymbols(live_bars_dict):
     global last_update_time
     latest_timestamps = [bars[-1].date for symbol,bars in live_bars_dict.items()]

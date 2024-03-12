@@ -48,14 +48,14 @@ class DF_Manager:
             if isinstance(bars, pd.DataFrame):
                 self.data_1min = bars
                 self.main_data = self.data_1min
-                self.data_5min = self.convert_to_timeframe(self.data_5sec, '5T')
+                self.data_5min = self.convert_to_timeframe(self.data_1min, '5T')
             elif isinstance(bars, dict):
                 self.data_1min = [util.df(bars).set_index('date') for symbol, bars, in bars.items()]
                 self.main_data = self.data_1min
             else:
                 self.data_1min = util.df(bars)
                 self.main_data = self.data_1min
-                self.data_5min = self.convert_to_timeframe(self.data_5sec, '5T')
+                self.data_5min = self.convert_to_timeframe(self.data_1min, '5T')
 
 
 

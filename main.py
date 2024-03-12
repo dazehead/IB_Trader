@@ -41,6 +41,7 @@ def onBarUpdate(bars, hasNewBar):
              df_manager=df,
              risk=risk,
              barsize='1min')
+
         
         signals = strat.custom_indicator(
             open=open,
@@ -66,14 +67,15 @@ print("Trade Log Initialized...")
 if not ib.positions():
     top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
     print(top_gainers.tickers_list)
-    top_gainers.filter_floats(float_percentage_limit= 10, archive=True)
+    top_gainers.filter_floats(float_percentage_limit= 20, archive=False)
     print(f"Tickers after filter: {top_gainers.tickers_list}")
-    top_gainers.calculate_percent_change()
-    top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
-    choice = input(f"{top_ticker.symbol} has been chosen.\nDo you want to trade this Ticker Y or N?\n").upper()
-    while choice != 'Y':
-        top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
-        choice = input(f"Y or N? for {top_ticker.symbol}\n").upper()
+    #top_gainers.calculate_percent_change()
+    #top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
+    #choice = input(f"{top_ticker.symbol} has been chosen.\nDo you want to trade this Ticker Y or N?\n").upper()
+    #while choice != 'Y':
+    #    top_ticker = top_gainers.monitor_percent_change(perc_threshold=.03, time_interval=10)
+    #    choice = input(f"Y or N? for {top_ticker.symbol}\n").upper()
+    top_ticker = Stock(top_gainers.tickers_list[0], 'SMART', 'USD')
 
     #top_ticker = top_gainers.contracts[0]
 else:
@@ -92,7 +94,8 @@ risk = Risk_Handler(
      backtest_db_table="KEFR_KAMA_ATR_below10",
      stop_time=None,
      start_time=None,
-     atr_perc=1.5)
+     atr_perc=1.5,
+     contracts=[top_ticker])
 print("Risk_Handler Initialized...")
 
 # Retrieving Historical data and keeping up to date with 5 second intervals
@@ -111,7 +114,8 @@ print(bars.barSizeSetting)
 print("Initializing DF...")
 df = DF_Manager(
      bars=bars,
-     ticker=top_ticker.symbol)
+     ticker=top_ticker.symbol,
+     barsize='1 min')
 print("DF intialized...")
 
 #signal_log = LogBook(ib=ib)

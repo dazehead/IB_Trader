@@ -17,7 +17,7 @@ def upload_historical(tickers=None):
             ticker = ticker.split('.')[0]
             df = pd.read_csv(f"historical_data/{date}_{ticker}.csv", delimiter=',')
             df['date'] = pd.to_datetime(df['date'])
-            all_data.append(DF_Manager(df, ticker))
+            all_data.append(DF_Manager(bars=df, ticker=ticker, barsize='1 min'))
 
     else:
         if isinstance(tickers, str):
@@ -38,7 +38,7 @@ def upload_historical(tickers=None):
                     files_done.append(tickers_filename)
                     df = pd.read_csv(f'historical_data/{tickers_filename}', delimiter=',')
                     df['date'] = pd.to_datetime(df['date'])
-                    all_data.append(DF_Manager(df, ticker))
+                    all_data.append(DF_Manager(bars=df, ticker=ticker, barsize='1 min'))
 
     return all_data
 
