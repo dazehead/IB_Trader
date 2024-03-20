@@ -7,6 +7,7 @@ import numpy as np
 import datetime as dt
 from get_data import download_historical
 import sqlite3
+import time
 
 class Scanner:
     """A class to handle Scanner lookup and paramters"""
@@ -27,6 +28,8 @@ class Scanner:
         self.ticker_market_cap = []
         self.ticker_float_percentage = []
         self.archive = False
+        self.scanDataList = None
+        self.counter = 0
         self.scan_market()
         print("...Scanner Initialized")
 
@@ -79,9 +82,9 @@ class Scanner:
             self.update_statistics_db(file)
             file.to_csv(file_path, index=False)
 
-            print('...downloading historical')
+            #print('...downloading historical')
             download_historical(need_to_download, to_csv=True, ib=self.ib)
-            print('...finished downloading historical')
+            #print('...finished downloading historical')
         else:
             pass
 
@@ -176,14 +179,17 @@ class Scanner:
             self.prev_day_close.append(prev_df.iloc[-1]['close'])
 
 
-    def scan_market(self):
+    def scan_market(self, callback=False):
         """Function to retrieve Tickers from Scanner"""
+        #if callback:
+        #    self.ib.cancelScannerSubscription(self.scanDataList)
+        #    self.ib.sleep(1)
         gainSub = ScannerSubscription(
             instrument="STK",
             locationCode="STK.US.MAJOR",
             scanCode=self.scancode,
             stockTypeFilter="CORP")
-        
+
         # full list of filters
         """https://nbviewer.org/github/erdewit/ib_insync/blob/master/notebooks/scanners.ipynb"""
         tagValues = [TagValue("priceAbove", '1'),
@@ -192,15 +198,18 @@ class Scanner:
                      #TagValue("openGapPercAbove", '25'),
                      TagValue("changePercAbove", "20")]
 
-        scanDataList = self.ib.reqScannerSubscription(gainSub, [], tagValues)
-        self.ib.sleep(1.5)
-        for data in scanDataList:
+        self.scanDataList = self.ib.reqScannerSubscription(gainSub, [], tagValues)
+        #print(self.scanDataList.reqId)
+        if not callback:
+            self.ib.sleep(1)
+                
+        for data in self.scanDataList:
             # retrieves all the tickers-converts to Stock object and appends them to a list
             stock = Stock(data.contractDetails.contract.symbol, 'SMART', 'USD')
             self.ib.qualifyContracts(stock)
             self.contracts.append(stock)
-        print(f'\n{len(scanDataList)} Tickers found.')
-        self.ib.cancelScannerSubscription(scanDataList)
+        print(f'\n{len(self.scanDataList)} Tickers found.')
+        #self.ib.cancelScannerSubscription(self.scanDataList)
 
         self.get_prev_day_close()
         self.get_ticker_list()
@@ -275,7 +284,7 @@ class Scanner:
 
         self.get_ticker_list()
         if self.archive:
-            print('...archiving data')
+            #print('...archiving data')
             self.archive_data_for_download()
 
     def get_finviz_stats(self):

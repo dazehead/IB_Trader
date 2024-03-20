@@ -185,14 +185,17 @@ class Strategy:
         return signals
     
     def _stop_trading_time(self, signals):
+
         if self.barsize == '10sec':
-            datetimes = self.data_10sec.index
+            datetimes = self.data_10sec.date
             date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.stop_time}")
+        
         elif self.barsize == '1min':
-            datetimes = self.data_1min.index
+            datetimes = self.data_1min.date
             date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.stop_time}")
+        
         elif self.barsize == '5min':
-            datetimes = self.data_5min.index
+            datetimes = self.data_5min.date
             date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.stop_time}")
 
         stop_index = (datetimes == date).argmax()
@@ -206,13 +209,15 @@ class Strategy:
         start_time = self.risk.start_time
 
         if self.barsize == '10sec':
-            datetimes = self.data_10sec.index
+            datetimes = self.data_10sec.date
             data = self.data_10sec
+        
         elif self.barsize == '1min':
-            datetimes = self.data_1min.index
+            datetimes = self.data_1min.date
             data = self.data_1min
+        
         elif self.barsize == '5min':
-            datetimes = self.data_5min.index
+            datetimes = self.data_5min.date
             data = self.data_5min
 
         date_str = f"{str(datetimes[0]).split()[0]} {start_time}"
