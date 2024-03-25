@@ -139,7 +139,7 @@ class Trade:
                         self.risk.trade_counter[self.top_stock.symbol] += 1
 
                 elif self.risk.trade[self.top_stock.symbol].order.action == 'SELL' and self.risk.trade[self.top_stock.symbol].orderStatus.status == 'PreSubmitted':
-                    if self.risk.trade_counter[self.top_stock.symbol] == 13:
+                    if self.risk.trade_counter[self.top_stock.symbol] == 6:
                         self.risk.trade_counter[self.top_stock.symbol] = 0
                         print("Updating Stop Loss")
                         # below does not update unsure how to modify existing order

@@ -11,6 +11,13 @@ import sys
 from strategies.kefr_kama import Kefr_Kama
 from sec_data import SEC_Data
 import datetime as dt
+import pygame
+
+
+float_limit = 10
+archive = True
+alarm = False
+
 
 """
 7496 - live
@@ -18,10 +25,8 @@ import datetime as dt
 """
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=1)
-
-float_limit = 10
-archive = True
 counter = 0
+
 
 if ib.client.port == 7496:
     to_go_on = input("YOU ARE FIXING TO TRADE ON A LIVE ACCOUNT PLEASE INPUT 'Y' TO CONTINUE...").upper()
@@ -53,15 +58,21 @@ if not ib.positions():
         print('No tickers fall within parameters - Continuing to Scan Market....\n')
     print(f"Tickers after filter: {top_gainers.tickers_list}")
     symbols = top_gainers.tickers_list
+    if alarm:
+        pygame.mixer.init()
+        pygame.mixer.music.load('alarm_sound.wav')
+        pygame.mixer.music.play()
+        pygame.time.wait(10)
     for i ,symbol in enumerate(symbols):
         print(f'{i+1}. {symbol}')
-    choice = input('!!!!!!!!!!!!!!!!\n!!!!!!!!!\n!!!!!!\n!!!!!!!!!!\n!!!!!!!!!!\n!!!!!!!!!!\n!!!!!!!!!!!!!\n!!!!!!!!!!!!\nWould you like to remove any of these tickers?\n').lower()
-    while choice != 'n':
-        to_be_removed = int(choice) - 1
-        symbols.pop(to_be_removed)
-        for i, symbol in enumerate(symbols):
-            print(f'{i+1}. {symbol}')
-        choice = input('Would you like to remove any more of these tickers?\n').lower()
+    if len(symbols) > 1:
+        choice = input('\n\n\n\n\n\n\n\n\n\n!!!!!!!!!!!!!!!!\n!!!!!!!!!\n!!!!!!\n!!!!!!!!!!\n!!!!!!!!!!\n!!!!!!!!!!\n!!!!!!!!!!!!!\n!!!!!!!!!!!!\n\n\n\nWould you like to remove any of these tickers?\n').lower()
+        while choice != 'n':
+            to_be_removed = int(choice) - 1
+            symbols.pop(to_be_removed)
+            for i, symbol in enumerate(symbols):
+                print(f'{i+1}. {symbol}')
+            choice = input('Would you like to remove any more of these tickers?\n').lower()
 
 else:
     print('Tickers with open positions have been added to the list')
@@ -74,6 +85,10 @@ else:
     symbols = top_gainers.tickers_list
     for i ,symbol in enumerate(symbols):
         print(f'{i+1}. {symbol}')
+    pygame.mixer.init()
+    pygame.mixer.music.load('alarm_sound.wav')
+    pygame.mixer.music.play()
+    pygame.time.wait(10)
     choice = input('Would you like to remove any of these tickers?\n').lower()
     while choice != 'n':
         to_be_removed = int(choice) - 1
