@@ -6,6 +6,7 @@ class Trade:
     def __init__(self, ib, risk, signals, contract, counter=None, logbook=None):
         self.ib = ib
         self.risk = risk
+        self.logbook = logbook
         self.top_stock = contract
         self.all_signals = signals
 
@@ -21,7 +22,7 @@ class Trade:
         # ticks(), vwap(), ticks(), volume(), low52wwk(), high52week(), ask(), modelGreeks, bidGreeks
         self.halted = market_data.halted
         self.price = market_data.marketPrice()
-        self.num_shares = 200#self.risk.balance_at_risk // self.price
+        self.num_shares = 1#self.risk.balance_at_risk // self.price
         self.ask = market_data.ask
         self.bid = market_data.bid
         self.symbol_has_positions, self.open_positions = self.check_and_match_positions()
@@ -139,7 +140,7 @@ class Trade:
                         self.risk.trade_counter[self.top_stock.symbol] += 1
 
                 elif self.risk.trade[self.top_stock.symbol].order.action == 'SELL' and self.risk.trade[self.top_stock.symbol].orderStatus.status == 'PreSubmitted':
-                    if self.risk.trade_counter[self.top_stock.symbol] == 6:
+                    if self.risk.trade_counter[self.top_stock.symbol] == 2:
                         self.risk.trade_counter[self.top_stock.symbol] = 0
                         print("Updating Stop Loss")
                         # below does not update unsure how to modify existing order
@@ -158,6 +159,8 @@ class Trade:
                     pass
                 else:
                     self._sell_order()
+            elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'Filled' and self.risk.trade[self.topo_stock.symbol].order.action == 'SELL':
+                self.logbook.log_portfolio(after_sell = True)
             else:
                 print('-----------------3------------')
                 self.risk.trade[self.top_stock.symbol] = None

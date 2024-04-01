@@ -37,10 +37,12 @@ class Risk_Handler:
             for contract in contracts:
                 self.trade[contract.symbol] = None
                 self.trade_counter[contract.symbol] = 0
-
+            print("\n*****************************************")
             print(f"Account Balance: {self.balance}")
             print(f"Buying Power: {self.buying_power}")
-            print(f"balance to trade: {self.balance_at_risk}")
+            print(f"Percent of Buying Power to be used: {self.perc_risk}")
+            print(f"Balance to trade: {self.balance_at_risk}")
+            print("*****************************************\n")
             #self.view_account_summary()
 
         #self.perc_risk = self.kelly_criterion(backtest_db_table)

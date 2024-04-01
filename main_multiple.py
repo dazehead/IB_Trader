@@ -12,24 +12,29 @@ from strategies.kefr_kama import Kefr_Kama
 from sec_data import SEC_Data
 import datetime as dt
 import pygame
+util.patchAsyncio()
 
 
 float_limit = 10
-archive = True
+archive = False
 alarm = False
+port = 7497
+changePercAbove = '15'
+rejected_tickers = []
+current_ticker_list = []
+"""
+live: 7496
+paper: 7497
+"""
 
 
-"""
-7496 - live
-7497 - paper
-"""
 ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=1)
+ib.connect('127.0.0.1', port, clientId=2)
 counter = 0
 
 
 if ib.client.port == 7496:
-    to_go_on = input("YOU ARE FIXING TO TRADE ON A LIVE ACCOUNT PLEASE INPUT 'Y' TO CONTINUE...").upper()
+    to_go_on = input("\nYOU ARE FIXING TO TRADE ON A LIVE ACCOUNT PLEASE INPUT 'Y' TO CONTINUE...\n").upper()
     if to_go_on != 'Y':
         sys.exit()
 
@@ -37,6 +42,7 @@ if ib.client.port == 7496:
 """---------------------START OF PROGRAM--------------------------"""
 print("Initializing Trade Log...")
 trade_log = LogBook(ib=ib)
+portfolio_log = LogBook(ib=ib)
 print("Trade Log Initialized...")
 
 
@@ -46,7 +52,7 @@ def onNoTicker(scanDataList):
 
 #initializing Scanner object
 if not ib.positions():
-    top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+    top_gainers = Scanner(ib=ib, scancode='TOP_PERC_GAIN', changePercAbove=changePercAbove)
     print(top_gainers.tickers_list)
     top_gainers.filter_floats(float_percentage_limit= float_limit, archive=archive)
     while not top_gainers.tickers_list:
@@ -54,7 +60,7 @@ if not ib.positions():
         ib.sleep(10)
         #top_gainers.scanDataList.updateEvent += onNoTicker
         top_gainers.scan_market()
-        top_gainers.filter_floats(float_percentage_limit= float_limit, archive=archive)
+        top_gainers.filter_floats(float_percentage_limit=float_limit, archive=archive)
         print('No tickers fall within parameters - Continuing to Scan Market....\n')
     print(f"Tickers after filter: {top_gainers.tickers_list}")
     symbols = top_gainers.tickers_list
@@ -69,7 +75,9 @@ if not ib.positions():
         choice = input('\n\n\n\n\n\n\n\n\n\n!!!!!!!!!!!!!!!!\n!!!!!!!!!\n!!!!!!\n!!!!!!!!!!\n!!!!!!!!!!\n!!!!!!!!!!\n!!!!!!!!!!!!!\n!!!!!!!!!!!!\n\n\n\nWould you like to remove any of these tickers?\n').lower()
         while choice != 'n':
             to_be_removed = int(choice) - 1
-            symbols.pop(to_be_removed)
+            rejected = symbols.pop(to_be_removed)
+            #rejected_tickers.append(rejected)
+            print("\n")
             for i, symbol in enumerate(symbols):
                 print(f'{i+1}. {symbol}')
             choice = input('Would you like to remove any more of these tickers?\n').lower()
@@ -121,7 +129,7 @@ for i, contract_obj in enumerate(contracts):
         contract = contract_obj,
         endDateTime= '',
         durationStr= '1 D',
-        barSizeSetting= barsize,
+        barSizeSetting= '1 min',
         whatToShow = 'TRADES',
         useRTH= False,
         keepUpToDate= True)
@@ -160,9 +168,11 @@ def on_bar_update(bars, hasNewBar):
     global live_bars_dict
     global df
     global counter
+    global portfolio_log
     if hasNewBarForAllSymbols(live_bars_dict):
         counter += 1
         df.update(live_bars_dict)
+        print(live_bars_dict.keys())
         for i, contract_obj in enumerate(contracts):
             open = df.main_data[i].open
             high = df.main_data[i].high
@@ -182,7 +192,8 @@ def on_bar_update(bars, hasNewBar):
 
             trade = Trade(
                 ib=ib, 
-                risk=risk, 
+                risk=risk,
+                logbook = portfolio_log,
                 signals=signals,
                 contract=contract_obj)
             
@@ -194,13 +205,13 @@ def onScanData(scanDataList):
     global contract_symbols
     global contracts
     global counter
-    if counter < 1:
+    global rejected_tickers
+    if counter < 2:
         pass
     else:
         new_symbols = []
         for data in top_gainers.scanDataList:
             symbol = data.contractDetails.contract.symbol
-            print(symbol)
             new_symbols.append(symbol)
         for symbol in contract_symbols:
             if symbol not in contract_symbols:
@@ -208,66 +219,41 @@ def onScanData(scanDataList):
                 stock = Stock(symbol, 'SMART', 'USD')
                 ib.qualifyContracts(stock)
                 contracts.append(stock)
-        
-        #print(f'\n{len(top_gainers.scanDataList)} Tickers found.')
-        #self.ib.cancelScannerSubscription(self.scanDataList)
-
+    
         top_gainers.get_ticker_list()
         top_gainers.get_finviz_stats()
         top_gainers.filter_floats(float_percentage_limit= float_limit, archive=archive)
-        #print(f"Tickers after filter: {top_gainers.tickers_list}")
+
         for ticker in top_gainers.tickers_list:
-            #print(ticker)
-            if ticker not in live_bars_dict.keys():
+            if ticker not in live_bars_dict.keys() and ticker not in rejected_tickers:
                 print(f'.............New ticker {ticker} from scanner....................')
                 stock = Stock(ticker, 'SMART', 'USD')
                 print('--------------appending contract------------')
                 contracts.append(stock)
-                print('---------------cancelling sub')
-                ib.cancelScannerSubscription(top_gainers.scanDataList)
-
-                print('----------creating new gainSub')
-                gainSub = ScannerSubscription(
-                    instrument="STK",
-                    locationCode="STK.US.MAJOR",
-                    scanCode=top_gainers.scancode,
-                    stockTypeFilter="CORP")
-
-                # full list of filters
-                """https://nbviewer.org/github/erdewit/ib_insync/blob/master/notebooks/scanners.ipynb"""
-                tagValues = [TagValue("priceAbove", '1'),
-                            TagValue("priceBelow", '20'),
-                            TagValue("volumeAbove", '999999'),
-                            #TagValue("openGapPercAbove", '25'),
-                            TagValue("changePercAbove", "20")]
-                print('----------------reqScannerSub')
-                top_gainers.scanDataList = ib.reqScannerSubscription(gainSub, [], tagValues)
-                print('-------------------canceling historical data')
-                for key, data in live_bars_dict.items():
-                    ib.cancelHistoricalData(data)
                 print('---------------live_bars_dict')
-                live_bars_dict = {}
-                for i, contract_obj in enumerate(contracts):
-                    live_bars_dict[contract_obj.symbol] = ib.reqHistoricalData(
-                        contract = contract_obj,
-                        endDateTime= '',
-                        durationStr= '1 D',
-                        barSizeSetting= barsize,
-                        whatToShow = 'TRADES',
-                        useRTH= False,
-                        keepUpToDate= True)
-                    ib.sleep(1)
-                print('-----------sleeping')
-                ib.sleep(1)
+
+                live_bars_dict[contracts[-1].symbol] = ib.reqHistoricalData(
+                    contract = contract_obj,
+                    endDateTime= '',
+                    durationStr= '1 D',
+                    barSizeSetting= barsize,
+                    whatToShow = 'TRADES',
+                    useRTH= False,
+                    keepUpToDate= True)
+                ib.sleep(.1)
+
             else:
                 print('...Scanner has not picked up any new tickers')
         
 
-
-top_gainers.scanDataList.updateEvent += onScanData
-ib.barUpdateEvent.clear()
-ib.barUpdateEvent+= on_bar_update
-ib.sleep(10000)
+try:
+    top_gainers.scanDataList.updateEvent.clear()
+    top_gainers.scanDataList.updateEvent += onScanData
+    ib.barUpdateEvent.clear()
+    ib.barUpdateEvent+= on_bar_update
+    ib.sleep(10000)
+except KeyboardInterrupt:
+    trade_log.log_trades()
 
 
 # print(f"--------------------------{top_ticker.symbol}--------------------------")

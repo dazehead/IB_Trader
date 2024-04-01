@@ -12,7 +12,7 @@ import time
 class Scanner:
     """A class to handle Scanner lookup and paramters"""
 
-    def __init__(self, ib, scancode):
+    def __init__(self, ib: object, scancode: str, changePercAbove: str):
         print("...Initializing Scanner")
         self.ib = ib
         self.float_percentage_limit = None
@@ -30,6 +30,7 @@ class Scanner:
         self.archive = False
         self.scanDataList = None
         self.counter = 0
+        self.change_perc_above = changePercAbove
         self.scan_market()
         print("...Scanner Initialized")
 
@@ -196,7 +197,7 @@ class Scanner:
                      TagValue("priceBelow", '20'),
                      TagValue("volumeAbove", '999999'),
                      #TagValue("openGapPercAbove", '25'),
-                     TagValue("changePercAbove", "20")]
+                     TagValue("changePercAbove", self.change_perc_above)]
 
         self.scanDataList = self.ib.reqScannerSubscription(gainSub, [], tagValues)
         #print(self.scanDataList.reqId)

@@ -52,9 +52,11 @@ class LogBook:
     def __init__(self, ib, value=None):
         self.head_node = Log(value)
         self.ib = ib
+        self.account_information = []
         if self.ib is not None:
             pass
             #self.get_charts()
+        self.log_portfolio(initial_balance=True)
 
 
 
@@ -359,6 +361,30 @@ class LogBook:
                     df.to_csv(filename, index=False)
                 else:
                     pass
+
+    def log_portfolio(self, initial_balance = False, after_buy=False, after_sell=False):
+        if not initial_balance and not after_buy and not after_sell:
+            print('Need to assign something!')
+            return
+        self.account_summary = util.df(self.ib.accountSummary())[['tag', 'value']]
+        cash_balance = pd.to_numeric(
+                self.account_summary.loc[self.account_summary['tag'] == 'CashBalance', 'value'].iloc[0]
+                )
+        if initial_balance:
+            self.account_information.append(cash_balance)
+        elif after_sell:
+            pnl = pd.to_numeric(
+                self.account_summary.loc[self.account_summary['tag'] == 'RealizedPnL', 'value'].iloc[0]
+            )
+            self.account_information.append(cash_balance)
+            self.account_information.append(pnl)
+            if pnl < 0:
+                percent = abs((self.account_information[1] / self.account_information[0]) - 1)
+            else:
+                percent = ((self.account_information[1] / self.account_information[0]) - 1)* -1
+            self.acount_information.append(percent)
+            print(self.account_information)
+
 
     
 
