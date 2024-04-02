@@ -41,7 +41,6 @@ class Trade:
         print(f"Signal: {self.signal}")
         print(f"Spread: {self.bid}-{self.ask}")
         if self.halted == 0.0: # not halted
-
             if not self.symbol_has_positions and self.signal == 1 and self.risk.trade[self.top_stock.symbol] is None:
                 if self.risk.active_buy_monitoring:
                     # need to put stuff here for active_buy_monitoring
