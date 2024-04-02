@@ -122,7 +122,7 @@ def run_backtest(tickers_list):
         print(backtest.pf.stats())
         backtest.graph_data()
     return logbook
-logbook = run_backtest(get_tickers_below(10)[0])
+#logbook = run_backtest(get_tickers_below(10)[0])
 #logbook.export_backtest_to_db("KEFR_KAMA_ATR_below10")
 
 #df = logbook._convert_to_dataframe()
@@ -229,31 +229,58 @@ def kelly_criterion(table):
     return kelly_percentage
 #kelly_criterion('KEFR_KAMA_ATR_below10')
 
-"""
+
 def onBarUpdate(bars, hasNewBar):
     if hasNewBar:
         global df
         global counter
+        global test_data
 
         df.update(bars)
+        print('-1-')
+        print(df.main_data)
+        open = df.main_data.open
+        high = df.main_data.high
+        low = df.main_data.low
+        close = df.main_data.close
+        print('-2-')
+        strat = Kefr_Kama(
+            df_manager = df,
+            risk = risk,
+            barsize=barsize
+        )
+        print('-3-')
+
+        signals = strat.custom_indicator(
+            open=open,
+            high=high,
+            low=low,
+            close=close
+        )
+        print('-4-')
 
         trade = Trade(
             ib=ib,
             risk=risk,
+            logbook = None,
             signals=test_data,
             contract=top_stock,
             counter = counter
             )
+        print('-5-')
         
         trade.execute_trade()
+        print('-6-')
         counter += 1
         print(counter)
+        print('----------------------------------------')
 
-
+barsize = '1 min'
+change_perc_above = '15'
 ib = IB()
 ib.connect("127.0.0.1", 7497, clientId=2)
 
-top_gainers = Scanner(ib, 'TOP_PERC_GAIN')
+top_gainers = Scanner(ib, 'TOP_PERC_GAIN', change_perc_above)
 top_gainers.filter_floats(float_percentage_limit=10, archive=False)
 top_stock = top_gainers.contracts[0]
 #top_stock = Stock('CHEA', 'SMART', 'USD')
@@ -262,26 +289,32 @@ ib.qualifyContracts(top_stock)
 
 risk = Risk_Handler(
     ib=ib,
+    backtest_db_table="KEFR_KAMA_ATR_below10",
     stop_time=None,
-    atr_perc=1.5
+    start_time = None,
+    atr_perc=1.5,
+    contracts = [top_stock]
 )
 bars = ib.reqHistoricalData(
     contract=top_stock,
     endDateTime= '',
     durationStr='1 D',
-    barSizeSetting='5 secs',
+    barSizeSetting='1 min',
     whatToShow='TRADES',
     useRTH=False,
     keepUpToDate=True
 )
+ib.sleep(1)
 df = DF_Manager(
         bars=bars,
-        ticker=top_stock.symbol
+        ticker=top_stock.symbol,
+        barsize=barsize
 )
 trade_log = LogBook(ib=ib)
 #trade_log.log_trades()
 counter = 0
-test_data = [0,0,0,0,1,0,0,0,0,0,0,0,0,0]
+test_data = [0,1,0,0,0,-1,0]
+print('starting program')
 
 try:
     bars.updateEvent.clear()
@@ -298,4 +331,3 @@ else:
     ib.cancelHistoricalData(bars)
     #trade_log.log_trades()
     ib.disconnect()
-"""

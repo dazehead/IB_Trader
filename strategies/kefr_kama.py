@@ -168,7 +168,6 @@ class Kefr_Kama(Strategy):
                         result = self.active_buy_monitor(close, open)
                         signals[-1] = result
 
-
             else:
                 if self.risk.active_buy_monitoring:
                     signals = self._process_buy_monitoring(signals=signals, close=close, open=open)
@@ -192,7 +191,7 @@ class Kefr_Kama(Strategy):
                 graph_signals = pd.Series(final_signals, index=self.data_1min.index)
                 self.graph_data(graph_signals, efratio_timeperiod, efratios, 'final_signals')
                 """     
-        #print(f"Total Time Elapsed: {time.time() - start}")   
+        #print(f"Total Time Elapsed: {time.time() - start}")
         return signals
 
     def _process_buy_monitoring(self,signals, close, open):

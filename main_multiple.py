@@ -15,8 +15,8 @@ import pygame
 util.patchAsyncio()
 
 
-float_limit = 15
-archive = False
+float_limit = 10
+archive = True
 alarm = False
 port = 7497
 changePercAbove = '15'
@@ -46,10 +46,6 @@ portfolio_log = LogBook(ib=ib)
 print("...Trade Log Initialized")
 
 
-def onNoTicker(scanDataList):
-    print('TEST____________________________')
-
-
 #initializing Scanner object
 if not ib.positions():
     top_gainers = Scanner(ib=ib, scancode='TOP_PERC_GAIN', changePercAbove=changePercAbove)
@@ -76,7 +72,7 @@ if not ib.positions():
         while choice != 'n':
             to_be_removed = int(choice) - 1
             rejected = symbols.pop(to_be_removed)
-            #rejected_tickers.append(rejected)
+            rejected_tickers.append(rejected)
             print("\n")
             for i, symbol in enumerate(symbols):
                 print(f'{i+1}. {symbol}')
@@ -112,7 +108,7 @@ for symbol in symbols:
     contracts.append(Stock(symbol, 'SMART', 'USD'))
     contract_symbols.append(symbol)
 
-print("\nInitializing Risk_Handler...")
+print("\n...Initializing Risk_Handler")
 risk = Risk_Handler(
      ib=ib,
      backtest_db_table="KEFR_KAMA_ATR_below10",
@@ -120,7 +116,7 @@ risk = Risk_Handler(
      start_time=None,
      atr_perc=1.5,
      contracts = contracts)
-print("\nRisk_Handler Initialized...")
+print("\n...Risk_Handler Initialized")
 
 
 live_bars_dict = {}
@@ -130,17 +126,17 @@ for i, contract_obj in enumerate(contracts):
         contract = contract_obj,
         endDateTime= '',
         durationStr= '1 D',
-        barSizeSetting= '1 min',
+        barSizeSetting= barsize,
         whatToShow = 'TRADES',
         useRTH= False,
         keepUpToDate= True)
     ib.sleep(1)
-print("\nInitiliazing DataFrame Mananger...")
+print("\n...Initiliazing DataFrame Mananger")
 df = DF_Manager(
     bars=live_bars_dict,
     ticker=contract_symbols,
     barsize = barsize)
-print("\nDataFrame Mananger Initialized...")
+print("\n...DataFrame Mananger Initialized")
 
     
 #print(live_bars_dict['BAND'][-1])
@@ -217,7 +213,7 @@ def onScanData(scanDataList):
         for data in top_gainers.scanDataList:
             symbol = data.contractDetails.contract.symbol
             new_symbols.append(symbol)
-            
+
         top_gainers.get_ticker_list()
         top_gainers.get_finviz_stats()
         top_gainers.filter_floats(float_percentage_limit= float_limit, archive=archive)

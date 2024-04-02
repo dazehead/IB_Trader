@@ -54,9 +54,9 @@ class LogBook:
         self.ib = ib
         self.account_information = []
         if self.ib is not None:
-            pass
+            self.log_portfolio(initial_balance=True)
             #self.get_charts()
-        self.log_portfolio(initial_balance=True)
+        #self.log_portfolio(initial_balance=True)
 
 
 
@@ -203,7 +203,7 @@ class LogBook:
     
     def log_trades(self):
         """Function to retrieve trade information from IB"""
-        print('...Logging Trades')
+        print('\n...Logging Trades')
         # retrives trades, converts to df, creates new datframe with column names 
         trades = self.ib.trades()
         #print(trades)
