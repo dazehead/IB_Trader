@@ -77,7 +77,7 @@ class Kefr_Kama(Strategy):
             """if we are connected to IB"""
             self.risk.stop_loss = round(self.kama[-1] - atr[-1] * self.risk.atr_perc, 2)
             print(f'---Stop Loss: {self.risk.stop_loss}')
-            if close[-1] < self.risk.stop_loss:
+            if close[-1] <= self.risk.stop_loss:
                 print('----SELL SIGNAL')
                 """SELL"""
                 new_signals = signals
