@@ -167,37 +167,41 @@ def on_bar_update(bars, hasNewBar):
     global counter
     global portfolio_log
     if hasNewBarForAllSymbols(live_bars_dict):
+        print('\n-hasNewBarForAllSymbols-')
         counter += 1
+        print('-updating live bars dict-')
         df.update(live_bars_dict)
+        print(f'-finished updating live bars dict for {len(contracts)} contracts-')
         #print(live_bars_dict.keys())
         for i, contract_obj in enumerate(contracts):
+            print(f'\n-starting data retrieval for {contract_obj.symbol}-')
             open = df.main_data[i].open
             high = df.main_data[i].high
             low = df.main_data[i].low
             close = df.main_data[i].close
-
+            print('-starting strategy init-')
             strat = Kefr_Kama(
                 df_manager=df,
                 risk=risk,
                 barsize=barsize,
                 index=i)
-
+            print('-starting custom indicator-')
             signals = strat.custom_indicator(
                 open=open,
                 high=high,
                 low=low,
                 close=close)
-
+            print('-starting trade obj init-')
             trade = Trade(
                 ib=ib, 
                 risk=risk,
                 logbook = portfolio_log,
                 signals=signals,
                 contract=contract_obj)
-
+            print('-starting execute trade-')
             trade.execute_trade()
                     
-        print('-------------------------------------------------------------')
+        print('\n\n------------------------------------------------------------------------\n\n')
 def onScanData(scanDataList):
     global live_bars_dict
     global contract_symbols
@@ -206,24 +210,36 @@ def onScanData(scanDataList):
     global rejected_tickers
     global df
     global risk
+    global top_gainers
     if counter < 1:
         pass
     else:
         new_symbols = []
+        top_gainers.contracts = []
         for data in top_gainers.scanDataList:
             symbol = data.contractDetails.contract.symbol
             new_symbols.append(symbol)
+            stock = Stock(symbol, 'SMART', 'USD')
+            ib.qualifyContracts(stock)
+            top_gainers.contracts.append(stock)
+
+
+        print(f"{len(new_symbols)} tickers hit on scanner:\n{new_symbols}\n")
 
         top_gainers.get_ticker_list()
         top_gainers.get_finviz_stats()
         top_gainers.filter_floats(float_percentage_limit= float_limit, archive=archive)
 
+        tickers_filter = []
+        new_ticker = False
         for ticker in top_gainers.tickers_list:
+            tickers_filter.append(ticker)
             if ticker not in live_bars_dict.keys() and ticker not in rejected_tickers:
+                new_ticker = True
                 print(f'\n\n******************* New ticker {ticker} from scanner *******************\n\n')
                 df.ticker.append(ticker)
                 risk.trade[ticker] = None
-                print(f"...Current tickers: {df.ticker}")
+                print(f"Current tickers: {df.ticker}")
                 stock = Stock(ticker, 'SMART', 'USD')
                 contracts.append(stock)
 
@@ -237,8 +253,9 @@ def onScanData(scanDataList):
                     keepUpToDate= True)
                 ib.sleep(1)
 
-            else:
-                print('...Scanner has not picked up any new tickers')
+        if not new_ticker:
+            print(f'{len(tickers_filter)} tickers after filter:\n {tickers_filter}\n')
+            print('...Scanner has not picked up any new tickers\n')
         
 
 try:

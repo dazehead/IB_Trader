@@ -72,16 +72,18 @@ class Kefr_Kama(Strategy):
         return new_signals
     
     def simple_atr_process(self, signals, atr, close):
-
+        print('---simple atr process')
         if self.risk.ib is not None:
             """if we are connected to IB"""
             self.risk.stop_loss = round(self.kama[-1] - atr[-1] * self.risk.atr_perc, 2)
-            print(f'Stop Loss: {self.risk.stop_loss}')
+            print(f'---Stop Loss: {self.risk.stop_loss}')
             if close[-1] < self.risk.stop_loss:
+                print('----SELL SIGNAL')
                 """SELL"""
                 new_signals = signals
                 new_signals[-1] = -1
             elif close[-1] > self.risk.stop_loss:
+                print('----NOTHING SIGNAL')
                 new_signals = signals
         else:
             """If we are only backtesting and NOT connected to IB"""
@@ -135,6 +137,7 @@ class Kefr_Kama(Strategy):
         efratios = self.calculate_efratio(efratio_timeperiod)
         #print(efratios)
         """insert KAMA here"""
+        print('---calculating KAMA')
         kama = self.calculate_kama(efratios, close)
         self.kama = pd.Series(kama, index=efratios.index)
         signals = pd.Series(0, index=efratios.index)

@@ -22,14 +22,13 @@ class Trade:
         # ticks(), vwap(), ticks(), volume(), low52wwk(), high52week(), ask(), modelGreeks, bidGreeks
         self.halted = market_data.halted
         self.price = market_data.marketPrice()
-        self.num_shares = 1#self.risk.balance_at_risk // self.price
+        self.num_shares = 200#self.risk.balance_at_risk // self.price
         self.ask = market_data.ask
         self.bid = market_data.bid
         self.symbol_has_positions, self.open_positions = self.check_and_match_positions()
         #self.midpoint = market_data.midpoint
     
     def check_and_match_positions(self):
-        print(self.top_stock.symbol)
         for position in self.ib.positions():
             if position.contract.symbol == self.top_stock.symbol:
                 print('--position open--')
@@ -38,8 +37,8 @@ class Trade:
         
     def execute_trade(self, sell_now = False):
         """Logic for when to buy and sell based off signals and if we already hold positions"""
-        print(f"Signal: {self.signal}")
-        print(f"Spread: {self.bid}-{self.ask}")
+        print(f"--Signal: {self.signal}")
+        print(f"--Spread: {self.bid}-{self.ask}")
         if self.halted == 0.0: # not halted
             if not self.symbol_has_positions and self.signal == 1 and self.risk.trade[self.top_stock.symbol] is None:
                 if self.risk.active_buy_monitoring:
@@ -100,7 +99,7 @@ class Trade:
             #self.risk.trade = None
             positions = self.open_positions.position
             sell_order = StopOrder("SELL", positions, self.risk.stop_loss)
-            print(f"stop_loss --------: {self.risk.stop_loss}")
+            #print(f"stop_loss --------: {self.risk.stop_loss}")
             if sell_now:
                 market_data = self.ib.reqMktData(self.top_stock, '', False, False)
                 self.bid = market_data.bid
@@ -114,15 +113,18 @@ class Trade:
 
     def _check_order(self):
         """Checks to make sure the orders have been filled, if not then we cancel the orders and place the orders again with updated market"""
-        print("-in checking order-\n")
+        print("--in checking order\n")
         if self.risk.trade[self.top_stock.symbol] is not None:
             print('-------------1-------------------')
             #print(f"Order Status: {self.risk.trade.orderStatus.status}")  
             if self.risk.trade[self.top_stock.symbol].orderStatus.status != 'Filled' and self.risk.trade[self.top_stock.symbol].orderStatus.status != 'Cancelled':
+                print('1-a')
                 #print(f"Order Status: {self.risk.trade.orderStatus.status}")             
 
                 if self.risk.trade[self.top_stock.symbol].order.action == 'BUY':
+                    print('1-b')
                     if self.risk.trade_counter[self.top_stock.symbol] == 3:
+                        print('1-c')
                         """when the buy order still hasn't been filled and 3 iterations have passed"""
                         self.risk.trade_counter[self.top_stock.symbol] = 0
                         # below is what we previous did still need to verify the .remaining give correct shares
@@ -134,11 +136,14 @@ class Trade:
                         self._buy_order(self.num_shares)
                         print('canceling and re-buying with calculated shares')
                     elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'PreSubmitted':
+                        print('1-d')
                         self.risk.trade_counter[self.top_stock.symbol] += 1
                     elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'Submitted':
+                        print('1-e')
                         self.risk.trade_counter[self.top_stock.symbol] += 1
 
                 elif self.risk.trade[self.top_stock.symbol].order.action == 'SELL' and self.risk.trade[self.top_stock.symbol].orderStatus.status == 'PreSubmitted':
+                    print('1-f')
                     if self.risk.trade_counter[self.top_stock.symbol] == 2:
                         self.risk.trade_counter[self.top_stock.symbol] = 0
                         print("Updating Stop Loss")
@@ -157,12 +162,15 @@ class Trade:
                     print(f"stop_loss is None")
                     pass
                 else:
+                    print('2-a')
                     self._sell_order()
-            elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'Filled' and self.risk.trade[self.topo_stock.symbol].order.action == 'SELL':
+            elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'Filled' and self.risk.trade[self.top_stock.symbol].order.action == 'SELL':
+                print('----------------3--------------')
                 self.logbook.log_portfolio(after_sell = True)
             else:
-                print('-----------------3------------')
+                print('-----------------4------------')
                 self.risk.trade[self.top_stock.symbol] = None
+        print('-----------------5-----------------')
         pass
 
 
