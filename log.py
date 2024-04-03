@@ -363,26 +363,34 @@ class LogBook:
                     pass
 
     def log_portfolio(self, initial_balance = False, after_buy=False, after_sell=False):
+        print('...logging portfolio')
         if not initial_balance and not after_buy and not after_sell:
             print('Need to assign something!')
             return
+        print('starting account summary')
         self.account_summary = util.df(self.ib.accountSummary())[['tag', 'value']]
+        print('getting cash balance')
         cash_balance = pd.to_numeric(
                 self.account_summary.loc[self.account_summary['tag'] == 'CashBalance', 'value'].iloc[0]
                 )
         if initial_balance:
             self.account_information.append(cash_balance)
         elif after_sell:
+            print('after sell is set to true-retrieving pnl')
             pnl = pd.to_numeric(
                 self.account_summary.loc[self.account_summary['tag'] == 'RealizedPnL', 'value'].iloc[0]
             )
+            print('appending to account information')
             self.account_information.append(cash_balance)
             self.account_information.append(pnl)
             if pnl < 0:
+                print('pnl greater than 0')
                 percent = abs((self.account_information[1] / self.account_information[0]) - 1)
             else:
+                print('pnl less than 0')
                 percent = ((self.account_information[1] / self.account_information[0]) - 1)* -1
-            self.acount_information.append(percent)
+            print('appending percent to account information')
+            self.account_information.append(percent)
             print(self.account_information)
 
 

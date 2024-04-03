@@ -166,7 +166,7 @@ class Trade:
                     self._sell_order()
             elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'Filled' and self.risk.trade[self.top_stock.symbol].order.action == 'SELL':
                 print('----------------3--------------')
-                self.logbook.log_portfolio(after_sell = True)
+                #self.logbook.log_portfolio(after_sell = True)
             else:
                 print('-----------------4------------')
                 self.risk.trade[self.top_stock.symbol] = None
