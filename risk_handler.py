@@ -37,14 +37,17 @@ class Risk_Handler:
             for contract in contracts:
                 self.trade[contract.symbol] = None
                 self.trade_counter[contract.symbol] = 0
+
             print("\n*****************************************")
             print(f"Account Balance: {self.balance}")
             print(f"Buying Power: {self.buying_power}")
             print(f"Percent of Buying Power to be used: {self.perc_risk}")
             print(f"Balance to trade: {self.balance_at_risk}")
             print("*****************************************\n")
-            #self.view_account_summary()
 
+
+        self.stop_loss = {}
+            #self.view_account_summary()
         #self.perc_risk = self.kelly_criterion(backtest_db_table)
 
         self.stop_time = stop_time
@@ -52,7 +55,7 @@ class Risk_Handler:
         # this creates a 2/1 proffit/loss ratio
         self.atr_perc = atr_perc
         self.profit_target_perc = atr_perc * 2
-        self.stop_loss = None
+        
 
         self.active_buy_monitoring = False
         self.started_buy_monitoring = False

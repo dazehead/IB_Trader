@@ -59,6 +59,21 @@ class DF_Manager:
                 self.data_1min = util.df(bars)
                 self.main_data = self.data_1min
                 self.data_5min = self.convert_to_timeframe(self.data_1min, '5T')
+        
+        elif self.barsize == '30 secs':
+            if isinstance(bars, pd.DataFrame):
+                self.data_30sec = bars
+                self.main_data = self.data_30sec
+                self.data_1min = self.convert_to_timeframe(self.main_data, '1T')
+                self.data_5min = self.convert_to_timeframe(self.main_data, '5T')
+            elif isinstance(bars, dict):
+                self.data_30sec = [util.df(bars).set_index('date') for symbol, bars, in bars.items()]
+                self.main_data = self.data_30sec
+            else:
+                self.data_30sec = util.df(bars)
+                self.main_data = self.data_30sec
+                self.data_1min = self.convert_to_timeframe(self.main_data, '1T')
+                self.data_5min = self.convert_to_timeframe(self.main_data, '5T')
 
 
 

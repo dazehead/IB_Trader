@@ -85,7 +85,7 @@ class Trade:
             """Sells open positions at market"""
             #self.risk.trade = None
             positions = self.open_positions.position
-            sell_order = StopOrder("SELL", positions, self.risk.stop_loss)
+            sell_order = StopOrder("SELL", positions, self.risk.stop_loss[self.top_stock.symbol])
             if sell_now:
                 market_data = self.ib.reqMktData(self.top_stock, '', False, False)
                 self.bid = market_data.bid
@@ -98,7 +98,7 @@ class Trade:
             """Sells open positions at market"""
             #self.risk.trade = None
             positions = self.open_positions.position
-            sell_order = StopOrder("SELL", positions, self.risk.stop_loss)
+            sell_order = StopOrder("SELL", positions, self.risk.stop_loss[self.top_stock.symbol])
             #print(f"stop_loss --------: {self.risk.stop_loss}")
             if sell_now:
                 market_data = self.ib.reqMktData(self.top_stock, '', False, False)
@@ -158,7 +158,7 @@ class Trade:
                     self.risk.trade_counter[self.top_stock.symbol] += 1
             elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'Filled' and self.risk.trade[self.top_stock.symbol].order.action == 'BUY':
                 print('----------------2--------------------')
-                if self.risk.stop_loss == None:
+                if self.risk.stop_loss[self.top_stock.symbol] == None:
                     print(f"stop_loss is None")
                     pass
                 else:

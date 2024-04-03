@@ -75,14 +75,14 @@ class Kefr_Kama(Strategy):
         print('---simple atr process')
         if self.risk.ib is not None:
             """if we are connected to IB"""
-            self.risk.stop_loss = round(self.kama[-1] - atr[-1] * self.risk.atr_perc, 2)
-            print(f'---Stop Loss: {self.risk.stop_loss}')
-            if close[-1] <= self.risk.stop_loss:
+            self.risk.stop_loss[self.ticker] = round(self.kama[-1] - atr[-1] * self.risk.atr_perc, 2)
+            print(f'---Stop Loss: {self.risk.stop_loss[self.ticker]}')
+            if close[-1] <= self.risk.stop_loss[self.ticker]:
                 print('----SELL SIGNAL')
                 """SELL"""
                 new_signals = signals
                 new_signals[-1] = -1
-            elif close[-1] > self.risk.stop_loss:
+            elif close[-1] > self.risk.stop_loss[self.ticker]:
                 print('----NOTHING SIGNAL')
                 new_signals = signals
         else:
@@ -92,6 +92,7 @@ class Kefr_Kama(Strategy):
             is_trading = signals[stop_index:]
             not_trading = zeros_array[:stop_index]
             new_signals = np.concatenate((is_trading, not_trading))
+            self.risk.stop_loss = None
 
             in_trade = False
             for i,price in enumerate(close):

@@ -19,9 +19,10 @@ float_limit = 10
 archive = True
 alarm = False
 port = 7497
-changePercAbove = '15'
+changePercAbove = '20'
 rejected_tickers = []
 current_ticker_list = []
+barsize = '30 secs'
 """
 live: 7496
 paper: 7497
@@ -120,7 +121,6 @@ print("\n...Risk_Handler Initialized")
 
 
 live_bars_dict = {}
-barsize = '1 min'
 for i, contract_obj in enumerate(contracts):
     live_bars_dict[contract_obj.symbol] = ib.reqHistoricalData(
         contract = contract_obj,
@@ -172,6 +172,8 @@ def on_bar_update(bars, hasNewBar):
         print('-updating live bars dict-')
         df.update(live_bars_dict)
         print(f'-finished updating live bars dict for {len(contracts)} contracts-')
+        print(f'Keys: {live_bars_dict.keys()}')
+        print(f'Contracts: {[contract_obj.symbol for contract_obj in contracts]}')
         #print(live_bars_dict.keys())
         for i, contract_obj in enumerate(contracts):
             print(f'\n-starting data retrieval for {contract_obj.symbol}-')
@@ -200,6 +202,7 @@ def on_bar_update(bars, hasNewBar):
                 contract=contract_obj)
             print('-starting execute trade-')
             trade.execute_trade()
+            ib.sleep(.1)
                     
         print('\n\n------------------------------------------------------------------------\n\n')
 def onScanData(scanDataList):
