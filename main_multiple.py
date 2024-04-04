@@ -23,6 +23,7 @@ changePercAbove = '15'
 rejected_tickers = []
 current_ticker_list = []
 barsize = '30 secs'
+buy_if_hit_scanner = True
 """
 live: 7496
 paper: 7497
@@ -261,6 +262,15 @@ def onScanData(scanDataList):
                     useRTH= False,
                     keepUpToDate= True)
                 ib.sleep(1)
+                if buy_if_hit_scanner:
+                    trade = Trade(
+                        ib=ib, 
+                        risk=risk,
+                        logbook = portfolio_log,
+                        signals=[1],
+                        contract=contract_obj)
+                    trade.execute_trade()
+
 
         if not new_ticker:
             print(f'{len(tickers_filter)} tickers after filter:\n {tickers_filter}\n')
