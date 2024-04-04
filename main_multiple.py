@@ -19,7 +19,7 @@ float_limit = 10
 archive = True
 alarm = False
 port = 7497
-changePercAbove = '20'
+changePercAbove = '15'
 rejected_tickers = []
 current_ticker_list = []
 barsize = '30 secs'
@@ -68,16 +68,19 @@ if not ib.positions():
         pygame.time.wait(10)
     for i ,symbol in enumerate(symbols):
         print(f'{i+1}. {symbol}')
-    if len(symbols) > 1:
-        choice = input('\nWould you like to remove any of these tickers?\n').lower()
-        while choice != 'n':
-            to_be_removed = int(choice) - 1
-            rejected = symbols.pop(to_be_removed)
-            rejected_tickers.append(rejected)
-            print("\n")
-            for i, symbol in enumerate(symbols):
-                print(f'{i+1}. {symbol}')
-            choice = input('Would you like to remove any more of these tickers?\n').lower()
+    #if len(symbols) > 1:
+    choice = input('\nWould you like to remove any of these tickers?\n').lower()
+    while choice != 'n':
+        if len(top_gainers.tickers_list) == 1:
+            rejected_tickers = top_gainers.tickers_list
+            break
+        to_be_removed = int(choice) - 1
+        rejected = symbols.pop(to_be_removed)
+        rejected_tickers.append(rejected)
+        print("\n")
+        for i, symbol in enumerate(symbols):
+            print(f'{i+1}. {symbol}')
+        choice = input('Would you like to remove any more of these tickers?\n').lower()
 
 else:
     print('Tickers with open positions have been added to the list')
@@ -176,33 +179,36 @@ def on_bar_update(bars, hasNewBar):
         print(f'Contracts: {[contract_obj.symbol for contract_obj in contracts]}')
         #print(live_bars_dict.keys())
         for i, contract_obj in enumerate(contracts):
-            print(f'\n-starting data retrieval for {contract_obj.symbol}-')
-            open = df.main_data[i].open
-            high = df.main_data[i].high
-            low = df.main_data[i].low
-            close = df.main_data[i].close
-            print('-starting strategy init-')
-            strat = Kefr_Kama(
-                df_manager=df,
-                risk=risk,
-                barsize=barsize,
-                index=i)
-            print('-starting custom indicator-')
-            signals = strat.custom_indicator(
-                open=open,
-                high=high,
-                low=low,
-                close=close)
-            print('-starting trade obj init-')
-            trade = Trade(
-                ib=ib, 
-                risk=risk,
-                logbook = portfolio_log,
-                signals=signals,
-                contract=contract_obj)
-            print('-starting execute trade-')
-            trade.execute_trade()
-            ib.sleep(.1)
+            if contract_obj.symbol not in rejected_tickers:
+                print(f'\n-starting data retrieval for {contract_obj.symbol}-')
+                open = df.main_data[i].open
+                high = df.main_data[i].high
+                low = df.main_data[i].low
+                close = df.main_data[i].close
+                print('-starting strategy init-')
+                strat = Kefr_Kama(
+                    df_manager=df,
+                    risk=risk,
+                    barsize=barsize,
+                    index=i)
+                print('-starting custom indicator-')
+                signals = strat.custom_indicator(
+                    open=open,
+                    high=high,
+                    low=low,
+                    close=close)
+                print('-starting trade obj init-')
+                trade = Trade(
+                    ib=ib, 
+                    risk=risk,
+                    logbook = portfolio_log,
+                    signals=signals,
+                    contract=contract_obj)
+                print('-starting execute trade-')
+                trade.execute_trade()
+                ib.sleep(.1)
+            else:
+                print(f"-{contract_obj.symbol} in rejected list")
                     
         print('\n\n------------------------------------------------------------------------\n\n')
 def onScanData(scanDataList):
