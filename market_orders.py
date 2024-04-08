@@ -25,6 +25,7 @@ class Trade:
         self.num_shares = 200#self.risk.balance_at_risk // self.price
         self.ask = market_data.ask
         self.bid = market_data.bid
+        self.mid = round((self.ask + self.bid) / 2, 2)
         self.symbol_has_positions, self.open_positions = self.check_and_match_positions()
         #self.midpoint = market_data.midpoint
     
@@ -65,14 +66,14 @@ class Trade:
         """Buys order at market order"""
         if self.outside_rth:
             self.risk.trade_num_shares = num_shares
-            buy_order = LimitOrder('BUY', num_shares, self.ask)
+            buy_order = LimitOrder('BUY', num_shares, self.mid)
             buy_order.outsideRth = self.outside_rth
             trade = self.ib.placeOrder(self.top_stock, buy_order)
             self.risk.trade[self.top_stock.symbol] = trade
             print("----BOUGHT----")
         else:
             self.risk.trade_num_shares = num_shares
-            buy_order = LimitOrder('BUY', num_shares, self.ask)
+            buy_order = LimitOrder('BUY', num_shares, self.mid)
             buy_order.outsideRth = self.outside_rth
             trade = self.ib.placeOrder(self.top_stock, buy_order)
             self.risk.trade[self.top_stock.symbol] = trade
@@ -90,7 +91,7 @@ class Trade:
                 market_data = self.ib.reqMktData(self.top_stock, '', False, False)
                 self.bid = market_data.bid
                 self.ib.cancelOrder(self.risk.trade[self.top_stock.symbol].order)
-                sell_order = LimitOrder("SELL", positions, self.bid)
+                sell_order = LimitOrder("SELL", positions, self.mid)
             sell_order.outsideRth = self.outside_rth
             trade = self.ib.placeOrder(self.top_stock, sell_order)
             self.risk.trade[self.top_stock.symbol] = trade
@@ -104,7 +105,7 @@ class Trade:
                 market_data = self.ib.reqMktData(self.top_stock, '', False, False)
                 self.bid = market_data.bid
                 self.ib.cancelOrder(self.risk.trade[self.top_stock.symbol].order)
-                sell_order = LimitOrder("SELL", positions, self.bid)
+                sell_order = LimitOrder("SELL", positions, self.mid)
             sell_order.outsideRth = self.outside_rth
             trade = self.ib.placeOrder(self.top_stock, sell_order)
             self.risk.trade[self.top_stock.symbol] = trade
@@ -144,7 +145,7 @@ class Trade:
 
                 elif self.risk.trade[self.top_stock.symbol].order.action == 'SELL' and self.risk.trade[self.top_stock.symbol].orderStatus.status == 'PreSubmitted':
                     print('1-f')
-                    if self.risk.trade_counter[self.top_stock.symbol] == 2:
+                    if self.risk.trade_counter[self.top_stock.symbol] >= 2:
                         self.risk.trade_counter[self.top_stock.symbol] = 0
                         print("Updating Stop Loss")
                         # below does not update unsure how to modify existing order

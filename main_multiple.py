@@ -17,7 +17,7 @@ util.patchAsyncio()
 
 float_limit = 10
 archive = True
-alarm = False
+alarm = True
 port = 7497
 changePercAbove = '15'
 rejected_tickers = []
@@ -31,7 +31,7 @@ paper: 7497
 
 
 ib = IB()
-ib.connect('127.0.0.1', port, clientId=2)
+ib.connect('127.0.0.1', port, clientId=1)
 counter = 0
 
 
@@ -60,28 +60,32 @@ if not ib.positions():
         top_gainers.scan_market()
         top_gainers.filter_floats(float_percentage_limit=float_limit, archive=archive)
         print('No tickers fall within parameters - Continuing to Scan Market....\n')
+        counter += 1
     print(f"\nTickers after filter: {top_gainers.tickers_list}")
     symbols = top_gainers.tickers_list
-    if alarm:
-        pygame.mixer.init()
-        pygame.mixer.music.load('alarm_sound.wav')
-        pygame.mixer.music.play()
-        pygame.time.wait(10)
     for i ,symbol in enumerate(symbols):
         print(f'{i+1}. {symbol}')
-    #if len(symbols) > 1:
-    choice = input('\nWould you like to remove any of these tickers?\n').lower()
-    while choice != 'n':
-        if len(top_gainers.tickers_list) == 1:
-            rejected_tickers = top_gainers.tickers_list
-            break
-        to_be_removed = int(choice) - 1
-        rejected = symbols.pop(to_be_removed)
-        rejected_tickers.append(rejected)
-        print("\n")
-        for i, symbol in enumerate(symbols):
-            print(f'{i+1}. {symbol}')
-        choice = input('Would you like to remove any more of these tickers?\n').lower()
+
+    if counter >= 1:
+        if alarm:
+            pygame.mixer.init()
+            pygame.mixer.music.load('alarm_sound.wav')
+            pygame.mixer.music.play()
+            pygame.time.wait(5)
+        counter = 0
+    else:
+        choice = input('\nWould you like to remove any of these tickers?\n').lower()
+        while choice != 'n':
+            if len(top_gainers.tickers_list) == 1:
+                rejected_tickers = top_gainers.tickers_list
+                break
+            to_be_removed = int(choice) - 1
+            rejected = symbols.pop(to_be_removed)
+            rejected_tickers.append(rejected)
+            print("\n")
+            for i, symbol in enumerate(symbols):
+                print(f'{i+1}. {symbol}')
+            choice = input('Would you like to remove any more of these tickers?\n').lower()
 
 else:
     print('Tickers with open positions have been added to the list')
@@ -245,8 +249,14 @@ def onScanData(scanDataList):
         for ticker in top_gainers.tickers_list:
             tickers_filter.append(ticker)
             if ticker not in live_bars_dict.keys() and ticker not in rejected_tickers:
+                if alarm:
+                    pygame.mixer.init()
+                    pygame.mixer.music.load('alarm_sound.wav')
+                    pygame.mixer.music.play()
+                    pygame.time.wait(5)
                 new_ticker = True
                 print(f'\n\n******************* New ticker {ticker} from scanner *******************\n\n')
+
                 df.ticker.append(ticker)
                 risk.trade[ticker] = None
                 print(f"Current tickers: {df.ticker}")
@@ -254,7 +264,7 @@ def onScanData(scanDataList):
                 contracts.append(stock)
 
                 live_bars_dict[contracts[-1].symbol] = ib.reqHistoricalData(
-                    contract = contract_obj,
+                    contract = stock,
                     endDateTime= '',
                     durationStr= '1 D',
                     barSizeSetting= barsize,
@@ -262,15 +272,6 @@ def onScanData(scanDataList):
                     useRTH= False,
                     keepUpToDate= True)
                 ib.sleep(1)
-                if buy_if_hit_scanner:
-                    trade = Trade(
-                        ib=ib, 
-                        risk=risk,
-                        logbook = portfolio_log,
-                        signals=[1],
-                        contract=contract_obj)
-                    trade.execute_trade()
-
 
         if not new_ticker:
             print(f'{len(tickers_filter)} tickers after filter:\n {tickers_filter}\n')
@@ -282,7 +283,7 @@ try:
     top_gainers.scanDataList.updateEvent += onScanData
     ib.barUpdateEvent.clear()
     ib.barUpdateEvent+= on_bar_update
-    ib.sleep(10000)
+    ib.sleep(21600)
 except KeyboardInterrupt:
     trade_log.log_trades()
 
