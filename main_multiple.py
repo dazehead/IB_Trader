@@ -189,12 +189,12 @@ def on_bar_update(bars, hasNewBar):
         print('-updating live bars dict-')
         df.update(live_bars_dict)
         print(f'-finished updating live bars dict for {len(contracts)} contracts-')
-        print(f'Keys: {live_bars_dict.keys()}')
+        #print(f'Keys: {live_bars_dict.keys()}')
         print(f'Contracts: {[contract_obj.symbol for contract_obj in contracts]}')
         #print(live_bars_dict.keys())
         for i, contract_obj in enumerate(contracts):
             if contract_obj.symbol not in rejected_tickers:
-                print(f'\n-starting data retrieval for {contract_obj.symbol}-')
+                print(f'\n\n\n-starting data retrieval for {contract_obj.symbol}-')
                 open = df.main_data[i].open
                 high = df.main_data[i].high
                 low = df.main_data[i].low
@@ -223,14 +223,25 @@ def on_bar_update(bars, hasNewBar):
                 trade.execute_trade()
                 ib.sleep(.1)
             else:
-                print(f"-{contract_obj.symbol} in rejected list")
+                print(f"\n-{contract_obj.symbol} in rejected list\n")
 
         try:
-            choice = inputimeout(prompt='Input T or F for StopLoss Override: \n', timeout=3)
-            if choice.lower() == 't':
-                stop_loss_override = True
-            if choice.lower() == 'f':
-                stop_loss_override = False
+            nums = [str(x) for x in range(10)]
+            choice = inputimeout(prompt=f'StopLoss Override: {stop_loss_override}\nInput S to switch StopLoss Override or index of ticker to put on rejected: \n', timeout=3)
+            if choice not in nums:
+                if choice.lower() == 's':
+                    if stop_loss_override:
+                        stop_loss_override = False
+                    else:
+                        stop_loss_override = True
+                    print(f'StopLoss Ovveride: {stop_loss_override}')
+            else:
+                index = int(choice)
+                rejected_tickers.append(contracts[index].symbol)
+                print(f'{contracts[index].symbol} has been added to rejected list')
+                print(f'Rejected: {rejected_tickers}')
+            
+            
         except Exception:
             pass
             
@@ -278,6 +289,7 @@ def onScanData(scanDataList):
 
                 df.ticker.append(ticker)
                 risk.trade[ticker] = None
+                risk.trade_counter[ticker] = 0
                 print(f"Current tickers: {df.ticker}")
                 stock = Stock(ticker, 'SMART', 'USD')
                 contracts.append(stock)

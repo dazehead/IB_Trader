@@ -56,7 +56,10 @@ class Trade:
             elif self.symbol_has_positions and (self.signal == 0) and (self.risk.trade[self.top_stock.symbol].order.action == 'SELL'):
                 self._check_order()
             elif self.symbol_has_positions and (self.signal == -1) and (self.risk.trade[self.top_stock.symbol].order.action == 'SELL'):
-                self._sell_order(sell_now=True)
+                if not self.stop_loss_override:
+                    self._sell_order(sell_now=True)
+                else:
+                    print('\n*******STOPLOSS OVERRIDE PREVENTED SELL*******\n')
 
             else:
                 """this section is to make sure that all positions were sold if not cancel and put in another market order"""
@@ -88,7 +91,7 @@ class Trade:
             """Sells open positions at market"""
             #self.risk.trade = None
             positions = self.open_positions.position
-            print(f'Positions: {positions}')
+            #print(f'Positions: {positions}') # this is correct posiitions
             sell_order = StopLimitOrder("SELL", positions, self.risk.stop_loss[self.top_stock.symbol], self.risk.stop_loss[self.top_stock.symbol])
             if sell_now:
                 market_data = self.ib.reqMktData(self.top_stock, '', False, False)
@@ -127,35 +130,40 @@ class Trade:
 
                 if self.risk.trade[self.top_stock.symbol].order.action == 'BUY':
                     print('1-b')
-                    if self.risk.trade_counter[self.top_stock.symbol] == 3:
-                        print('1-c')
-                        """when the buy order still hasn't been filled and 3 iterations have passed"""
-                        self.risk.trade_counter[self.top_stock.symbol] = 0
-                        # below is what we previous did still need to verify the .remaining give correct shares
-                        #shares_prev_bought = self.risk.trade.order.totalQuantity
-                        #self.num_shares = round(self.risk.trade_num_shares - shares_prev_bought, 1)
-                        print(f"filled: {self.risk.trade[self.top_stock.symbol].orderStatus.filled} : needing: {self.risk.trade[self.top_stock.symbol].orderStatus.remaining}")
-                        self.num_shares = self.risk.trade[self.top_stock.symbol].orderStatus.remaining
-                        self.ib.cancelOrder(self.risk.trade[self.top_stock.symbol].order)
-                        self._buy_order(self.num_shares)
-                        print('canceling and re-buying with calculated shares')
-                    elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'PreSubmitted':
+                    #if self.risk.trade_counter[self.top_stock.symbol] == 3:
+                        #print('1-c')
+                        #"""when the buy order still hasn't been filled and 3 iterations have passed"""
+                        #self.risk.trade_counter[self.top_stock.symbol] = 0
+                        #print(f"filled: {self.risk.trade[self.top_stock.symbol].orderStatus.filled} : needing: {self.risk.trade[self.top_stock.symbol].orderStatus.remaining}")
+                        #self.num_shares = self.risk.trade[self.top_stock.symbol].orderStatus.remaining
+                        #self.ib.cancelOrder(self.risk.trade[self.top_stock.symbol].order)
+                        #self._buy_order(self.num_shares)
+                        #print('canceling and re-buying with calculated shares')
+                    if self.risk.trade[self.top_stock.symbol].orderStatus.status == 'PreSubmitted':
                         print('1-d')
                         self.risk.trade_counter[self.top_stock.symbol] += 1
                     elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'Submitted':
+                        """buy order has not been filled yet"""
                         print('1-e')
-                        self.risk.trade_counter[self.top_stock.symbol] += 1
+                        #self.risk.trade_counter[self.top_stock.symbol] += 1
+                        print(f"filled: {self.risk.trade[self.top_stock.symbol].orderStatus.filled} : needing: {self.risk.trade[self.top_stock.symbol].orderStatus.remaining}")
+                        num_shares = self.risk.trade[self.top_stock.symbol].orderStatus.remaining
+                        self.ib.cancelOrder(self.risk.trade[self.top_stock.symbol].order)
+                        self._buy_order(num_shares)
 
                 elif self.risk.trade[self.top_stock.symbol].order.action == 'SELL' and self.risk.trade[self.top_stock.symbol].orderStatus.status == 'PreSubmitted':
                     print('1-f')
+                    print(self.risk.trade_counter)
+                    print(f'trade_counter: {self.risk.trade_counter[self.top_stock.symbol]}')
                     if self.risk.trade_counter[self.top_stock.symbol] >= 2:
+                        print('1-f-1')
                         self.risk.trade_counter[self.top_stock.symbol] = 0
                         if not self.stop_loss_override:
                             print("Updating Stop Loss")
                             self.ib.cancelOrder(self.risk.trade[self.top_stock.symbol].order)
                             self._sell_order()
-                        
                     #print(self.risk.trade_counter)
+                    print('1-f-2')
                     self.risk.trade_counter[self.top_stock.symbol] += 1
             elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'Filled' and self.risk.trade[self.top_stock.symbol].order.action == 'BUY':
                 print('----------------2--------------------')
