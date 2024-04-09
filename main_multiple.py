@@ -12,7 +12,9 @@ from strategies.kefr_kama import Kefr_Kama
 from sec_data import SEC_Data
 import datetime as dt
 import pygame
+from inputimeout import inputimeout
 util.patchAsyncio()
+
 
 
 float_limit = 20
@@ -33,6 +35,7 @@ paper: 7497
 ib = IB()
 ib.connect('127.0.0.1', port, clientId=1)
 counter = 0
+stop_loss_override = False
 
 
 if ib.client.port == 7496:
@@ -170,6 +173,7 @@ def hasNewBarForAllSymbols(live_bars_dict):
 
 # Defining callback on_bar_update but this time globally not just to the specififc real time bars
 
+
 def on_bar_update(bars, hasNewBar):
     global top_gainers
     global contracts
@@ -178,6 +182,7 @@ def on_bar_update(bars, hasNewBar):
     global df
     global counter
     global portfolio_log
+    global stop_loss_override
     if hasNewBarForAllSymbols(live_bars_dict):
         print('\n-hasNewBarForAllSymbols-')
         counter += 1
@@ -212,13 +217,23 @@ def on_bar_update(bars, hasNewBar):
                     risk=risk,
                     logbook = portfolio_log,
                     signals=signals,
-                    contract=contract_obj)
+                    contract=contract_obj,
+                    stop_loss_override = stop_loss_override)
                 print('-starting execute trade-')
                 trade.execute_trade()
                 ib.sleep(.1)
             else:
                 print(f"-{contract_obj.symbol} in rejected list")
-                    
+
+        try:
+            choice = inputimeout(prompt='Input T or F for StopLoss Override: \n', timeout=3)
+            if choice.lower() == 't':
+                stop_loss_override = True
+            if choice.lower() == 'f':
+                stop_loss_override = False
+        except Exception:
+            pass
+            
         print('\n\n------------------------------------------------------------------------\n\n')
 def onScanData(scanDataList):
     global live_bars_dict

@@ -3,12 +3,13 @@ from ib_insync import *
 
 class Trade:
     """A class to handle interactions with IB"""
-    def __init__(self, ib, risk, signals, contract, counter=None, logbook=None):
+    def __init__(self, ib, risk, signals, contract, stop_loss_override=False, counter=None, logbook=None):
         self.ib = ib
         self.risk = risk
         self.logbook = logbook
         self.top_stock = contract
         self.all_signals = signals
+        self.stop_loss_override = stop_loss_override
 
         self.todays_date = str(datetime.now()).split(' ')[0]
         self.outside_rth = self.check_RTH()
@@ -88,7 +89,7 @@ class Trade:
             #self.risk.trade = None
             positions = self.open_positions.position
             print(f'Positions: {positions}')
-            sell_order = StopOrder("SELL", positions, self.risk.stop_loss[self.top_stock.symbol])
+            sell_order = StopLimitOrder("SELL", positions, self.risk.stop_loss[self.top_stock.symbol], self.risk.stop_loss[self.top_stock.symbol])
             if sell_now:
                 market_data = self.ib.reqMktData(self.top_stock, '', False, False)
                 self.bid = market_data.bid
@@ -101,7 +102,7 @@ class Trade:
             """Sells open positions at market"""
             #self.risk.trade = None
             positions = self.open_positions.position
-            sell_order = StopOrder("SELL", positions, self.risk.stop_loss[self.top_stock.symbol])
+            sell_order = StopLimitOrder("SELL", positions, self.risk.stop_loss[self.top_stock.symbol], self.risk.stop_loss[self.top_stock.symbol])
             #print(f"stop_loss --------: {self.risk.stop_loss}")
             if sell_now:
                 market_data = self.ib.reqMktData(self.top_stock, '', False, False)
@@ -149,14 +150,11 @@ class Trade:
                     print('1-f')
                     if self.risk.trade_counter[self.top_stock.symbol] >= 2:
                         self.risk.trade_counter[self.top_stock.symbol] = 0
-                        print("Updating Stop Loss")
-                        # below does not update unsure how to modify existing order
-                        #updated_order = self.risk.trade.order.update(stopPrice=self.risk.stop_loss)
-                        #self.ib.placeOrder(self.top_stock, updated_order)
-
-                        # As of right now we have to cancel and resubmit
-                        self.ib.cancelOrder(self.risk.trade[self.top_stock.symbol].order)
-                        self._sell_order()
+                        if not self.stop_loss_override:
+                            print("Updating Stop Loss")
+                            self.ib.cancelOrder(self.risk.trade[self.top_stock.symbol].order)
+                            self._sell_order()
+                        
                     #print(self.risk.trade_counter)
                     self.risk.trade_counter[self.top_stock.symbol] += 1
             elif self.risk.trade[self.top_stock.symbol].orderStatus.status == 'Filled' and self.risk.trade[self.top_stock.symbol].order.action == 'BUY':
