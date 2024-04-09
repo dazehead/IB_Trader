@@ -195,7 +195,7 @@ class Scanner:
         """https://nbviewer.org/github/erdewit/ib_insync/blob/master/notebooks/scanners.ipynb"""
         tagValues = [TagValue("priceAbove", '1'),
                      TagValue("priceBelow", '20'),
-                     TagValue("volumeAbove", '999999'),
+                     TagValue("volumeAbove", '150000'),
                      #TagValue("openGapPercAbove", '25'),
                      TagValue("changePercAbove", self.change_perc_above)]
 

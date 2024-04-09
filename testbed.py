@@ -62,7 +62,7 @@ def test_strategy():
     backtest = BackTest(strat)
     backtest.graph_data()
     print(backtest.pf.stats())
-#test_stretegy()
+#test_strategy()
 
 
 

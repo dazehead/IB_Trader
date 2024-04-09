@@ -15,7 +15,7 @@ import pygame
 util.patchAsyncio()
 
 
-float_limit = 10
+float_limit = 20
 archive = True
 alarm = True
 port = 7497
@@ -76,11 +76,11 @@ if not ib.positions():
     else:
         choice = input('\nWould you like to remove any of these tickers?\n').lower()
         while choice != 'n':
-            if len(top_gainers.tickers_list) == 1:
-                rejected_tickers = top_gainers.tickers_list
-                break
+            #if len(top_gainers.tickers_list) == 1:
+            #    rejected_tickers = top_gainers.tickers_list
+            #    break
             to_be_removed = int(choice) - 1
-            rejected = symbols.pop(to_be_removed)
+            rejected = symbols[to_be_removed]
             rejected_tickers.append(rejected)
             print("\n")
             for i, symbol in enumerate(symbols):
@@ -113,6 +113,8 @@ else:
 
 contracts = []
 contract_symbols = []
+print(f"Symbols: {symbols}")
+print(f"top_gainers.ticker_list: {top_gainers.tickers_list}")
 for symbol in symbols:
     contracts.append(Stock(symbol, 'SMART', 'USD'))
     contract_symbols.append(symbol)
@@ -150,7 +152,9 @@ print("\n...DataFrame Mananger Initialized")
 #print(live_bars_dict['BAND'][-1])
 #print(live_bars_dict['AAPL'][-1].date)
 
+print(f"Rejected List: {rejected_tickers}")
 last_update_time = live_bars_dict[symbols[0]][-1].date
+
 
 def hasNewBarForAllSymbols(live_bars_dict):
     global last_update_time
@@ -283,7 +287,7 @@ try:
     top_gainers.scanDataList.updateEvent += onScanData
     ib.barUpdateEvent.clear()
     ib.barUpdateEvent+= on_bar_update
-    ib.sleep(21600)
+    ib.sleep(60000)
 except KeyboardInterrupt:
     trade_log.log_trades()
 

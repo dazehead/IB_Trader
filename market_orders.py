@@ -18,6 +18,7 @@ class Trade:
         else:
             self.signal = signals[-1]
         market_data = self.ib.reqMktData(self.top_stock, '', False, False)
+        self.ib.sleep(.1)
         # we can get a lot of different dat from this market data
         # ticks(), vwap(), ticks(), volume(), low52wwk(), high52week(), ask(), modelGreeks, bidGreeks
         self.halted = market_data.halted
@@ -86,6 +87,7 @@ class Trade:
             """Sells open positions at market"""
             #self.risk.trade = None
             positions = self.open_positions.position
+            print(f'Positions: {positions}')
             sell_order = StopOrder("SELL", positions, self.risk.stop_loss[self.top_stock.symbol])
             if sell_now:
                 market_data = self.ib.reqMktData(self.top_stock, '', False, False)

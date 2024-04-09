@@ -139,63 +139,67 @@ class Kefr_Kama(Strategy):
         #print(efratios)
         """insert KAMA here"""
         print('---calculating KAMA')
-        kama = self.calculate_kama(efratios, close)
-        self.kama = pd.Series(kama, index=efratios.index)
-        signals = pd.Series(0, index=efratios.index)
-        signals[efratios > threshold] = 1
+        try:
+            kama = self.calculate_kama(efratios, close)
+            self.kama = pd.Series(kama, index=efratios.index)
+            signals = pd.Series(0, index=efratios.index)
+            signals[efratios > threshold] = 1
 
 
-        signals = self.process_kama(signals, close)
+            signals = self.process_kama(signals, close)
 
-        # trading times
-        if self.risk:
-            if self.risk.stop_time is not None:
-                signals = self._stop_trading_time(signals)
-            if self.risk.start_time is not None:
-                signals = self._start_trading_time(signals)
+            # trading times
+            if self.risk:
+                if self.risk.stop_time is not None:
+                    signals = self._stop_trading_time(signals)
+                if self.risk.start_time is not None:
+                    signals = self._start_trading_time(signals)
 
-            # exits
-            atr = ta.ATR(high, low, close, timeperiod=14)
-            if self.risk.ib is not None:
-                if self.risk.ib.positions():
-                    """ASSIGNS THE STOP LOSS TO RISK.STOPLOSS, THIS COULD BE ALL WE WANT"""
-                    self.simple_atr_process(signals, atr, close)
+                # exits
+                atr = ta.ATR(high, low, close, timeperiod=14)
+                if self.risk.ib is not None:
+                    if self.risk.ib.positions():
+                        """ASSIGNS THE STOP LOSS TO RISK.STOPLOSS, THIS COULD BE ALL WE WANT"""
+                        self.simple_atr_process(signals, atr, close)
+                        #signals = self._process_atr_data(signals, atr, close, high)
+
+                        # active buy monitoring function logic
+                    if self.risk.active_buy_monitoring:
+                        if signals[-1] == 1 and not self.risk.started_buy_monitoring:
+                            self.risk.started_buy_monitoring = True
+                            print('********** ACTIVE BUY MONITORING ENABLED **********')
+                            signals[-1] = 0
+                        elif self.risk.started_buy_monitoring and signals[-1] != -1:
+                            result = self.active_buy_monitor(close, open)
+                            signals[-1] = result
+
+                else:
+                    if self.risk.active_buy_monitoring:
+                        signals = self._process_buy_monitoring(signals=signals, close=close, open=open)
+                    signals = self.simple_atr_process(signals, atr, close)
                     #signals = self._process_atr_data(signals, atr, close, high)
-
-                    # active buy monitoring function logic
-                if self.risk.active_buy_monitoring:
-                    if signals[-1] == 1 and not self.risk.started_buy_monitoring:
-                        self.risk.started_buy_monitoring = True
-                        print('********** ACTIVE BUY MONITORING ENABLED **********')
-                        signals[-1] = 0
-                    elif self.risk.started_buy_monitoring and signals[-1] != -1:
-                        result = self.active_buy_monitor(close, open)
-                        signals[-1] = result
-
-            else:
-                if self.risk.active_buy_monitoring:
-                    signals = self._process_buy_monitoring(signals=signals, close=close, open=open)
-                signals = self.simple_atr_process(signals, atr, close)
-                #signals = self._process_atr_data(signals, atr, close, high)
-                signals = self._process_signal_data(signals=signals)
-                #print(f"atr signals: {signals[-1]}")
+                    signals = self._process_signal_data(signals=signals)
+                    #print(f"atr signals: {signals[-1]}")
 
 
-                #--------------------------Testing------------------------
-                """
-                print(len(signals_with_efr))
-                graph_signals = pd.Series(signals_with_efr, index=self.data_1min.index)
-                self.graph_data(graph_signals, efratio_timeperiod, efratios, 'Signals with EFR')
+                    #--------------------------Testing------------------------
+                    """
+                    print(len(signals_with_efr))
+                    graph_signals = pd.Series(signals_with_efr, index=self.data_1min.index)
+                    self.graph_data(graph_signals, efratio_timeperiod, efratios, 'Signals with EFR')
 
-                print(len(signals_after_atr))
-                graph_signals = pd.Series(signals_after_atr, index=self.data_1min.index)
-                self.graph_data(graph_signals, efratio_timeperiod, efratios, 'Signals after ATR')
+                    print(len(signals_after_atr))
+                    graph_signals = pd.Series(signals_after_atr, index=self.data_1min.index)
+                    self.graph_data(graph_signals, efratio_timeperiod, efratios, 'Signals after ATR')
 
-                print(len(final_signals))
-                graph_signals = pd.Series(final_signals, index=self.data_1min.index)
-                self.graph_data(graph_signals, efratio_timeperiod, efratios, 'final_signals')
-                """     
-        #print(f"Total Time Elapsed: {time.time() - start}")
+                    print(len(final_signals))
+                    graph_signals = pd.Series(final_signals, index=self.data_1min.index)
+                    self.graph_data(graph_signals, efratio_timeperiod, efratios, 'final_signals')
+                    """     
+            #print(f"Total Time Elapsed: {time.time() - start}")
+        except IndexError:
+            print('Not enough data to calculate KAMA')
+            signals = 0
         return signals
 
     def _process_buy_monitoring(self,signals, close, open):
