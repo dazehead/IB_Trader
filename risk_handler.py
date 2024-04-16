@@ -19,17 +19,17 @@ class Risk_Handler:
                 self.account_summary.loc[self.account_summary['tag'] == 'BuyingPower', 'value'].iloc[0]
                 )
             
-            self.perc_risk = self.kelly_criterion(backtest_db_table)
+            self.perc_risk = .33#self.kelly_criterion(backtest_db_table)
             self.balance_at_risk = self.balance * self.perc_risk
             if self.buying_power < self.balance_at_risk:
                 print("!!!!!!!!BUYING POWER TOO LOW!!!!!!!!")
-                to_go_on = input(f"Would you like to still trade today only using {self.buying_power}?\n Y or N").upper()
-                while to_go_on not in ['Y', 'N']:
-                    to_go_on = input(f"Invalid Response please enter 'Y' or 'N'").upper()
-                if to_go_on == 'Y':
-                    self.balance_at_risk = self.buying_power
-                elif to_go_on == 'N':
-                    sys.exit()
+                #to_go_on = input(f"Would you like to still trade today only using {self.buying_power}?\n Y or N").upper()
+                #while to_go_on not in ['Y', 'N']:
+                #    to_go_on = input(f"Invalid Response please enter 'Y' or 'N'").upper()
+                #if to_go_on == 'Y':
+                #    self.balance_at_risk = self.buying_power
+                #elif to_go_on == 'N':
+                sys.exit() 
             self.highest_high = None
             self.trade = {}
             self.trade_num_shares = None
@@ -59,6 +59,29 @@ class Risk_Handler:
 
         self.active_buy_monitoring = False
         self.started_buy_monitoring = False
+    
+    def get_buying_power(self, print_to_console=False):
+        self.account_summary = util.df(self.ib.accountSummary())[['tag', 'value']]
+        self.balance = pd.to_numeric(
+            self.account_summary.loc[self.account_summary['tag'] == 'AvailableFunds', 'value'].iloc[0]
+            )
+        self.buying_power = pd.to_numeric(
+            self.account_summary.loc[self.account_summary['tag'] == 'BuyingPower', 'value'].iloc[0]
+            )
+        self.perc_risk = .33#self.kelly_criterion(backtest_db_table)
+        self.balance_at_risk = self.balance * self.perc_risk
+
+        if self.buying_power < self.balance_at_risk:
+            self.balance_at_risk = self.buying_power
+        if print_to_console:
+            print("\n*****************************************")
+            print(f"Account Balance: {self.balance}")
+            print(f"Buying Power: {self.buying_power}")
+            print(f"Percent of Buying Power to be used: {self.perc_risk}")
+            print(f"Balance to trade: {self.balance_at_risk}")
+            print("*****************************************\n")
+
+
 
     def kelly_criterion(self, table):
         if table is not None:

@@ -12,7 +12,7 @@ import time
 class Scanner:
     """A class to handle Scanner lookup and paramters"""
 
-    def __init__(self, ib: object, scancode: str, changePercAbove: str):
+    def __init__(self, ib: object, scancode: str, changePercAbove: str, volume_above):
         print("...Initializing Scanner")
         self.ib = ib
         self.float_percentage_limit = None
@@ -31,6 +31,7 @@ class Scanner:
         self.scanDataList = None
         self.counter = 0
         self.change_perc_above = changePercAbove
+        self.volume_above = volume_above
         self.scan_market()
         print("...Scanner Initialized")
 
@@ -195,7 +196,7 @@ class Scanner:
         """https://nbviewer.org/github/erdewit/ib_insync/blob/master/notebooks/scanners.ipynb"""
         tagValues = [TagValue("priceAbove", '1'),
                      TagValue("priceBelow", '20'),
-                     TagValue("volumeAbove", '999999'),
+                     TagValue("volumeAbove", self.volume_above),
                      #TagValue("openGapPercAbove", '25'),
                      TagValue("changePercAbove", self.change_perc_above)]
 

@@ -24,7 +24,7 @@ class Trade:
         # ticks(), vwap(), ticks(), volume(), low52wwk(), high52week(), ask(), modelGreeks, bidGreeks
         self.halted = market_data.halted
         self.price = market_data.marketPrice()
-        self.num_shares = 200#self.risk.balance_at_risk // self.price
+        self.num_shares = self.risk.balance_at_risk // self.price
         self.ask = market_data.ask
         self.bid = market_data.bid
         self.mid = round((self.ask + self.bid) / 2, 2)
@@ -46,8 +46,12 @@ class Trade:
             if not self.symbol_has_positions and self.signal == 1 and self.risk.trade[self.top_stock.symbol] is None:
                 if self.risk.active_buy_monitoring:
                     # need to put stuff here for active_buy_monitoring
+                    self.risk.get_buying_power(print_to_console=True)
+                    self.num_shares = self.risk.balance_at_risk//self.price
                     self._buy_order(self.num_shares)
                 else:
+                    self.risk.get_buying_power(print_to_console=True)
+                    self.num_shares = self.risk.balance_at_risk//self.price
                     self._buy_order(self.num_shares)
 
             elif self.symbol_has_positions and (self.signal == -1) and (self.risk.trade[self.top_stock.symbol] is None):

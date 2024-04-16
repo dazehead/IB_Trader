@@ -23,6 +23,16 @@ import numpy as np
 tickers_list_below_10 = ['GHSI', 'SUGP', 'SMGT', 'NEXI', 'PLCE', 'CCTG', 'LBPH', 'MGIH', 'BMR', 'MSS', 'MINM']
 
 
+def test_trades():
+    ib = IB()
+    ib.connect('127.0.0.1', 7497, clientId=1)
+    profit_loss = ib.pnl()
+    print(profit_loss)
+
+test_trades()
+
+
+
 def get_tickers_below(float_perc):
     conn = sqlite3.connect('logbooks/tickers.db')
     tickers_list = pd.read_sql(f"SELECT ticker FROM statistics WHERE float_perc < {float_perc};", conn)
@@ -275,6 +285,7 @@ def onBarUpdate(bars, hasNewBar):
         print(counter)
         print('----------------------------------------')
 
+"""
 barsize = '1 min'
 change_perc_above = '15'
 ib = IB()
@@ -331,3 +342,4 @@ else:
     ib.cancelHistoricalData(bars)
     #trade_log.log_trades()
     ib.disconnect()
+"""

@@ -5,6 +5,7 @@ from risk_handler import Risk_Handler
 from dataframe_manager import DF_Manager
 from strategies.engulfing import Engulfing
 from market_orders import Trade
+from trade_short import Trade_Short
 from log import LogBook
 from backtest import BackTest
 import sys
@@ -13,19 +14,33 @@ from sec_data import SEC_Data
 import datetime as dt
 import pygame
 from inputimeout import inputimeout
+import subprocess
 util.patchAsyncio()
 
 
+def restart_and_execute():
+    gitbash = "C:\Program Files\Git\git-bash.exe"
+    commands = [
+        "cd OneDrive/desktop/env_trading/IB_Trader/",
+        "source venv/Scripts/activate",
+        "winpty python3 -u main_multiple.py"
+    ]
+    #subprocess.Popen([gitbash])
+    for command in commands:
+        subprocess.Popen([gitbash, "-c", command], shell=True)
+    sys.exit()
 
-float_limit = 20
+
+
+float_limit = 10
 archive = True
 alarm = True
 port = 7497
 changePercAbove = '15'
+volume_above = '200000'
 rejected_tickers = []
 current_ticker_list = []
-barsize = '30 secs'
-buy_if_hit_scanner = True
+barsize = '1 min'
 """
 live: 7496
 paper: 7497
@@ -33,16 +48,21 @@ paper: 7497
 
 
 ib = IB()
-ib.connect('127.0.0.1', port, clientId=1)
+ib.connect('127.0.0.1', port, clientId=2)
 counter = 0
 stop_loss_override = False
+previous_tickers = []
 
 
 if ib.client.port == 7496:
-    to_go_on = input("\nYOU ARE FIXING TO TRADE ON A LIVE ACCOUNT PLEASE INPUT 'Y' TO CONTINUE...\n").upper()
-    if to_go_on != 'Y':
-        sys.exit()
-
+    #to_go_on = input("\nYOU ARE FIXING TO TRADE ON A LIVE ACCOUNT PLEASE INPUT 'Y' TO CONTINUE...\n").upper()
+    #if to_go_on != 'Y':
+    #    sys.exit()
+    for i in range(5):
+        print("***************************************")
+        print("you are fixing to trade on LIVE account")
+        print("***************************************\n")
+        ib.sleep(1)
 
 """---------------------START OF PROGRAM--------------------------"""
 print("...Initializing Trade Log")
@@ -53,7 +73,7 @@ print("...Trade Log Initialized")
 
 #initializing Scanner object
 if not ib.positions():
-    top_gainers = Scanner(ib=ib, scancode='TOP_PERC_GAIN', changePercAbove=changePercAbove)
+    top_gainers = Scanner(ib=ib, scancode='TOP_PERC_GAIN', changePercAbove=changePercAbove, volume_above=volume_above)
     print(top_gainers.tickers_list)
     top_gainers.filter_floats(float_percentage_limit= float_limit, archive=archive)
     while not top_gainers.tickers_list:
@@ -63,6 +83,13 @@ if not ib.positions():
         top_gainers.scan_market()
         top_gainers.filter_floats(float_percentage_limit=float_limit, archive=archive)
         print('No tickers fall within parameters - Continuing to Scan Market....\n')
+
+        if len(top_gainers.scanDataList) == 0:
+            previous_tickers.append(len(top_gainers.scanDataList))
+            if len(previous_tickers) >=3:
+                restart_and_execute()
+        if len(previous_tickers) >= 1 and len(top_gainers.scanDataList) >= 1:
+            previous_tickers = []
         counter += 1
     print(f"\nTickers after filter: {top_gainers.tickers_list}")
     symbols = top_gainers.tickers_list
@@ -79,9 +106,6 @@ if not ib.positions():
     else:
         choice = input('\nWould you like to remove any of these tickers?\n').lower()
         while choice != 'n':
-            #if len(top_gainers.tickers_list) == 1:
-            #    rejected_tickers = top_gainers.tickers_list
-            #    break
             to_be_removed = int(choice) - 1
             rejected = symbols[to_be_removed]
             rejected_tickers.append(rejected)
@@ -151,10 +175,6 @@ df = DF_Manager(
     barsize = barsize)
 print("\n...DataFrame Mananger Initialized")
 
-    
-#print(live_bars_dict['BAND'][-1])
-#print(live_bars_dict['AAPL'][-1].date)
-
 print(f"Rejected List: {rejected_tickers}")
 last_update_time = live_bars_dict[symbols[0]][-1].date
 
@@ -190,10 +210,11 @@ def on_bar_update(bars, hasNewBar):
         df.update(live_bars_dict)
         print(f'-finished updating live bars dict for {len(contracts)} contracts-')
         #print(f'Keys: {live_bars_dict.keys()}')
-        print(f'Contracts: {[contract_obj.symbol for contract_obj in contracts]}')
+        print(f'\nContracts: {[contract_obj.symbol for contract_obj in contracts]}')
         #print(live_bars_dict.keys())
         for i, contract_obj in enumerate(contracts):
             if contract_obj.symbol not in rejected_tickers:
+                risk.get_buying_power()
                 print(f'\n\n\n-starting data retrieval for {contract_obj.symbol}-')
                 open = df.main_data[i].open
                 high = df.main_data[i].high
@@ -212,7 +233,7 @@ def on_bar_update(bars, hasNewBar):
                     low=low,
                     close=close)
                 print('-starting trade obj init-')
-                trade = Trade(
+                trade = Trade_Short(
                     ib=ib, 
                     risk=risk,
                     logbook = portfolio_log,
@@ -255,6 +276,7 @@ def onScanData(scanDataList):
     global df
     global risk
     global top_gainers
+    global previous_tickers
     if counter < 1:
         pass
     else:
