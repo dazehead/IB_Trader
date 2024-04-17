@@ -19,7 +19,7 @@ class Risk_Handler:
                 self.account_summary.loc[self.account_summary['tag'] == 'BuyingPower', 'value'].iloc[0]
                 )
             
-            self.perc_risk = .33#self.kelly_criterion(backtest_db_table)
+            self.perc_risk = .15#self.kelly_criterion(backtest_db_table)
             self.balance_at_risk = self.balance * self.perc_risk
             if self.buying_power < self.balance_at_risk:
                 print("!!!!!!!!BUYING POWER TOO LOW!!!!!!!!")
@@ -60,26 +60,34 @@ class Risk_Handler:
         self.active_buy_monitoring = False
         self.started_buy_monitoring = False
     
-    def get_buying_power(self, print_to_console=False):
-        self.account_summary = util.df(self.ib.accountSummary())[['tag', 'value']]
-        self.balance = pd.to_numeric(
-            self.account_summary.loc[self.account_summary['tag'] == 'AvailableFunds', 'value'].iloc[0]
-            )
-        self.buying_power = pd.to_numeric(
-            self.account_summary.loc[self.account_summary['tag'] == 'BuyingPower', 'value'].iloc[0]
-            )
-        self.perc_risk = .33#self.kelly_criterion(backtest_db_table)
-        self.balance_at_risk = self.balance * self.perc_risk
-
-        if self.buying_power < self.balance_at_risk:
-            self.balance_at_risk = self.buying_power
-        if print_to_console:
+    def get_buying_power(self, print_to_console=False, only_print=False):
+        if only_print:
             print("\n*****************************************")
             print(f"Account Balance: {self.balance}")
             print(f"Buying Power: {self.buying_power}")
             print(f"Percent of Buying Power to be used: {self.perc_risk}")
             print(f"Balance to trade: {self.balance_at_risk}")
             print("*****************************************\n")
+        else:
+            self.account_summary = util.df(self.ib.accountSummary())[['tag', 'value']]
+            self.balance = pd.to_numeric(
+                self.account_summary.loc[self.account_summary['tag'] == 'AvailableFunds', 'value'].iloc[0]
+                )
+            self.buying_power = pd.to_numeric(
+                self.account_summary.loc[self.account_summary['tag'] == 'BuyingPower', 'value'].iloc[0]
+                )
+            self.perc_risk = .33#self.kelly_criterion(backtest_db_table)
+            self.balance_at_risk = self.balance * self.perc_risk
+
+            if self.buying_power < self.balance_at_risk:
+                self.balance_at_risk = self.buying_power
+            if print_to_console:
+                print("\n*****************************************")
+                print(f"Account Balance: {self.balance}")
+                print(f"Buying Power: {self.buying_power}")
+                print(f"Percent of Buying Power to be used: {self.perc_risk}")
+                print(f"Balance to trade: {self.balance_at_risk}")
+                print("*****************************************\n")
 
 
 

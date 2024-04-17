@@ -3,7 +3,7 @@ import time
 from scanner import Scanner
 from risk_handler import Risk_Handler
 from dataframe_manager import DF_Manager
-from strategies.engulfing import Engulfing
+from strategies.kama_short import Kama_Short
 from market_orders import Trade
 from trade_short import Trade_Short
 from log import LogBook
@@ -32,23 +32,46 @@ def restart_and_execute():
 
 
 
-float_limit = 10
-archive = True
+float_limit = 15
+archive = False
 alarm = True
-port = 7497
-changePercAbove = '15'
+port = 7496
+changePercAbove = '20'
 volume_above = '200000'
 rejected_tickers = []
 current_ticker_list = []
 barsize = '1 min'
+clientId = 1
 """
 live: 7496
 paper: 7497
 """
 
+def disconnect_reconnect():
+    global clientId
+    global ib
+    global trade_log
+    global portfolio_log
+    global top_gainers
+    ib.disconnect()
+    print("Starting disconnect and reconnect process")
+    if clientId == 1:
+        clientId = 2
+    else:
+        clientId = 1
+    time.sleep(1)
+    ib = IB()
+    ib.connect("127.0.0.1", port, clientId=clientId)
+    trade_log = LogBook(ib=ib)
+    portfolio_log = LogBook(ib=ib)
+    top_gainers = Scanner(ib=ib, scancode='TOP_PERC_GAIN', changePercAbove=changePercAbove, volume_above=volume_above)
+    print(top_gainers.tickers_list)
+    top_gainers.filter_floats(float_percentage_limit= float_limit, archive=archive)
+
+
 
 ib = IB()
-ib.connect('127.0.0.1', port, clientId=2)
+ib.connect('127.0.0.1', port, clientId=clientId)
 counter = 0
 stop_loss_override = False
 previous_tickers = []
@@ -87,7 +110,9 @@ if not ib.positions():
         if len(top_gainers.scanDataList) == 0:
             previous_tickers.append(len(top_gainers.scanDataList))
             if len(previous_tickers) >=3:
-                restart_and_execute()
+                #restart_and_execute()
+                disconnect_reconnect()
+                previous_tickers = []
         if len(previous_tickers) >= 1 and len(top_gainers.scanDataList) >= 1:
             previous_tickers = []
         counter += 1
@@ -212,6 +237,7 @@ def on_bar_update(bars, hasNewBar):
         #print(f'Keys: {live_bars_dict.keys()}')
         print(f'\nContracts: {[contract_obj.symbol for contract_obj in contracts]}')
         #print(live_bars_dict.keys())
+        risk.get_buying_power(only_print=True)
         for i, contract_obj in enumerate(contracts):
             if contract_obj.symbol not in rejected_tickers:
                 risk.get_buying_power()
@@ -233,13 +259,13 @@ def on_bar_update(bars, hasNewBar):
                     low=low,
                     close=close)
                 print('-starting trade obj init-')
-                trade = Trade_Short(
+                trade = Trade(
                     ib=ib, 
                     risk=risk,
-                    logbook = portfolio_log,
+                    logbook=portfolio_log,
                     signals=signals,
                     contract=contract_obj,
-                    stop_loss_override = stop_loss_override)
+                    stop_loss_override=stop_loss_override)
                 print('-starting execute trade-')
                 trade.execute_trade()
                 ib.sleep(.1)

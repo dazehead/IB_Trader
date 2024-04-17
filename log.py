@@ -58,8 +58,6 @@ class LogBook:
             #self.get_charts()
         #self.log_portfolio(initial_balance=True)
 
-
-
     def get_head_node(self):
         return self.head_node
     
@@ -292,10 +290,55 @@ class LogBook:
                 new_df.dropna(inplace=True)
                 new_df.sort_values(by='time', inplace=True)
                 #print(new_df)
+            print(new_df)
             self.export_trades_to_db(new_df)
         except TypeError:
             print('Could not export logs as there are no trades for today')
 
+    def calculate_portfolio(self):
+        """need to add at the very end when we crl+C to add everything together for the date"""
+
+        column_names = ['start balance', 'end balance', 'PnL', 'Total Return [%]', 'date']
+        portfolio_df = pd.DataFrame(columns=column_names)
+        if len(self.account_information) == 1:
+            pass
+        else:
+            if not self.ib.positions():
+                print('Retriving Portfolio information in calculate_portfolio')
+                portfolio_df["start balance"] = self.account_information[0]
+                portfolio_df["end balance"] = self.account_information[1]
+                portfolio_df["PnL"] = portfolio_df["end balance"] - portfolio_df["start balance"]
+                portfolio_df["Total Return [%]"] = round((portfolio_df['PnL'] / portfolio_df["start balance"]) * 100, 2)
+                portfolio_df["date"] = datetime.date.now()
+                self.account_information = []
+                self.account_information.append(portfolio_df['start balance'])
+                self.export_portfolio_to_db(portfolio_df)
+            else:
+                print("in calculate Portfolio but still has open positions")
+                self.account_information = self.account_information[0]
+    
+    def export_portfolio_to_db(self, df):
+        print("exporting portfolio to DB")
+        conn = sqlite3.connect('logbooks/trade_log.db')
+        if self.ib.client.port == 7497:
+            name = 'paper_portfolio'
+        else:
+            name = 'live_portfolio'
+        print("--1")
+        df_from_db = pd.read_sql(f'SELECT * FROM {name}', conn)
+        print("--2")
+        df_from_db["date"] = pd.to_datetime(df_from_db["date"])
+        print("--3")
+        df["date"] = pd.to_datetime(df['date'])
+
+        print("--4")
+        merged_df = pd.merge(df, df_from_db[["date"]], on="date", how="left", indicator=True)
+        print("--5")
+        result = merged_df[merged_df['_merge'] == 'left_only'].drop('_merge', axis=1)
+        print("--6")
+        result.to_sql('portfolio_log', conn, if_exist='append', index=False)
+        
+    
     
     def export_trades_to_db(self, df):
         """takes df and exports it to the trade_log, also logic for duplicates, will not overwrite"""
@@ -306,7 +349,7 @@ class LogBook:
             name = "paper_log"
         else:
             # 7496 -- real account
-            name = "account_log"
+            name = "live_log"
 
         df_from_db= pd.read_sql(f'SELECT * FROM {name}', conn)
         df_from_db['time'] = pd.to_datetime(df_from_db['time'])
