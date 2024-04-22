@@ -11,9 +11,9 @@ class BackTest:
         self.ticker = self.strategy.ticker
 
         # retrieves data from from Strategy() class
-        if self.strategy.barsize == '1min':
+        if self.strategy.barsize == '1 min':
             self.data = self.strategy.data_1min
-        elif self.strategy.barsize == '5min':
+        elif self.strategy.barsize == '5 min':
             self.data = self.strategy.data_5min
 
         # Building/ performed backtest
@@ -75,13 +75,21 @@ class BackTest:
             init_cash=10000.0)
         return pf
 
-    def graph_data(self):
+    def graph_data(self, ticker):
         """Function to graph data"""
         fig = self.data.vbt.ohlcv.plots(
-            settings=dict(plot_type='candlestick'))
+            settings=dict(plot_type='candlestick',
+                          title=ticker))
         fig = self.entries.vbt.signals.plot_as_entry_markers(
             self.data.close, fig=fig)
         fig = self.exits.vbt.signals.plot_as_exit_markers(
             self.data.close, fig=fig)
-        fig = self.strategy.kama.vbt.plot(trace_kwargs=dict(line=dict(color='blue')), fig=fig)
+        fig = self.strategy.kama.vbt.plot(
+            trace_kwargs=dict(line=dict(color='blue')),
+            trace_names = ['Kama'],
+            fig=fig)
+        #fig = self.strategy.kama2.vbt.plot(
+        #    trace_kwargs=dict(line=dict(color='red')),
+        #    trace_names = ['Kama2'],
+        #    fig=fig)
         fig.show()

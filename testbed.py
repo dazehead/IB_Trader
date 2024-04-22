@@ -9,6 +9,7 @@ from market_orders import Trade
 import datetime
 from strategies.price_action import PriceAction
 from strategies.kefr_kama import Kefr_Kama
+from strategies.kama_short import Kama_Short
 from finvizfinance.quote import finvizfinance
 import yfinance as yf
 import os
@@ -29,7 +30,7 @@ def test_trades():
     profit_loss = ib.pnl()
     print(profit_loss)
 
-test_trades()
+#test_trades()
 
 
 
@@ -60,14 +61,14 @@ def test_strategy():
     df_manager = df_manager[0]
     risk = Risk_Handler(
         ib=None,
-        perc_risk=0.8,
-        stop_time='10:00:00-05:00',
-        atr_perc = .25)
+        start_time='07:00:00-05:00',
+        stop_time = "10:00:00-05:00",
+        atr_perc = 1.5)
     
     strat = Kefr_Kama(
         df_manager=df_manager,
-        barsize="1min",
-        risk=risk)
+        risk = risk,
+        barsize="1 min")
     
     backtest = BackTest(strat)
     backtest.graph_data()
@@ -90,7 +91,7 @@ def test_price_action():
     
     strat = PriceAction(
         df_manager=df_manager,
-        barsize="5min",
+        barsize="5 min",
         risk=risk)
 
     strat.price_action_testing()
@@ -107,8 +108,7 @@ def run_backtest(tickers_list):
 
     risk = Risk_Handler(ib = None,
                         stop_time="11:00:00-05:00",
-                        start_time="07:00:00-05:00",
-                        atr_perc = 1.2)
+                        start_time="07:00:00-05:00")
 
     # iterating of each DF_Manager and creating a strategy object with each manager
     logbook = LogBook(None, None)
@@ -117,23 +117,23 @@ def run_backtest(tickers_list):
         if i == 0:
             strat = Kefr_Kama(
                 df_manager=manager,
-                barsize= "1min",
+                barsize= "1 min",
                 risk = risk)
             backtest = BackTest(strat)
             logbook = LogBook(ib=None, value=backtest)
         else:
             strat = Kefr_Kama(
                 df_manager=manager,
-                barsize='1min',
+                barsize='1 min',
                 risk=risk)
             backtest = BackTest(strat)
             logbook.insert_beginning(new_value=backtest)
         #print(list(dir(backtest.pf)))
         print(backtest.pf.stats())
-        backtest.graph_data()
+        backtest.graph_data(ticker=manager.ticker)
     return logbook
-#logbook = run_backtest(get_tickers_below(10)[0])
-#logbook.export_backtest_to_db("KEFR_KAMA_ATR_below10")
+logbook = run_backtest(get_tickers_below(10)[-4:])
+#logbook.export_backtest_to_db("KEFR_KAMA_ATR_below10_16_p9_1p8")
 
 #df = logbook._convert_to_dataframe()
 #print(df)

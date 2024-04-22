@@ -195,7 +195,7 @@ class Scanner:
         # full list of filters
         """https://nbviewer.org/github/erdewit/ib_insync/blob/master/notebooks/scanners.ipynb"""
         tagValues = [TagValue("priceAbove", '1'),
-                     TagValue("priceBelow", '20'),
+                     TagValue("priceBelow", '30'),
                      TagValue("volumeAbove", self.volume_above),
                      #TagValue("openGapPercAbove", '25'),
                      TagValue("changePercAbove", self.change_perc_above)]

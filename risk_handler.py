@@ -6,30 +6,35 @@ import numpy as np
 
 class Risk_Handler:
     """A class to hanlde portfolio risk"""
-    def __init__(self, ib=None, backtest_db_table = None ,stop_time=None,start_time=None, atr_perc= 1.5, contracts = None):
+    def __init__(self, ib=None, backtest_db_table = None ,stop_time=None,start_time=None, contracts = None):
         """Initializing Risk resources"""
         self.ib = ib
         if self.ib is not None:
 
             self.account_summary = util.df(self.ib.accountSummary())[['tag', 'value']]
+            #for i in range(len(self.account_summary)):
+            #    print(self.account_summary.iloc[i])
+
             self.balance = pd.to_numeric(
-                self.account_summary.loc[self.account_summary['tag'] == 'AvailableFunds', 'value'].iloc[0]
+                self.account_summary.loc[self.account_summary['tag'] == 'TotalCashBalance', 'value'].iloc[0]
                 )
             self.buying_power = pd.to_numeric(
                 self.account_summary.loc[self.account_summary['tag'] == 'BuyingPower', 'value'].iloc[0]
                 )
             
-            self.perc_risk = .15#self.kelly_criterion(backtest_db_table)
-            self.balance_at_risk = self.balance * self.perc_risk
+            self.perc_risk = .20#self.kelly_criterion(backtest_db_table)
+            self.balance_at_risk = round(self.balance * self.perc_risk, 2)
             if self.buying_power < self.balance_at_risk:
-                print("!!!!!!!!BUYING POWER TOO LOW!!!!!!!!")
+                print(f"\n{self.balance_at_risk} is over our buying power of: {self.buying_power}.")
+                print("Will only trade with Buying Power!\n")
+                self.balance_at_risk = self.buying_power
                 #to_go_on = input(f"Would you like to still trade today only using {self.buying_power}?\n Y or N").upper()
                 #while to_go_on not in ['Y', 'N']:
                 #    to_go_on = input(f"Invalid Response please enter 'Y' or 'N'").upper()
                 #if to_go_on == 'Y':
                 #    self.balance_at_risk = self.buying_power
                 #elif to_go_on == 'N':
-                sys.exit() 
+                #sys.exit() 
             self.highest_high = None
             self.trade = {}
             self.trade_num_shares = None
@@ -41,7 +46,7 @@ class Risk_Handler:
             print("\n*****************************************")
             print(f"Account Balance: {self.balance}")
             print(f"Buying Power: {self.buying_power}")
-            print(f"Percent of Buying Power to be used: {self.perc_risk}")
+            print(f"Percent of Account Balance to be used: {self.perc_risk}")
             print(f"Balance to trade: {self.balance_at_risk}")
             print("*****************************************\n")
 
@@ -53,8 +58,8 @@ class Risk_Handler:
         self.stop_time = stop_time
         self.start_time = start_time
         # this creates a 2/1 proffit/loss ratio
-        self.atr_perc = atr_perc
-        self.profit_target_perc = atr_perc * 2
+        self.atr_perc = None
+        #self.profit_target_perc = atr_perc * 2
         
 
         self.active_buy_monitoring = False
@@ -65,18 +70,18 @@ class Risk_Handler:
             print("\n*****************************************")
             print(f"Account Balance: {self.balance}")
             print(f"Buying Power: {self.buying_power}")
-            print(f"Percent of Buying Power to be used: {self.perc_risk}")
+            print(f"Percent of Account Balance to be used: {self.perc_risk}")
             print(f"Balance to trade: {self.balance_at_risk}")
             print("*****************************************\n")
         else:
             self.account_summary = util.df(self.ib.accountSummary())[['tag', 'value']]
             self.balance = pd.to_numeric(
-                self.account_summary.loc[self.account_summary['tag'] == 'AvailableFunds', 'value'].iloc[0]
+                self.account_summary.loc[self.account_summary['tag'] == 'TotalCashBalance', 'value'].iloc[0]
                 )
             self.buying_power = pd.to_numeric(
                 self.account_summary.loc[self.account_summary['tag'] == 'BuyingPower', 'value'].iloc[0]
                 )
-            self.perc_risk = .33#self.kelly_criterion(backtest_db_table)
+            #self.perc_risk = .33#self.kelly_criterion(backtest_db_table)
             self.balance_at_risk = self.balance * self.perc_risk
 
             if self.buying_power < self.balance_at_risk:
@@ -85,7 +90,7 @@ class Risk_Handler:
                 print("\n*****************************************")
                 print(f"Account Balance: {self.balance}")
                 print(f"Buying Power: {self.buying_power}")
-                print(f"Percent of Buying Power to be used: {self.perc_risk}")
+                print(f"Percent of Account Balance to be used: {self.perc_risk}")
                 print(f"Balance to trade: {self.balance_at_risk}")
                 print("*****************************************\n")
 

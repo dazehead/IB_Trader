@@ -32,11 +32,11 @@ def restart_and_execute():
 
 
 
-float_limit = 15
-archive = False
+float_limit = 10
+archive = True
 alarm = True
 port = 7496
-changePercAbove = '20'
+changePercAbove = '15'
 volume_above = '200000'
 rejected_tickers = []
 current_ticker_list = []
@@ -177,7 +177,6 @@ risk = Risk_Handler(
      backtest_db_table="KEFR_KAMA_ATR_below10",
      stop_time=None,
      start_time=None,
-     atr_perc=1.5,
      contracts = contracts)
 print("\n...Risk_Handler Initialized")
 

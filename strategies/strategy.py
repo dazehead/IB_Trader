@@ -190,11 +190,11 @@ class Strategy:
             datetimes = self.data_10sec.date
             date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.stop_time}")
         
-        elif self.barsize == '1min':
+        elif self.barsize == '1 min':
             datetimes = self.data_1min.date
             date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.stop_time}")
         
-        elif self.barsize == '5min':
+        elif self.barsize == '5 min':
             datetimes = self.data_5min.date
             date = pd.to_datetime(f"{str(datetimes[0]).split()[0]} {self.risk.stop_time}")
 
@@ -212,11 +212,11 @@ class Strategy:
             datetimes = self.data_10sec.date
             data = self.data_10sec
         
-        elif self.barsize == '1min':
+        elif self.barsize == '1 min':
             datetimes = self.data_1min.date
             data = self.data_1min
         
-        elif self.barsize == '5min':
+        elif self.barsize == '5 min':
             datetimes = self.data_5min.date
             data = self.data_5min
 

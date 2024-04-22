@@ -297,6 +297,10 @@ class LogBook:
 
     def calculate_portfolio(self):
         """need to add at the very end when we crl+C to add everything together for the date"""
+        # 0: start balance
+        # 1: end balance
+        # 2: PnL
+        # 4: Percent
 
         column_names = ['start balance', 'end balance', 'PnL', 'Total Return [%]', 'date']
         portfolio_df = pd.DataFrame(columns=column_names)
@@ -307,9 +311,9 @@ class LogBook:
                 print('Retriving Portfolio information in calculate_portfolio')
                 portfolio_df["start balance"] = self.account_information[0]
                 portfolio_df["end balance"] = self.account_information[1]
-                portfolio_df["PnL"] = portfolio_df["end balance"] - portfolio_df["start balance"]
-                portfolio_df["Total Return [%]"] = round((portfolio_df['PnL'] / portfolio_df["start balance"]) * 100, 2)
-                portfolio_df["date"] = datetime.date.now()
+                portfolio_df["PnL"] = self.account_information[2]
+                portfolio_df["Total Return [%]"] = self.account_information[3]
+                portfolio_df["date"] = datetime.now().date()
                 self.account_information = []
                 self.account_information.append(portfolio_df['start balance'])
                 self.export_portfolio_to_db(portfolio_df)
@@ -414,7 +418,7 @@ class LogBook:
         self.account_summary = util.df(self.ib.accountSummary())[['tag', 'value']]
         print('getting cash balance')
         cash_balance = pd.to_numeric(
-                self.account_summary.loc[self.account_summary['tag'] == 'CashBalance', 'value'].iloc[0]
+                self.account_summary.loc[self.account_summary['tag'] == 'TotalCashBalance', 'value'].iloc[0]
                 )
         if initial_balance:
             self.account_information.append(cash_balance)

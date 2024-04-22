@@ -100,7 +100,6 @@ def run_hyper(tickers_list=None):
     
     risk = Risk_Handler(ib = None,
                         stop_time="11:00:00-05:00",
-                        start_time="07:00:00-05:00",
                         atr_perc = 0.0)
                         
 
@@ -111,14 +110,14 @@ def run_hyper(tickers_list=None):
         if i == 0:
             strat = Kefr_Kama(
                 df_manager=manager,
-                barsize= "1min",
+                barsize= "1 min",
                 risk = risk)
             backtest = HyperBT(strat)
             logbook = LogBook(ib=None, value=backtest)
         else:
             strat = Kefr_Kama(
                 df_manager=manager,
-                barsize='1min',
+                barsize='1 min',
                 risk=risk)
             backtest = HyperBT(strat)
             logbook.insert_beginning(new_value=backtest)
@@ -139,4 +138,3 @@ start = time.time()
 logbook = run_hyper(tickers_list_below_10)
 print(f"Total Time: {time.time() - start}")
 logbook.export_hyper_to_db('KEFR_KAMA_ATR_below10')
-

@@ -59,7 +59,7 @@ class Kefr_Kama(Strategy):
         kama[fast_period - 1] = close[fast_period - 1]  # Set initial value for kama
 
         for i in range(fast_period, len(close)):
-            kama[i] = kama[i - 1] + sc[i] * (close[i] - kama[i - 1])
+            kama[i] = kama[i - 1] + sc[i] * (close[i] - kama[i - 1]) 
 
         return kama
     
@@ -72,7 +72,7 @@ class Kefr_Kama(Strategy):
         return new_signals
     
     def simple_atr_process(self, signals, atr, close):
-        print('---simple atr process')
+        #print('---simple atr process')
         if self.risk.ib is not None:
             """if we are connected to IB"""
             self.risk.stop_loss[self.ticker] = round(self.kama[-1] - atr[-1] * self.risk.atr_perc, 2)
@@ -138,10 +138,11 @@ class Kefr_Kama(Strategy):
         efratios = self.calculate_efratio(efratio_timeperiod)
         #print(efratios)
         """insert KAMA here"""
-        print('---calculating KAMA')
+        #print('---calculating KAMA')
         try:
             kama = self.calculate_kama(efratios, close)
             self.kama = pd.Series(kama, index=efratios.index)
+            #print(self.kama)
             signals = pd.Series(0, index=efratios.index)
             signals[efratios > threshold] = 1
 
@@ -199,6 +200,8 @@ class Kefr_Kama(Strategy):
             #print(f"Total Time Elapsed: {time.time() - start}")
         except IndexError:
             print('Not enough data to calculate KAMA')
+            print(f"length of close: {len(close)}")
+            print(close)
             signals = 0
         return signals
 
